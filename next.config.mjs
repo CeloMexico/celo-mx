@@ -35,6 +35,24 @@ const nextConfig = {
         tls: false,
       };
     }
+    
+    // Fix for client reference manifest issues
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks?.cacheGroups,
+          client: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'client',
+            chunks: 'all',
+            enforce: true,
+          },
+        },
+      },
+    };
+    
     return config;
   },
   // Ensure proper client/server component handling

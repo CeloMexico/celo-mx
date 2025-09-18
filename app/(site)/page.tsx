@@ -1,8 +1,11 @@
-import HeroStrip from '@/components/HeroStrip';
+import dynamic from 'next/dynamic';
 import Section from '@/components/Section';
-import FeatureCard from '@/components/FeatureCard';
-import PillRow from '@/components/PillRow';
-import FrontierInnovation from '@/components/FrontierInnovation';
+
+// Dynamically import client components to avoid SSR issues
+const HeroStrip = dynamic(() => import('@/components/HeroStrip'), { ssr: false });
+const FeatureCard = dynamic(() => import('@/components/FeatureCard'), { ssr: false });
+const PillRow = dynamic(() => import('@/components/PillRow'), { ssr: false });
+const FrontierInnovation = dynamic(() => import('@/components/FrontierInnovation'), { ssr: false });
 
 export default function HomePage() {
   return (
