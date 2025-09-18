@@ -1,0 +1,28 @@
+node_modules/
+.next/
+.turbo/
+out/
+dist/
+coverage/
+*.log
+
+# Env
+.env
+.env.*
+.env.local
+.env.local.backup
+!.env.example
+
+# Prisma (si aplica)
+prisma/*.db
+prisma/*.db-journal
+
+# SO/Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Usa SOLO npm:
+package-lock.json
+#pnpm-lock.yaml
+#yarn.lock

@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'GT Alpina Fine Standard Thin Trial';
+  src: url('/fonts/GT-Alpina-Fine-Standard-Thin-Trial.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GT Alpina VAR Trial';
+  src: url('/fonts/GT-Alpina-VAR-Trial.woff2') format('woff2');
+  font-weight: 40 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-display: 'GrilliEnd', ui-serif, system-ui;
+  --font-body: 'Inter', ui-sans-serif, system-ui;
+  --font-title: 'GT Alpina Fine Standard Thin Trial', 'Georgia', 'Times New Roman', serif;
+  --font-italic: 'GT Alpina Fine Standard Thin Trial', 'Georgia', 'Times New Roman', serif;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+  
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-title);
+    font-weight: 100;
+  }
+
+  .font-italic {
+    font-family: var(--font-italic);
+    font-weight: 100;
+    font-style: italic;
+  }
+
+  .font-title {
+    font-family: var(--font-title);
+    font-weight: 100;
+  }
+
+  .font-title-italic {
+    font-family: var(--font-title);
+    font-weight: 100;
+    font-style: italic;
+  }
+}
+
+/* Celo Theme tokens - using different variable names to avoid conflicts */
+.theme-yellow {
+  --celo-bg: #F7FF58;
+  --celo-text: #0A0A0A;
+  --celo-heading: #0A0A0A;
+  --celo-card: #FFFFFF;
+  --celo-border: #ECECEC;
+}
+
+.theme-yellow.dark {
+  --celo-bg: #0A0A0A;
+  --celo-text: #FFFFFF;
+  --celo-heading: #F7FF58;
+  --celo-card: #111111;
+  --celo-border: #1E1E1E;
+}
+
+/* Celo theme utility classes */
+.celo-bg {
+  background: var(--celo-bg);
+}
+
+.celo-text {
+  color: var(--celo-text);
+}
+
+.celo-heading {
+  color: var(--celo-heading);
+}
+
+.celo-card {
+  background: var(--celo-card);
+}
+
+.celo-border {
+  border-color: var(--celo-border);
+}
+
+.hairline {
+  border-width: 1px;
+  border-color: var(--celo-border);
+}
+
+.surface {
+  background: var(--celo-card);
+}
+
+/* focus ring */
+:focus-visible {
+  outline: 2px solid theme(colors.celo.lime);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Responsive utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-first responsive improvements */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+  
+  .hover\:opacity-80:hover {
+    opacity: 1;
+  }
+}
+
+
+
