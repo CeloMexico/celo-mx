@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, Play, Star, Users, Clock, Share2, Heart } from "lucide-react";
@@ -17,17 +17,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
 
 interface CourseDetailPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default function CourseDetailPage({ params }: CourseDetailPageProps) {
+  const [slug, setSlug] = useState<string>('');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
 
+  // Handle async params in client component
+  useEffect(() => {
+    params.then(({ slug: resolvedSlug }) => {
+      setSlug(resolvedSlug);
+    });
+  }, [params]);
+
   // Find course by slug
-  const course = getCourseBySlug(params.slug);
+  const course = slug ? getCourseBySlug(slug) : null;
   
   if (!course) {
     notFound();

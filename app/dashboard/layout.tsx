@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import '../globals.css'
 import { Inter } from 'next/font/google'
-import dynamic from 'next/dynamic'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import Providers from '@/components/Providers'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' })
-const Providers = dynamic(() => import('@/components/Providers'), { ssr: false })
 
 export const metadata: Metadata = {
   title: 'Dashboard • CELO Mexico',
