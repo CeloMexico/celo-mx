@@ -38,6 +38,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     );
   }
   
+  // If no Privy app ID, just render with theme provider
+  if (!appId) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </ThemeProvider>
+    );
+  }
+  
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <WagmiProvider config={config}>
