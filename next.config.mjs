@@ -7,7 +7,9 @@ const nextConfig = {
       "@privy-io/react-auth",
       "wagmi",
       "viem"
-    ]
+    ],
+    // Fix for Vercel build issues with client reference manifests
+    esmExternals: 'loose',
   },
   images: {
     remotePatterns: [
@@ -26,7 +28,7 @@ const nextConfig = {
     ],
   },
   // Add build optimizations to fix client reference manifest issues
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -36,22 +38,32 @@ const nextConfig = {
       };
     }
     
-    // Fix for client reference manifest issues
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          ...config.optimization.splitChunks?.cacheGroups,
-          client: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'client',
-            chunks: 'all',
-            enforce: true,
+    // Fix for Vercel build issues with client reference manifests
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            client: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'client',
+              chunks: 'all',
+              enforce: true,
+            },
           },
         },
-      },
-    };
+      };
+    }
+    
+    // Additional fix for Vercel environment
+    config.externals = config.externals || [];
+    if (Array.isArray(config.externals)) {
+      config.externals.push({
+        'supports-color': 'commonjs supports-color',
+      });
+    }
     
     return config;
   },
