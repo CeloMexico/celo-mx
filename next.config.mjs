@@ -25,6 +25,20 @@ const nextConfig = {
       },
     ],
   },
+  // Add build optimizations to fix client reference manifest issues
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
+  },
+  // Ensure proper client/server component handling
+  transpilePackages: ['@privy-io/react-auth', 'wagmi', 'viem'],
 };
 
 export default nextConfig;

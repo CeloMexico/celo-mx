@@ -4,9 +4,6 @@ import FeatureCard from '@/components/FeatureCard';
 import PillRow from '@/components/PillRow';
 import FrontierInnovation from '@/components/FrontierInnovation';
 
-// Force dynamic rendering to avoid Privy issues during build
-export const dynamic = 'force-dynamic';
-
 export default function HomePage() {
   return (
     <div className="space-y-16 sm:space-y-20 lg:space-y-24 pb-16 sm:pb-20 lg:pb-24">
