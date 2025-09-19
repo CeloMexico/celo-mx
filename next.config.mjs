@@ -2,10 +2,7 @@
 const nextConfig = {
   experimental: {
     optimizePackageImports: [
-      "framer-motion",
-      "@privy-io/react-auth",
-      "wagmi",
-      "viem"
+      "framer-motion"
     ],
   },
   // Better client reference handling
@@ -49,7 +46,7 @@ const nextConfig = {
     return config;
   },
   // Ensure proper client/server component handling
-  transpilePackages: ['@privy-io/react-auth', 'wagmi', 'viem'],
+  transpilePackages: [],
 };
 
 export default nextConfig;
