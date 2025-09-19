@@ -1,26 +1,16 @@
 'use client';
-import { usePrivy } from '@privy-io/react-auth';
 import Section from '@/components/Section';
-import { useEffect, useState } from 'react';
-import { getAddress, createPublicClient, http, Chain } from 'viem';
-
-const celo: Chain = {
-  id: 42220,
-  name: 'Celo',
-  nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
-  rpcUrls: { default: { http: ['https://forno.celo.org'] } },
-};
+import { useState } from 'react';
 
 export default function DashboardPage() {
-  const { authenticated, login, user, ready } = usePrivy();
-  const [chainId, setChainId] = useState<number | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [chainId] = useState(42220); // Mock Celo mainnet
+  const addr = authenticated ? '0x1234...5678' : '—';
 
-  useEffect(() => {
-    const client = createPublicClient({ chain: celo, transport: http() });
-    client.getChainId().then(setChainId).catch(() => setChainId(null));
-  }, []);
+  const login = () => {
+    setAuthenticated(true);
+  };
 
-  if (!ready) return null;
   if (!authenticated) {
     return (
       <Section title="Dashboard protegido">
@@ -29,8 +19,6 @@ export default function DashboardPage() {
       </Section>
     );
   }
-
-  const addr = user?.wallet?.address ? getAddress(user.wallet.address) : '—';
 
   return (
     <div className="space-y-10 pb-24">

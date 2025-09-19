@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+// Mock authentication for demo
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,8 @@ interface BuySheetProps {
 }
 
 export default function BuySheet({ open, onOpenChange, asset }: BuySheetProps) {
-  const { authenticated, login } = usePrivy();
+  const [authenticated, setAuthenticated] = useState(false); // Mock authentication
+  const login = () => setAuthenticated(true);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 

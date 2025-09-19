@@ -3,7 +3,6 @@ import { Asset } from '@/app/marketplace/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingCart, Image as ImageIcon } from 'lucide-react';
-import { usePrivy } from '@privy-io/react-auth';
 import { useState } from 'react';
 import BuySheet from './BuySheet';
 
@@ -13,7 +12,7 @@ interface AssetGridProps {
 }
 
 export default function AssetGrid({ assets, className = '' }: AssetGridProps) {
-  const { authenticated } = usePrivy();
+  const [authenticated] = useState(true); // Mock: assume authenticated for demo
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [showBuySheet, setShowBuySheet] = useState(false);
 

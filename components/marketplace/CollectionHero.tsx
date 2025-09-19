@@ -3,7 +3,7 @@ import { Collection } from '@/app/marketplace/data';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, ArrowRight, Eye } from 'lucide-react';
-import { usePrivy } from '@privy-io/react-auth';
+// Mock authentication for demo
 import { useState } from 'react';
 import BuySheet from './BuySheet';
 import RampLauncher from '@/components/RampLauncher';
@@ -14,7 +14,7 @@ interface CollectionHeroProps {
 }
 
 export default function CollectionHero({ collection, onViewAssets }: CollectionHeroProps) {
-  const { authenticated } = usePrivy();
+  const [authenticated] = useState(true); // Mock: assume authenticated for demo
   const [showBuySheet, setShowBuySheet] = useState(false);
 
   const handleBuy = () => {
