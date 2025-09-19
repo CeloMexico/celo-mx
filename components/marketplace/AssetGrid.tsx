@@ -1,5 +1,5 @@
 'use client';
-import { Asset } from '@/app/(site)/marketplace/data';
+import { Asset } from '@/app/marketplace/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingCart, Image as ImageIcon } from 'lucide-react';

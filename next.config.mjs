@@ -28,8 +28,8 @@ const nextConfig = {
       },
     ],
   },
-  // Simplified webpack config for Next.js 15
-  webpack: (config, { isServer }) => {
+  // Enhanced webpack config for Next.js 15
+  webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -38,6 +38,13 @@ const nextConfig = {
         tls: false,
       };
     }
+    
+    // Fix for client reference manifest issues
+    config.plugins.push(
+      new webpack.DefinePlugin({
+        'process.env.NEXT_CLIENT_REFERENCE_MANIFEST': 'undefined',
+      })
+    );
     
     return config;
   },

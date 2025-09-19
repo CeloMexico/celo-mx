@@ -1,5 +1,5 @@
 'use client';
-import { UpcomingCollection } from '@/app/(site)/marketplace/data';
+import { UpcomingCollection } from '@/app/marketplace/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Lock } from 'lucide-react';

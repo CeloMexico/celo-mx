@@ -1,5 +1,5 @@
 'use client';
-import { Collection } from '@/app/(site)/marketplace/data';
+import { Collection } from '@/app/marketplace/data';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, ArrowRight, Eye } from 'lucide-react';
