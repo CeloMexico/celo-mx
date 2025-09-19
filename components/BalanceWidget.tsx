@@ -1,8 +1,5 @@
 'use client';
-import { usePrivy } from '@privy-io/react-auth';
-import { useEffect, useState } from 'react';
-import { publicClient } from '@/lib/wallet/viemClient';
-import { formatEther } from 'viem';
+import { useState } from 'react';
 import { Wallet, Coins } from 'lucide-react';
 import PrivyLogin from './PrivyLogin';
 
@@ -11,49 +8,23 @@ interface BalanceWidgetProps {
 }
 
 export default function BalanceWidget({ className = '' }: BalanceWidgetProps) {
-  const { authenticated, user } = usePrivy();
   const [celoBalance, setCeloBalance] = useState<string>('0');
   const [loading, setLoading] = useState(false);
   const [address, setAddress] = useState<string>('');
+  const [authenticated, setAuthenticated] = useState(false);
 
-  // Extract address from Privy user
-  useEffect(() => {
-    if (authenticated && user) {
-      const direct = (user as any)?.wallet?.address as string | undefined;
-      const fromLinked = (user as any)?.linkedAccounts?.find((a: any) => a?.type === 'wallet' && a?.address)?.address as string | undefined;
-      const userAddress = direct || fromLinked || '';
-      setAddress(userAddress);
-    } else {
-      setAddress('');
-      setCeloBalance('0');
-    }
-  }, [authenticated, user]);
-
-  // Fetch CELO balance
-  useEffect(() => {
-    if (!address) return;
-
-    const fetchBalance = async () => {
-      setLoading(true);
-      try {
-        const balance = await publicClient.getBalance({
-          address: address as `0x${string}`,
-        });
-        const formattedBalance = formatEther(balance);
-        setCeloBalance(parseFloat(formattedBalance).toFixed(4));
-      } catch (error) {
-        console.error('Error fetching balance:', error);
-        setCeloBalance('0');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBalance();
-  }, [address]);
+  // Mock data for demo purposes
+  const mockBalance = '1.25';
+  const mockAddress = '0x1234...5678';
 
   const truncateAddress = (addr: string) => {
     return addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '';
+  };
+
+  const handleLogin = () => {
+    setAuthenticated(true);
+    setAddress(mockAddress);
+    setCeloBalance(mockBalance);
   };
 
   if (!authenticated) {
@@ -65,7 +36,14 @@ export default function BalanceWidget({ className = '' }: BalanceWidgetProps) {
         </div>
         <div className="text-center py-8">
           <p className="text-sm celo-text mb-4">Conecta tu wallet para ver tu balance</p>
-          <PrivyLogin />
+          <button 
+            onClick={handleLogin}
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-celo-yellow to-celo-lime text-celo-black dark:text-celo-black rounded-xl text-xs sm:text-sm font-medium hover:from-celo-yellowAlt hover:to-celo-yellow transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20"
+          >
+            <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Conectar Wallet</span>
+            <span className="xs:hidden">Conectar</span>
+          </button>
         </div>
       </div>
     );

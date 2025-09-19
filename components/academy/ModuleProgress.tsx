@@ -5,7 +5,6 @@ import { CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import { isModuleDone, markModuleDone } from "@/lib/progress";
 import { moduleTokenId } from "@/lib/milestones";
 import { useMilestoneNFT } from "@/hooks/useMilestoneNFT";
-import { useAccount } from "wagmi";
 import { useToast } from "@/components/ui/toast";
 
 export default function ModuleProgress({
@@ -14,8 +13,8 @@ export default function ModuleProgress({
   const [done, setDone] = useState(false);
   const [txUrl, setTxUrl] = useState<string | null>(null);
   const [minting, setMinting] = useState(false);
+  const [isConnected] = useState(true); // Mock: assume connected for demo
   const { hasBadge, claimBadge } = useMilestoneNFT();
-  const { isConnected } = useAccount();
   const { toast } = useToast();
 
   useEffect(() => {

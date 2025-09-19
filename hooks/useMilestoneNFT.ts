@@ -1,35 +1,26 @@
 "use client";
-import { useAccount, useChainId } from "wagmi";
-import { writeContract, readContract } from "wagmi/actions";
-import { getMilestoneAddress, MILESTONE_ABI_JSON } from "@/lib/milestoneContract";
-import { explorerTx } from "@/lib/milestones";
-import { config } from "@/lib/wagmi";
+import { useState } from "react";
 
+// Mock version for demo purposes - no on-chain functionality
 export function useMilestoneNFT() {
-  const { address } = useAccount();
-  const chainId = useChainId();
+  const [mockAddress] = useState("0x1234...5678");
+  const [mockChainId] = useState(44787); // Alfajores testnet
 
   async function hasBadge(tokenId: bigint): Promise<boolean> {
-    if (!address) return false;
-    const balance = await readContract(config, {
-      address: getMilestoneAddress(chainId),
-      abi: MILESTONE_ABI_JSON,
-      functionName: "balanceOf",
-      args: [address, tokenId],
-      chainId: chainId as 44787 | 42220,
-    }) as bigint;
-    return balance > 0n;
+    // Mock: simulate some badges being owned
+    const mockOwnedBadges = [1n, 3n, 5n]; // Mock badges that user "owns"
+    return mockOwnedBadges.includes(tokenId);
   }
 
   async function claimBadge(tokenId: bigint): Promise<{ hash: `0x${string}`, url?: string }> {
-    const hash = await writeContract(config, {
-      address: getMilestoneAddress(chainId),
-      abi: MILESTONE_ABI_JSON,
-      functionName: "claim",
-      args: [tokenId],
-      chainId: chainId as 44787 | 42220,
-    });
-    return { hash, url: explorerTx(chainId, hash) };
+    // Mock: simulate a transaction hash
+    const mockHash = `0x${Math.random().toString(16).substring(2, 66)}` as `0x${string}`;
+    const mockUrl = `https://alfajores.celoscan.io/tx/${mockHash}`;
+    
+    // Simulate async operation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return { hash: mockHash, url: mockUrl };
   }
 
   return { hasBadge, claimBadge };

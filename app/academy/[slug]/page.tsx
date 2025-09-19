@@ -37,6 +37,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   // Find course by slug
   const course = slug ? getCourseBySlug(slug) : null;
   
+  // Show loading while slug is being resolved
+  if (!slug) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Cargando curso...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Only show 404 if we have a slug but no course found
   if (!course) {
     notFound();
   }

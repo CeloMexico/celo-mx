@@ -1,7 +1,6 @@
 'use client';
-import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Copy, 
   Check, 
@@ -14,18 +13,14 @@ import {
 } from 'lucide-react';
 
 export default function PrivyLogin() {
-  const { authenticated, login, logout, user } = usePrivy();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const addr = useMemo(() => {
-    const direct = (user as any)?.wallet?.address as string | undefined;
-    if (direct) return direct;
-    const fromLinked = (user as any)?.linkedAccounts?.find((a: any) => a?.type === 'wallet' && a?.address)?.address as string | undefined;
-    return fromLinked ?? '';
-  }, [user]);
+  // Mock address for demo purposes
+  const addr = authenticated ? '0x1234...5678' : '';
 
   function truncate(a: string) {
     return a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '';
@@ -40,6 +35,15 @@ export default function PrivyLogin() {
     } catch (err) {
       console.error('Failed to copy address:', err);
     }
+  };
+
+  const login = () => {
+    setAuthenticated(true);
+  };
+
+  const logout = () => {
+    setAuthenticated(false);
+    setShowDropdown(false);
   };
 
   // Close dropdown when clicking outside
@@ -59,7 +63,7 @@ export default function PrivyLogin() {
   if (!authenticated) {
     return (
       <button 
-        onClick={() => login()} 
+        onClick={login} 
         className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-celo-yellow to-celo-lime text-celo-black dark:text-celo-black rounded-xl text-xs sm:text-sm font-medium hover:from-celo-yellowAlt hover:to-celo-yellow transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20"
       >
         <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

@@ -38,34 +38,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // If no Privy app ID, just render with theme provider
-  if (!appId) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
-      </ThemeProvider>
-    );
-  }
-  
+  // Simplified version without on-chain features for now
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          <PrivyProvider 
-            appId={appId} 
-            config={{ 
-              loginMethods: ['email', 'google', 'twitter', 'wallet'], 
-              appearance: { theme: 'dark' } 
-            }}
-          >
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </PrivyProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
+      <ToastProvider>
+        {children}
+      </ToastProvider>
     </ThemeProvider>
   );
 }
