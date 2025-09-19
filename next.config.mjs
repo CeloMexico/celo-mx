@@ -8,7 +8,10 @@ const nextConfig = {
       "viem"
     ],
   },
+  // Better client reference handling
+  serverExternalPackages: ['@prisma/client'],
   typedRoutes: true,
+  outputFileTracingRoot: '/Users/main/Developer/celo-mexico',
   images: {
     remotePatterns: [
       {
@@ -35,6 +38,7 @@ const nextConfig = {
         tls: false,
       };
     }
+    
     return config;
   },
   // Ensure proper client/server component handling
