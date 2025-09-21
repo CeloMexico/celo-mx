@@ -38,13 +38,13 @@ export default async function CourseDetailPage({ params, searchParams }: CourseD
     }
 
     // Get module at index m
-    const module = course.modules[moduleIndex];
-    if (!module) {
+    const courseModule = course.modules[moduleIndex];
+    if (!courseModule) {
       notFound();
     }
 
     // Get submodule at index s within the module
-    const submodule = module.submodules[submoduleIndex];
+    const submodule = courseModule.submodules[submoduleIndex];
     if (!submodule) {
       notFound();
     }
