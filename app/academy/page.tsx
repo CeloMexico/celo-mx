@@ -60,12 +60,12 @@ export default async function AcademyIndex() {
                     level: course.level?.name || 'Principiante',
                     category: course.category?.name || 'General',
                     learners: course.learners || 0,
-                    rating: 4.8,
-                    ratingCount: 150,
+                    rating: course.rating || 4.8,
+                    ratingCount: course.ratingCount || 150,
                     durationHours: course.durationHours || 8,
                     lessonsCount: course.lessonsCount || 30,
                     isFree: course.isFree || true,
-                    priceUSD: course.priceUSD || 0,
+                    priceUSD: 0,
                     coverUrl: course.coverUrl,
                     promoVideoUrl: course.promoVideoUrl
                   }}
