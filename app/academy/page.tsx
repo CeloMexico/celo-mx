@@ -56,7 +56,7 @@ export default async function AcademyIndex() {
                   course={{
                     id: course.id,
                     title: course.title,
-                    subtitle: course.subtitle,
+                    subtitle: course.subtitle || undefined,
                     level: course.level?.name || 'Principiante',
                     category: course.category?.name || 'General',
                     learners: course.learners || 0,
