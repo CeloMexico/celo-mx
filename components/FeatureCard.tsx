@@ -22,16 +22,23 @@ export default function FeatureCard({ title, description, icon }: { title: strin
       {/* Contenido de la tarjeta */}
       <div className="relative z-10">
         <div className="mb-3 sm:mb-4">
-          <Image 
-            src={`/icons/${icon}.svg`} 
-            alt={title}
-            width={24}
-            height={24}
-            className="w-6 h-6"
+          <span
+            aria-hidden
+            className="block w-6 h-6 bg-current text-celo-yellow group-hover:text-black transition-colors"
+            style={{
+              WebkitMaskImage: `url(/icons/${icon}.svg)`,
+              maskImage: `url(/icons/${icon}.svg)`,
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center'
+            }}
           />
         </div>
-        <h3 className="text-lg sm:text-xl lg:text-2xl leading-tight text-gray-900 mb-2" style={{ fontFamily: 'GT Alpina VAR Trial, ui-serif, system-ui', fontWeight: 400 }}>{title}</h3>
-        <p className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed">{description}</p>
+        <h3 className="text-lg sm:text-xl lg:text-2xl leading-tight text-gray-900 dark:text-celo-yellow group-hover:text-black transition-colors mb-2" style={{ fontFamily: 'GT Alpina VAR Trial, ui-serif, system-ui', fontWeight: 400 }}>{title}</h3>
+        <p className="text-xs sm:text-sm lg:text-base text-gray-700 dark:text-celo-fg group-hover:text-black transition-colors leading-relaxed">{description}</p>
       </div>
     </div>
   );

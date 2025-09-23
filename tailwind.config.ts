@@ -18,22 +18,32 @@ const config: Config = {
   			'xl': '1280px',
   			'2xl': '1536px',
   		},
-  		colors: {
+		colors: {
   			celo: {
-  				yellow: '#F7FF58',
-  				yellowAlt: '#FFF96B',
-  				lime: '#D9FF3F',
-  				black: '#0A0A0A',
-  				white: '#FFFFFF',
-  				gray: {
-  					'100': '#F6F6F6',
-  					'200': '#ECECEC',
-  					'300': '#D9D9D9',
-  					'500': '#9A9A9A',
-  					'700': '#4A4A4A',
-  					'900': '#171717'
-  				}
-  			},
+					bg: 'var(--celo-bg)',
+					fg: 'var(--celo-fg)',
+					muted: 'var(--celo-muted)',
+					border: 'var(--celo-border)',
+					yellow: 'var(--celo-yellow)',
+					yweak: 'var(--celo-yellow-weak)',
+					accent: 'var(--celo-accent)'
+				},
+				// legacy direct tokens kept for compatibility
+				celoLegacy: {
+					yellow: '#F7FF58',
+					yellowAlt: '#FFF96B',
+					lime: '#D9FF3F',
+					black: '#0A0A0A',
+					white: '#FFFFFF',
+					gray: {
+						'100': '#F6F6F6',
+						'200': '#ECECEC',
+						'300': '#D9D9D9',
+						'500': '#9A9A9A',
+						'700': '#4A4A4A',
+						'900': '#171717'
+					}
+				},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -75,15 +85,18 @@ const config: Config = {
   				'5': 'hsl(var(--chart-5))'
   			}
   		},
-  		borderRadius: {
-  			xl: '1rem',
-  			'2xl': '1.25rem',
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		},
+		borderRadius: {
+			xl: '1rem',
+			'2xl': '1.25rem',
+			'xl2': '1.25rem',
+			'xl3': '1.75rem',
+			lg: 'var(--radius)',
+			md: 'calc(var(--radius) - 2px)',
+			sm: 'calc(var(--radius) - 4px)'
+		},
   		boxShadow: {
-  			soft: '0 10px 30px -12px rgba(0,0,0,0.15)'
+			soft: '0 10px 30px -12px rgba(0,0,0,0.15)',
+			focus: '0 0 0 2px var(--celo-yellow)'
   		},
   		fontFamily: {
   			display: 'var(--font-display)',

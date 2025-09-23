@@ -1,58 +1,63 @@
-import { notFound } from "next/navigation";
-import { getCourseBySlug } from "@/data/academy";
-import { CourseDetailClient } from "./CourseDetailClient";
+import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/db'
+import RenderMdx from '@/components/mdx/RenderMdx'
+import LessonLayout from '@/components/academy/LessonLayout'
+import { getCourseBySlug } from '@/data/academy'
 
-export const runtime = 'nodejs';
-export const dynamicParams = false;
-export function generateStaticParams() { 
-  const { COURSES } = require('@/data/academy'); 
-  return COURSES.map((c:any)=>({slug:c.slug})); 
+export const runtime = 'nodejs'
+export const dynamicParams = false
+
+export async function generateStaticParams() {
+  // Use static data for now
+  const { COURSES } = await import('@/data/academy')
+  return COURSES.map((course) => ({ slug: course.slug }))
 }
 
-interface CourseDetailPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
-  searchParams: Promise<{
-    m?: string;
-    s?: string;
-  }>;
-}
+export default async function CoursePage(props: any) {
+  const { params, searchParams } = props as { params:{ slug:string }, searchParams?:{ m?:string; s?:string } }
+  const awaitedParams = await params
+  const awaitedSearchParams = await searchParams
+  const m = Number.isInteger(Number(awaitedSearchParams?.m)) ? Math.max(1, parseInt(String(awaitedSearchParams!.m),10)) : 1
+  const s = Number.isInteger(Number(awaitedSearchParams?.s)) ? Math.max(1, parseInt(String(awaitedSearchParams!.s),10)) : 1
 
-export default async function CourseDetailPage({ params, searchParams }: CourseDetailPageProps) {
-  try {
-    // Resolve async params in server component
-    const { slug } = await params;
-    const { m, s } = await searchParams;
-
-    // Parse and validate m and s parameters, default to 0, clamp >= 0
-    const moduleIndex = Math.max(0, parseInt(m || '0', 10) || 0);
-    const submoduleIndex = Math.max(0, parseInt(s || '0', 10) || 0);
-
-    // Find course by slug
-    const course = getCourseBySlug(slug);
-    
-    // Show 404 if course not found
-    if (!course) {
-      notFound();
-    }
-
-    // Get module at index m
-    const courseModule = course.modules[moduleIndex];
-    if (!courseModule) {
-      notFound();
-    }
-
-    // Get submodule at index s within the module
-    const submodule = courseModule.submodules[submoduleIndex];
-    if (!submodule) {
-      notFound();
-    }
-
-    // Pass resolved data to client component
-    return <CourseDetailClient course={course} />;
-  } catch (error) {
-    console.error('Error in CourseDetailPage:', error);
-    notFound();
+  // Use static data for now
+  const course = getCourseBySlug(awaitedParams.slug)
+  if (!course) return notFound()
+  
+  // Convert static data to match the expected format
+  const courseWithRels = {
+    id: course.id,
+    slug: course.slug,
+    title: course.title,
+    subtitle: course.subtitle,
+    status: 'PUBLISHED',
+    visibility: 'PUBLIC',
+    modules: course.modules.map(module => ({
+      id: `module-${module.index}`,
+      index: module.index,
+      title: module.title,
+      summary: module.summary,
+      lessons: module.submodules.map(submodule => ({
+        id: `lesson-${module.index}-${submodule.index}`,
+        index: submodule.index,
+        title: submodule.title,
+        contentMdx: submodule.content || '',
+        status: 'PUBLISHED',
+        visibility: 'PUBLIC'
+      }))
+    }))
   }
+
+  const mod = courseWithRels.modules.find((mm: any) => mm.index === m)
+  const lesson = mod?.lessons.find((ll: any) => ll.index === s)
+  if (!mod || !lesson || lesson.status !== 'PUBLISHED') return notFound()
+
+  return (
+    <LessonLayout 
+      course={courseWithRels} 
+      current={{ moduleIndex: m, subIndex: s }}
+    >
+      <RenderMdx source={lesson.contentMdx ?? ''} />
+    </LessonLayout>
+  )
 }

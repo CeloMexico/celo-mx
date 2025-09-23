@@ -53,19 +53,19 @@ export function CourseCardSimple({ course, href }: CourseCardProps) {
         <CardContent className="flex-1 p-6">
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
-              <Badge className={`text-xs font-medium ${getLevelColor(course.level)}`}>
+              <Badge className={`text-xs font-medium ${getLevelColor(course.level)} text-black dark:text-yellow-300`}>
                 {course.level}
               </Badge>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs text-black dark:text-yellow-300">
                 {course.category}
               </Badge>
             </div>
 
             <div>
-              <h3 className="font-semibold text-lg leading-tight line-clamp-2 mb-1">
+              <h3 className="font-semibold text-lg leading-tight line-clamp-2 mb-1 theme-yellow-dark:text-black">
                 {course.title}
               </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2">
+              <p className="text-sm text-muted-foreground line-clamp-2 theme-yellow-dark:text-black/80">
                 {course.subtitle}
               </p>
             </div>
@@ -93,9 +93,9 @@ export function CourseCardSimple({ course, href }: CourseCardProps) {
             <div className="flex items-center justify-between">
               <div className="text-lg font-bold">
                 {course.isFree ? (
-                  <span className="text-green-600">Free</span>
+                  <span className="text-black dark:text-yellow-300">Free</span>
                 ) : (
-                  <span>${course.priceUSD}</span>
+                  <span className="text-black dark:text-foreground">${course.priceUSD}</span>
                 )}
               </div>
               <div className="text-sm text-muted-foreground">

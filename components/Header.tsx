@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import ThemeToggle from './ThemeToggle';
+import ThemeToggle from '@/components/theme/ThemeToggle';
 import PrivyLogin from './PrivyLogin';
 import CeloLogo from './CeloLogo';
 
@@ -17,7 +17,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-celo-yellow/95 dark:bg-celo-black/95 border-b border-celo-black/20 dark:border-celo-yellow/20">
+    <header className="sticky top-0 z-40 backdrop-blur-xl bg-celo-yellow/95 dark:bg-celo-black/95 border-b border-celo-border">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
           <CeloLogo width={80} height={18} className="text-celo-black dark:text-celo-yellow sm:w-[100px] sm:h-[22px]" />

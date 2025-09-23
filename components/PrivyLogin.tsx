@@ -64,11 +64,14 @@ export default function PrivyLogin() {
     return (
       <button 
         onClick={login} 
-        className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-celo-yellow to-celo-lime text-celo-black dark:text-celo-black rounded-xl text-xs sm:text-sm font-medium hover:from-celo-yellowAlt hover:to-celo-yellow transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20"
+        className="group relative overflow-hidden flex items-center gap-1.5 sm:gap-2 px-4 py-2 bg-transparent text-black dark:text-celo-yellow dark:group-hover:text-black rounded-full text-[10px] sm:text-xs font-bold border border-celo-border border-[0.7px] transition-colors"
       >
-        <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        <span className="hidden xs:inline">Conectar Wallet</span>
-        <span className="xs:hidden">Conectar</span>
+        <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
+          <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black dark:text-celo-yellow dark:group-hover:text-black" />
+          <span className="hidden xs:inline">Conectar Wallet</span>
+          <span className="xs:hidden">Conectar</span>
+        </span>
+        <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150" />
       </button>
     );
   }

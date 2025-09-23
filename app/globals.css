@@ -52,6 +52,15 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+    /* Celo brand tokens - base: neutral dark (no yellow accents) */
+    --celo-bg: #0a0a0a;              /* onyx */
+    --celo-fg: #ffffff;              /* white */
+    --celo-muted: #9ca3af;           /* gray-400/500 */
+    --celo-yellow: #fcff52;          /* Prosperity Yellow (requested) */
+    --celo-yellow-weak: rgba(252,255,82,0.18);
+    --celo-accent: #a3f7bf;          /* optional */
+    --celo-border: var(--celo-yellow); /* dark mode: yellow borders */
   }
   
   .dark {
@@ -81,12 +90,22 @@
     --chart-5: 340 75% 55%;
   }
 
+  /* Yellow theme (light background, brand foreground) */
+  .theme-yellow-dark {
+    --celo-bg: #fcff52;            /* Prosperity Yellow */
+    --celo-fg: #0a0a0a;            /* onyx text on yellow */
+    --celo-muted: #3f3f46;         /* zinc-600 for contrast */
+    --celo-border: #0a0a0a;        /* borders black on yellow */
+    --celo-yellow: #fcff52;        /* brand yellow on yellow theme where needed */
+    --celo-yellow-weak: rgba(10,10,10,0.08);
+    --celo-accent: #0a0a0a;
+  }
+
   * {
     @apply border-border;
   }
   
   body {
-    @apply bg-background text-foreground;
     font-family: var(--font-body);
   }
 
@@ -162,9 +181,17 @@
 
 /* focus ring */
 :focus-visible {
-  outline: 2px solid theme(colors.celo.lime);
+  outline: 2px solid var(--celo-yellow);
   outline-offset: 2px;
 }
+
+/* Typography utilities */
+.font-display { font-family: var(--font-gt, var(--font-title, ui-serif)); }
+.font-sans { font-family: var(--font-inter, var(--font-body, ui-sans-serif)); }
+.brand-em { font-style: italic; color: var(--celo-yellow); }
+
+/* Prose link override for brand */
+.prose a { color: var(--celo-yellow); }
 
 @media (prefers-reduced-motion: reduce) {
   * {

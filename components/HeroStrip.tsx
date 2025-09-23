@@ -80,8 +80,9 @@ export default function HeroStrip() {
             transition={{ duration: 0.6, delay: 1.4 }}
             className="flex flex-col sm:flex-row gap-4 sm:gap-6"
           >
-            <button className="bg-celo-yellow text-celo-black px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-medium text-sm sm:text-base hover:bg-celo-yellowAlt transition-colors duration-200 shadow-lg hover:shadow-xl">
-              Construye con Celo
+            <button className="group relative overflow-hidden rounded-full border-celo-fg dark:border-celo-yellow border-[0.3px] px-8 py-3 font-bold text-black dark:text-celo-yellow dark:group-hover:text-black text-xs sm:text-sm bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-celo-yellow focus-visible:ring-offset-0">
+              <span className="relative z-10">Construye con Celo</span>
+              <span className="pointer-events-none absolute inset-0 m-auto h-full w-full rounded-full bg-[#fcf6f1] scale-0 transition-transform duration-300 ease-out group-hover:scale-150 z-0" />
             </button>
             
             <button className="group flex items-center gap-2 celo-text font-medium text-sm sm:text-base hover:opacity-80 transition-all duration-200">
