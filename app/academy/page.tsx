@@ -66,8 +66,8 @@ export default async function AcademyIndex() {
                     lessonsCount: course.lessonsCount || 30,
                     isFree: course.isFree || true,
                     priceUSD: 0,
-                    coverUrl: course.coverUrl,
-                    promoVideoUrl: course.promoVideoUrl
+                    coverUrl: course.coverUrl || undefined,
+                    promoVideoUrl: course.promoVideoUrl || undefined
                   }}
                   href={`/academy/${course.slug}`}
                 />
