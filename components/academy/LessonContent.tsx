@@ -156,9 +156,9 @@ export default function LessonContent({
 // Helper function to flatten lessons for navigation
 function flattenLessons(course: CourseWithRels) {
   const out: { m: number; s: number }[] = [];
-  for (const module of course.modules) {
-    for (const lesson of module.lessons) {
-      out.push({ m: module.index, s: lesson.index });
+  for (const courseModule of course.modules) {
+    for (const lesson of courseModule.lessons) {
+      out.push({ m: courseModule.index, s: lesson.index });
     }
   }
   return out.sort((a, b) => a.m === b.m ? a.s - b.s : a.m - b.m);
