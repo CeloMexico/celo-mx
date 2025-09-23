@@ -9,11 +9,19 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export default async function AcademyIndex() {
-  const courses = await prisma.course.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: { createdAt: 'desc' },
-    include: { level:true, category:true, instructors:{ include:{ instructor:true }}, tags:{ include:{ tag:true }} }
-  })
+  let courses: any[] = []
+  
+  try {
+    courses = await prisma.course.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { createdAt: 'desc' },
+      include: { level:true, category:true, instructors:{ include:{ instructor:true }}, tags:{ include:{ tag:true }} }
+    })
+  } catch (error) {
+    console.error('Database connection error:', error)
+    // Fallback to empty array if database is not available
+    courses = []
+  }
 
   return (
     <div className="min-h-screen bg-celo-bg text-celo-fg">
