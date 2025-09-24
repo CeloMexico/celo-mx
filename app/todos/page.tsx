@@ -4,7 +4,7 @@ import supabase from '../../utils/supabase'
 import NewTodo from '../../components/NewTodo'
 
 export default function TodosPage() {
-  const [todos, setTodos] = useState([])
+  const [todos, setTodos] = useState<any[]>([])
 
   const fetchTodos = async () => {
     const { data } = await supabase.from('todos').select('*')

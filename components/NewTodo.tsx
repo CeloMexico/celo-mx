@@ -1,10 +1,14 @@
 import { useState } from 'react'
 import supabase from '../utils/supabase'
 
-const NewTodo = ({ reload }) => {
+interface NewTodoProps {
+  reload: () => void
+}
+
+const NewTodo = ({ reload }: NewTodoProps) => {
   const [title, setTitle] = useState('')
 
-  const addTodo = async (e) => {
+  const addTodo = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await supabase.from('todos').insert({ title })
     reload()
