@@ -17,10 +17,18 @@ export default async function AcademyIndex() {
       orderBy: { createdAt: 'desc' },
       include: { level:true, category:true, instructors:{ include:{ instructor:true }}, tags:{ include:{ tag:true }} }
     })
-  } catch (error) {
-    console.error('Database connection error:', error)
-    // Fallback to empty array if database is not available
-    courses = []
+  } catch (err) {
+    console.error('[academy] list error', err);
+    return (
+      <div className="mx-auto max-w-3xl py-16">
+        <h1 className="text-2xl font-semibold">No pudimos cargar los cursos en este momento</h1>
+        <p className="mt-2 text-sm opacity-80">Revisa estos diagnósticos (solo admins):</p>
+        <ul className="list-disc pl-6 mt-2">
+          <li><a className="underline" href="/api/health/env" target="_blank">/api/health/env</a></li>
+          <li><a className="underline" href="/api/health/db" target="_blank">/api/health/db</a></li>
+        </ul>
+      </div>
+    );
   }
 
   return (

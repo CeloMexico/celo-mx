@@ -23,6 +23,6 @@ prisma/*.db-journal
 .idea/
 
 # Usa SOLO npm:
-package-lock.json
+#package-lock.json
 #pnpm-lock.yaml
 #yarn.lock
