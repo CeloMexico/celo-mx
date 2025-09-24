@@ -3,6 +3,7 @@ import { CourseCard } from '@/components/academy/CourseCard'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import { COURSES } from '@/data/academy'
 // import { motion } from 'framer-motion'
 
 export const runtime = 'nodejs'
@@ -18,17 +19,24 @@ export default async function AcademyIndex() {
       include: { level:true, category:true, instructors:{ include:{ instructor:true }}, tags:{ include:{ tag:true }} }
     })
   } catch (err) {
-    console.error('[academy] list error', err);
-    return (
-      <div className="mx-auto max-w-3xl py-16">
-        <h1 className="text-2xl font-semibold">No pudimos cargar los cursos en este momento</h1>
-        <p className="mt-2 text-sm opacity-80">Revisa estos diagnósticos (solo admins):</p>
-        <ul className="list-disc pl-6 mt-2">
-          <li><a className="underline" href="/api/health/env" target="_blank">/api/health/env</a></li>
-          <li><a className="underline" href="/api/health/db" target="_blank">/api/health/db</a></li>
-        </ul>
-      </div>
-    );
+    console.error('[academy] Database error, using static data as fallback:', err);
+    // Use static data as fallback when database fails
+    courses = COURSES.map(course => ({
+      id: course.id,
+      slug: course.slug,
+      title: course.title,
+      subtitle: course.subtitle,
+      level: { name: course.level },
+      category: { name: course.category },
+      learners: course.learners,
+      rating: course.rating,
+      ratingCount: course.ratingCount,
+      durationHours: course.durationHours,
+      lessonsCount: course.lessonsCount,
+      isFree: course.isFree,
+      coverUrl: course.coverUrl,
+      promoVideoUrl: course.promoVideoUrl
+    }));
   }
 
   return (
