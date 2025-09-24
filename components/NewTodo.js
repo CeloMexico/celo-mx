@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import supabase from '../utils/supabase'
 
-export default ({ reload }) => {
+const NewTodo = ({ reload }) => {
   const [title, setTitle] = useState('')
 
   const addTodo = async (e) => {
@@ -17,3 +17,7 @@ export default ({ reload }) => {
     </form>
   )
 }
+
+NewTodo.displayName = 'NewTodo'
+
+export default NewTodo
