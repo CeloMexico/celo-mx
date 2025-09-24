@@ -2,14 +2,13 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import RenderMdx from '@/components/mdx/RenderMdx'
 import LessonLayout from '@/components/academy/LessonLayout'
-import { getCourseBySlug } from '@/data/academy'
+import { getCourseBySlug, COURSES } from '@/data/academy'
 
 export const runtime = 'nodejs'
 export const dynamicParams = false
 
 export async function generateStaticParams() {
   // Use static data for now
-  const { COURSES } = await import('@/data/academy')
   return COURSES.map((course) => ({ slug: course.slug }))
 }
 
