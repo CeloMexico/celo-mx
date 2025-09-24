@@ -75,27 +75,27 @@ export default function Header() {
           className="lg:hidden flex flex-col items-center justify-center w-8 h-8 space-y-1"
           aria-label="Toggle menu"
         >
-          <span className={`block w-6 h-0.5 bg-celo-black dark:bg-celo-yellow transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-celo-black dark:bg-celo-yellow transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-celo-black dark:bg-celo-yellow transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
+          <span className={`block w-6 h-0.5 bg-celoLegacy-black dark:bg-celo-yellow theme-yellow-dark:bg-celoLegacy-black transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
+          <span className={`block w-6 h-0.5 bg-celoLegacy-black dark:bg-celo-yellow theme-yellow-dark:bg-celoLegacy-black transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`}></span>
+          <span className={`block w-6 h-0.5 bg-celoLegacy-black dark:bg-celo-yellow theme-yellow-dark:bg-celoLegacy-black transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
         </button>
       </div>
 
       {/* Mobile Menu */}
       <div className={`lg:hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 border-t border-celo-black/20 dark:border-celo-yellow/20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 border-t border-celoLegacy-black/20 dark:border-celo-yellow/20 theme-yellow-dark:border-celoLegacy-black/20">
           <nav className="flex flex-col space-y-4">
             <Link 
               href="/academy" 
               onClick={closeMenu}
-              className="text-celo-black dark:text-celo-yellow font-medium py-2 transition-colors duration-200 hover:opacity-70"
+              className="text-celoLegacy-black dark:text-celo-yellow theme-yellow-dark:text-celoLegacy-black font-medium py-2 transition-colors duration-200 hover:opacity-70"
             >
               Academia
             </Link>
             <Link 
               href="/marketplace" 
               onClick={closeMenu}
-              className="text-celo-black dark:text-celo-yellow font-medium py-2 transition-colors duration-200 hover:opacity-70"
+              className="text-celoLegacy-black dark:text-celo-yellow theme-yellow-dark:text-celoLegacy-black font-medium py-2 transition-colors duration-200 hover:opacity-70"
             >
               Marketplace
             </Link>
@@ -103,7 +103,7 @@ export default function Header() {
               href="https://forum.celo.org" 
               target="_blank" 
               rel="noreferrer"
-              className="text-celo-black dark:text-celo-yellow font-medium py-2 transition-colors duration-200 hover:opacity-70"
+              className="text-celoLegacy-black dark:text-celo-yellow theme-yellow-dark:text-celoLegacy-black font-medium py-2 transition-colors duration-200 hover:opacity-70"
             >
               Comunidad
             </a>
@@ -111,12 +111,12 @@ export default function Header() {
               href="https://docs.celo.org" 
               target="_blank" 
               rel="noreferrer"
-              className="text-celo-black dark:text-celo-yellow font-medium py-2 transition-colors duration-200 hover:opacity-70"
+              className="text-celoLegacy-black dark:text-celo-yellow theme-yellow-dark:text-celoLegacy-black font-medium py-2 transition-colors duration-200 hover:opacity-70"
             >
               Documentación
             </a>
           </nav>
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-celo-black/20 dark:border-celo-yellow/20">
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-celoLegacy-black/20 dark:border-celo-yellow/20 theme-yellow-dark:border-celoLegacy-black/20">
             <ThemeToggle />
             <PrivyLogin />
           </div>
