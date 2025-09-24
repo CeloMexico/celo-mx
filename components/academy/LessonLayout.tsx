@@ -7,14 +7,14 @@ export type CourseWithRels = {
   id: string;
   slug: string;
   title: string;
-  subtitle?: string;
+  subtitle?: string | null;
   status?: string;
   visibility?: string;
   modules: Array<{
     id: string;
     index: number;
     title: string;
-    summary?: string;
+    summary?: string | null;
     lessons: Array<{
       id: string;
       index: number;

@@ -19,30 +19,40 @@ export default async function CoursePage(props: any) {
   const m = Number.isInteger(Number(awaitedSearchParams?.m)) ? Math.max(1, parseInt(String(awaitedSearchParams!.m),10)) : 1
   const s = Number.isInteger(Number(awaitedSearchParams?.s)) ? Math.max(1, parseInt(String(awaitedSearchParams!.s),10)) : 1
 
-  // Use static data for now
-  const course = getCourseBySlug(awaitedParams.slug)
+  // Get course from database
+  const course = await prisma.course.findUnique({
+    where: { slug: awaitedParams.slug },
+    include: {
+      modules: {
+        include: {
+          lessons: true
+        },
+        orderBy: { index: 'asc' }
+      }
+    }
+  })
+  
   if (!course) return notFound()
   
-  // Convert static data to match the expected format
   const courseWithRels = {
     id: course.id,
     slug: course.slug,
     title: course.title,
     subtitle: course.subtitle,
-    status: 'PUBLISHED',
-    visibility: 'PUBLIC',
+    status: course.status,
+    visibility: course.visibility,
     modules: course.modules.map(module => ({
-      id: `module-${module.index}`,
+      id: module.id,
       index: module.index,
       title: module.title,
       summary: module.summary,
-      lessons: module.submodules.map(submodule => ({
-        id: `lesson-${module.index}-${submodule.index}`,
-        index: submodule.index,
-        title: submodule.title,
-        contentMdx: submodule.content || '',
-        status: 'PUBLISHED',
-        visibility: 'PUBLIC'
+      lessons: module.lessons.map(lesson => ({
+        id: lesson.id,
+        index: lesson.index,
+        title: lesson.title,
+        contentMdx: lesson.contentMdx || '',
+        status: lesson.status,
+        visibility: lesson.visibility
       }))
     }))
   }

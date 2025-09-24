@@ -8,7 +8,7 @@ type LessonContentProps = {
     id: string;
     index: number;
     title: string;
-    summary?: string;
+    summary?: string | null;
     lessons: Array<{
       id: string;
       index: number;
