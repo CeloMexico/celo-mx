@@ -89,13 +89,13 @@ export async function GET(request: NextRequest) {
     // ==========================================================================
     // DETERMINE OVERALL STATUS
     // ==========================================================================
-    const hasErrors = Object.values(checks.checks).some(check => check.status === 'error');
+    const hasErrors = Object.values(checks.checks).some((check: any) => check.status === 'error');
     if (hasErrors) {
       checks.status = 'error';
       return NextResponse.json(checks, { status: 503 });
     }
 
-    const hasDegraded = Object.values(checks.checks).some(check => check.status === 'degraded');
+    const hasDegraded = Object.values(checks.checks).some((check: any) => check.status === 'degraded');
     if (hasDegraded) {
       checks.status = 'degraded';
       return NextResponse.json(checks, { status: 200 });
