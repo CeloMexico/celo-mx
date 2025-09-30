@@ -155,6 +155,6 @@ export async function getAuthenticatedUser(request: Request) {
     isAuthenticated: validation.isValid,
     isAdmin: validation.isAdmin,
     user: validation.user,
-    error: validation.error,
+    error: validation.error || undefined,
   };
 }
