@@ -108,10 +108,12 @@ export async function PUT(
           
           const newModule = await tx.module.create({
             data: {
+              id: `mod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
               courseId: id,
               index: i + 1,
               title: moduleData.title || `Module ${i + 1}`,
               summary: moduleData.summary || '',
+              updatedAt: new Date(),
             }
           });
 
@@ -122,6 +124,7 @@ export async function PUT(
               
               await tx.lesson.create({
                 data: {
+                  id: `lesson_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}_${j}`,
                   moduleId: newModule.id,
                   index: j + 1,
                   title: lessonData.title || `Lesson ${j + 1}`,
@@ -129,6 +132,7 @@ export async function PUT(
                   contentMdx: lessonData.contentMdx || '',
                   status: 'PUBLISHED',
                   visibility: 'PUBLIC',
+                  updatedAt: new Date(),
                 }
               });
             }
