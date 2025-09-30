@@ -31,10 +31,12 @@ export async function POST(request: NextRequest) {
 
     const instructor = await prisma.instructor.create({
       data: {
+        id: `inst_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name,
         title: title || null,
         bio: bio || null,
         avatarUrl: avatarUrl || null,
+        updatedAt: new Date(),
       },
     });
 

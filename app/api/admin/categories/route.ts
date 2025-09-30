@@ -31,8 +31,10 @@ export async function POST(request: NextRequest) {
 
     const category = await prisma.category.create({
       data: {
+        id: `cat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name,
         slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        updatedAt: new Date(),
       },
     });
 

@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       // Create the course
       const newCourse = await tx.course.create({
         data: {
+          id: `course_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           title,
           subtitle,
           slug,
@@ -76,10 +77,11 @@ export async function POST(request: NextRequest) {
           coverUrl: coverUrl || null,
           promoVideoUrl: promoVideoUrl || null,
           durationHours,
-          lessonsCount: modules.reduce((total: number, module: any) => total + module.lessons.length, 0),
+          lessonsCount: modules?.reduce((total: number, module: any) => total + (module.lessons?.length || 0), 0) || 0,
           isFree,
           status,
           visibility,
+          updatedAt: new Date(),
         },
       });
 
@@ -100,10 +102,12 @@ export async function POST(request: NextRequest) {
         
         const newModule = await tx.module.create({
           data: {
+            id: `mod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
             courseId: newCourse.id,
             index: i + 1,
             title: moduleData.title || `Module ${i + 1}`,
             summary: moduleData.summary || '',
+            updatedAt: new Date(),
           },
         });
 
@@ -113,6 +117,7 @@ export async function POST(request: NextRequest) {
           
           await tx.lesson.create({
             data: {
+              id: `lesson_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}_${j}`,
               moduleId: newModule.id,
               index: j + 1,
               title: lessonData.title || `Lesson ${j + 1}`,
@@ -120,6 +125,7 @@ export async function POST(request: NextRequest) {
               contentMdx: lessonData.contentMdx || '',
               status: 'PUBLISHED',
               visibility: 'PUBLIC',
+              updatedAt: new Date(),
             },
           });
         }
