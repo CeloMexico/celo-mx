@@ -96,7 +96,15 @@ export function useAuth(): UseAuthReturn {
 
   // Update admin status when user changes
   useEffect(() => {
-    setIsAdmin(checkAdminRole());
+    const isAdminResult = checkAdminRole();
+    console.log('[DEBUG] useAuth admin check', {
+      user: !!user,
+      wallet: !!wallet,
+      walletAddress: (wallet as any)?.address,
+      isAdminResult,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'server'
+    });
+    setIsAdmin(isAdminResult);
   }, [user, wallet]);
 
   // Enhanced logout that cleans up tokens and admin state
@@ -159,12 +167,23 @@ export function useRequireAdmin() {
   const auth = useAuth();
   
   useEffect(() => {
+    console.log('[DEBUG] useRequireAdmin called', {
+      isAuthenticated: auth.isAuthenticated,
+      isAdmin: auth.isAdmin,
+      nodeEnv: process.env.NODE_ENV,
+      currentPath: window.location.pathname
+    });
+    
     // Only enforce admin requirements in production or when explicitly authenticated
     const isDevelopment = process.env.NODE_ENV === 'development';
     
     if (!isDevelopment && auth.isAuthenticated && !auth.isAdmin) {
       // Redirect non-admin users (only in production)
-      console.warn('Non-admin user attempted to access admin area');
+      console.warn('[REDIRECT] Non-admin user attempted to access admin area, redirecting to /', {
+        currentPath: window.location.pathname,
+        isAuthenticated: auth.isAuthenticated,
+        isAdmin: auth.isAdmin
+      });
       window.location.href = '/';
     }
   }, [auth.isAuthenticated, auth.isAdmin]);
