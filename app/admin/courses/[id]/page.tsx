@@ -535,7 +535,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
 
         {(!course.Module || course.Module.length === 0) && (
           <div className="text-center py-8 text-gray-500">
-            <p>No modules added yet. Click "Add Module" to get started.</p>
+            <p>No modules added yet. Click &quot;Add Module&quot; to get started.</p>
           </div>
         )}
       </div>
