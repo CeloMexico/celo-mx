@@ -37,19 +37,30 @@ interface Lesson {
   contentMdx?: string;
 }
 
-export default function EditCoursePage({ params }: { params: { id: string } }) {
+export default function EditCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
+  const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      setCourseId(resolvedParams.id);
+    };
+    resolveParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    
     const fetchData = async () => {
       try {
         // Fetch course data
-        const courseResponse = await fetch(`/api/admin/courses/${params.id}`);
+        const courseResponse = await fetch(`/api/admin/courses/${courseId}`);
         if (courseResponse.ok) {
           const courseData = await courseResponse.json();
           setCourse(courseData);
@@ -83,14 +94,14 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
     };
 
     fetchData();
-  }, [params.id, router]);
+  }, [courseId, router]);
 
   const handleSave = async () => {
-    if (!course) return;
+    if (!course || !courseId) return;
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/admin/courses/${params.id}`, {
+      const response = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -113,14 +124,14 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
   };
 
   const handleDelete = async () => {
-    if (!course) return;
+    if (!course || !courseId) return;
     
     if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/courses/${params.id}`, {
+      const response = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'DELETE',
       });
 
