@@ -8,7 +8,7 @@ export default function TodosPage() {
 
   const fetchTodos = async () => {
     const { data } = await supabase.from('todos').select('*')
-    setTodos(data)
+    setTodos(data || [])
   }
 
   useEffect(() => {
