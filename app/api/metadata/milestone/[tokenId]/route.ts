@@ -128,10 +128,10 @@ const COURSE_METADATA: Record<string, {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tokenId: string } }
+  { params }: { params: Promise<{ tokenId: string }> }
 ) {
   try {
-    const tokenId = params.tokenId;
+    const { tokenId } = await params;
 
     // Validate token ID
     if (!tokenId || !/^\d+$/.test(tokenId)) {
@@ -171,7 +171,7 @@ export async function GET(
 // Also handle POST requests for dynamic metadata updates (optional)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tokenId: string } }
+  { params }: { params: Promise<{ tokenId: string }> }
 ) {
   // This could be used for updating metadata dynamically
   // For now, return method not allowed
