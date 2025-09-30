@@ -4,11 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 // GET single course by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         Category: true,
         Level: true,
@@ -54,9 +55,10 @@ export async function GET(
 // PUT - Update course
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
@@ -77,7 +79,7 @@ export async function PUT(
     const updatedCourse = await prisma.$transaction(async (tx) => {
       // Update the main course data
       const course = await tx.course.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           title,
           subtitle,
@@ -97,7 +99,7 @@ export async function PUT(
       if (modules && Array.isArray(modules)) {
         // Delete existing modules and lessons (cascade)
         await tx.module.deleteMany({
-          where: { courseId: params.id }
+          where: { courseId: id }
         });
 
         // Create new modules and lessons
@@ -106,7 +108,7 @@ export async function PUT(
           
           const newModule = await tx.module.create({
             data: {
-              courseId: params.id,
+              courseId: id,
               index: i + 1,
               title: moduleData.title || `Module ${i + 1}`,
               summary: moduleData.summary || '',
@@ -139,7 +141,7 @@ export async function PUT(
         }, 0);
 
         await tx.course.update({
-          where: { id: params.id },
+          where: { id },
           data: {
             lessonsCount: totalLessons
           }
@@ -151,7 +153,7 @@ export async function PUT(
 
     // Fetch the updated course with relations
     const courseWithRelations = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         Category: true,
         Level: true,
@@ -179,12 +181,13 @@ export async function PUT(
 // DELETE - Delete course
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Delete course (this will cascade to modules, lessons, etc.)
     await prisma.course.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ message: 'Course deleted successfully' });
