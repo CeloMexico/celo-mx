@@ -51,7 +51,15 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "deploy/**/*",
+    "scripts/**/*",
+    "hardhat.config.*",
+    "*.config.js",
+    "*.config.mjs",
+    "*.config.cjs",
+    "test/**/*",
+    "tests/**/*"
   ]
 }
 
