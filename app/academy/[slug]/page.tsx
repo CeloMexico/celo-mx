@@ -8,6 +8,12 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function generateStaticParams() {
+  // For production deployment, use static fallback to avoid database dependency
+  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    console.log('Using static course data for production build')
+    return COURSES.map((course) => ({ slug: course.slug }))
+  }
+  
   try {
     const courses = await prisma.course.findMany({
       where: { status: 'PUBLISHED' },
