@@ -67,7 +67,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     
     if (!user) {
       user = await prisma.user.create({ 
-        data: { walletAddress },
+        data: { 
+          id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          walletAddress,
+          updatedAt: new Date(),
+        },
         select: { id: true, walletAddress: true }
       });
       logProgressEvent('USER_CREATED', { userId: user.id, walletAddress });
@@ -87,6 +91,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         // Create new progress entry
         const newProgress = await tx.userLessonProgress.create({
           data: {
+            id: `progress_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             userId: user.id,
             lessonId,
             status: status || 'IN_PROGRESS',
