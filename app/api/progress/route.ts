@@ -284,7 +284,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (validatedParams.courseId) {
       const courseLessons = await prisma.lesson.findMany({
         where: {
-          module: {
+          Module: {
             courseId: validatedParams.courseId
           }
         },
@@ -298,17 +298,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const progress = await prisma.userLessonProgress.findMany({
       where,
       include: {
-        lesson: {
+        Lesson: {
           select: {
             id: true,
             title: true,
             index: true,
-            module: {
+            Module: {
               select: {
                 id: true,
                 title: true,
                 index: true,
-                course: {
+                Course: {
                   select: {
                     id: true,
                     title: true,
@@ -321,8 +321,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         }
       },
       orderBy: [
-        { lesson: { module: { index: 'asc' } } },
-        { lesson: { index: 'asc' } }
+        { Lesson: { Module: { index: 'asc' } } },
+        { Lesson: { index: 'asc' } }
       ],
     });
 
