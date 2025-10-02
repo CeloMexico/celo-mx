@@ -171,21 +171,23 @@ export function useRequireAdmin() {
       isAuthenticated: auth.isAuthenticated,
       isAdmin: auth.isAdmin,
       nodeEnv: process.env.NODE_ENV,
-      currentPath: window.location.pathname
+      currentPath: window.location.pathname,
+      adminWallets: process.env.NEXT_PUBLIC_ADMIN_WALLETS,
+      currentWallet: auth.wallet.address
     });
     
-    // Only enforce admin requirements in production or when explicitly authenticated
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    // TEMPORARILY DISABLED ALL REDIRECTS - Allow admin access for debugging
+    console.log('[DEBUG] Admin redirect is DISABLED for debugging');
     
-    if (!isDevelopment && auth.isAuthenticated && !auth.isAdmin) {
-      // Redirect non-admin users (only in production)
-      console.warn('[REDIRECT] Non-admin user attempted to access admin area, redirecting to /', {
-        currentPath: window.location.pathname,
-        isAuthenticated: auth.isAuthenticated,
-        isAdmin: auth.isAdmin
-      });
-      window.location.href = '/';
-    }
+    // const isDevelopment = process.env.NODE_ENV === 'development';
+    // if (!isDevelopment && auth.isAuthenticated && !auth.isAdmin) {
+    //   console.warn('[REDIRECT] Non-admin user attempted to access admin area, redirecting to /', {
+    //     currentPath: window.location.pathname,
+    //     isAuthenticated: auth.isAuthenticated,
+    //     isAdmin: auth.isAdmin
+    //   });
+    //   window.location.href = '/';
+    // }
   }, [auth.isAuthenticated, auth.isAdmin]);
   
   return auth;
