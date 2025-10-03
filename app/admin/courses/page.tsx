@@ -2,6 +2,10 @@ import { prisma } from '@/lib/db';
 import Link from 'next/link';
 import { Plus, Edit, ExternalLink, Trash2 } from 'lucide-react';
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CoursesPage() {
   let courses: any[] = [];
   
