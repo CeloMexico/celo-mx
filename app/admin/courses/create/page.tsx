@@ -69,12 +69,15 @@ export default function CreateCoursePage() {
   // Generate slug from title
   useEffect(() => {
     if (formData.title) {
-      const slug = formData.title
+      const baseSlug = formData.title
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '') // Remove accents
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
+      
+      // Add timestamp suffix to make it unique
+      const slug = `${baseSlug}-${Date.now().toString(36)}`;
       setFormData(prev => ({ ...prev, slug }));
     }
   }, [formData.title]);

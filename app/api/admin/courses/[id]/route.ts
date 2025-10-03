@@ -75,6 +75,28 @@ export async function PUT(
       Module: modules
     } = body;
 
+    // Validate required fields
+    if (!title || !subtitle) {
+      return NextResponse.json(
+        { error: 'Title and subtitle are required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if slug already exists (excluding current course)
+    if (slug) {
+      const existingCourse = await prisma.course.findUnique({
+        where: { slug },
+      });
+
+      if (existingCourse && existingCourse.id !== id) {
+        return NextResponse.json(
+          { error: 'A course with this slug already exists' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Update course with modules and lessons in a transaction
     const updatedCourse = await prisma.$transaction(async (tx) => {
       // Update the main course data
@@ -97,7 +119,20 @@ export async function PUT(
 
       // If modules are provided, update them
       if (modules && Array.isArray(modules)) {
-        // Delete existing modules and lessons (cascade)
+        // First delete lessons, then modules to avoid foreign key constraint issues
+        const existingModules = await tx.module.findMany({
+          where: { courseId: id },
+          select: { id: true }
+        });
+        
+        // Delete lessons first
+        for (const module of existingModules) {
+          await tx.lesson.deleteMany({
+            where: { moduleId: module.id }
+          });
+        }
+        
+        // Then delete modules
         await tx.module.deleteMany({
           where: { courseId: id }
         });
