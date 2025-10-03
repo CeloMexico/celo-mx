@@ -126,9 +126,9 @@ export async function PUT(
         });
         
         // Delete lessons first
-        for (const module of existingModules) {
+        for (const existingModule of existingModules) {
           await tx.lesson.deleteMany({
-            where: { moduleId: module.id }
+            where: { moduleId: existingModule.id }
           });
         }
         
