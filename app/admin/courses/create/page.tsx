@@ -256,7 +256,7 @@ export default function CreateCoursePage() {
                 required
                 value={formData.title}
                 onChange={(e) => updateField('title', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                 placeholder="e.g., Introduction to Celo"
               />
             </div>
@@ -269,7 +269,7 @@ export default function CreateCoursePage() {
                 type="text"
                 value={formData.slug}
                 onChange={(e) => updateField('slug', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                 placeholder="Auto-generated from title"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -286,7 +286,7 @@ export default function CreateCoursePage() {
                 rows={3}
                 value={formData.subtitle}
                 onChange={(e) => updateField('subtitle', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                 placeholder="Brief description of what students will learn"
               />
             </div>
@@ -298,7 +298,7 @@ export default function CreateCoursePage() {
               <select
                 value={formData.categoryId}
                 onChange={(e) => updateField('categoryId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               >
                 <option value="">Select a category</option>
                 {categories.map((category) => (
@@ -316,7 +316,7 @@ export default function CreateCoursePage() {
               <select
                 value={formData.levelId}
                 onChange={(e) => updateField('levelId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               >
                 <option value="">Select a level</option>
                 {levels.map((level) => (
@@ -334,7 +334,7 @@ export default function CreateCoursePage() {
               <select
                 value={formData.instructorId}
                 onChange={(e) => updateField('instructorId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               >
                 <option value="">Select an instructor</option>
                 {instructors.map((instructor) => (
@@ -354,7 +354,7 @@ export default function CreateCoursePage() {
                 min="1"
                 value={formData.durationHours}
                 onChange={(e) => updateField('durationHours', parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               />
             </div>
 
@@ -366,7 +366,7 @@ export default function CreateCoursePage() {
                 type="url"
                 value={formData.coverUrl}
                 onChange={(e) => updateField('coverUrl', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                 placeholder="https://example.com/image.jpg"
               />
             </div>
@@ -379,7 +379,7 @@ export default function CreateCoursePage() {
                 type="url"
                 value={formData.promoVideoUrl}
                 onChange={(e) => updateField('promoVideoUrl', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                 placeholder="https://youtube.com/watch?v=..."
               />
             </div>
@@ -403,7 +403,7 @@ export default function CreateCoursePage() {
               <select
                 value={formData.status}
                 onChange={(e) => updateField('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               >
                 <option value="DRAFT">Draft</option>
                 <option value="PUBLISHED">Published</option>
@@ -418,7 +418,7 @@ export default function CreateCoursePage() {
               <select
                 value={formData.visibility}
                 onChange={(e) => updateField('visibility', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               >
                 <option value="PUBLIC">Public</option>
                 <option value="LOGGED_IN">Logged In Users</option>
@@ -467,7 +467,7 @@ export default function CreateCoursePage() {
                       type="text"
                       value={module.title}
                       onChange={(e) => updateModuleField(moduleIndex, 'title', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                       placeholder="e.g., Getting Started"
                     />
                   </div>
@@ -480,7 +480,7 @@ export default function CreateCoursePage() {
                       type="text"
                       value={module.summary}
                       onChange={(e) => updateModuleField(moduleIndex, 'summary', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                       placeholder="Brief description of the module"
                     />
                   </div>
@@ -525,7 +525,7 @@ export default function CreateCoursePage() {
                             onChange={(e) =>
                               updateLessonField(moduleIndex, lessonIndex, 'title', e.target.value)
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                             placeholder="Lesson title"
                           />
                         </div>
@@ -537,7 +537,7 @@ export default function CreateCoursePage() {
                             onChange={(e) =>
                               updateLessonField(moduleIndex, lessonIndex, 'summary', e.target.value)
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
                             placeholder="Lesson summary"
                           />
                         </div>

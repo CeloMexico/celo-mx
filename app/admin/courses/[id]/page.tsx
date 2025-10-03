@@ -331,7 +331,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
               required
               value={course.title}
               onChange={(e) => updateField('title', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
             />
           </div>
 
@@ -343,7 +343,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
               type="text"
               value={course.slug}
               onChange={(e) => updateField('slug', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
             />
             <p className="text-xs text-gray-500 mt-1">
               URL: /academy/{course.slug}
@@ -358,7 +358,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
               rows={3}
               value={course.subtitle || ''}
               onChange={(e) => updateField('subtitle', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
               placeholder="Brief description of what students will learn"
             />
           </div>
@@ -370,7 +370,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
             <select
               value={course.categoryId || ''}
               onChange={(e) => updateField('categoryId', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
@@ -388,7 +388,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
             <select
               value={course.levelId || ''}
               onChange={(e) => updateField('levelId', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
             >
               <option value="">Select a level</option>
               {levels.map((level) => (
@@ -409,7 +409,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
               step="0.5"
               value={course.durationHours || ''}
               onChange={(e) => updateField('durationHours', parseInt(e.target.value) || null)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
             />
           </div>
 
@@ -420,7 +420,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
             <select
               value={course.status}
               onChange={(e) => updateField('status', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
             >
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
