@@ -215,7 +215,12 @@ export default function CreateCoursePage() {
 
       if (response.ok) {
         const course = await response.json();
-        router.push(`/admin/courses/${course.id}` as any);
+        alert(`Course '${course.title}' created successfully! Redirecting to overview...`);
+        // Force refresh and go back to overview after create
+        router.refresh();
+        setTimeout(() => {
+          router.push('/admin/courses');
+        }, 500);
       } else {
         const error = await response.json();
         console.error('Course creation failed:', error);

@@ -110,9 +110,12 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
       });
 
       if (response.ok) {
-        alert('Course updated successfully!');
-        // Redirect to courses list to see fresh data
-        router.push('/admin/courses');
+        alert('Course updated successfully! Redirecting to overview...');
+        // Force refresh and redirect to courses overview
+        router.refresh();
+        setTimeout(() => {
+          router.push('/admin/courses');
+        }, 500);
       } else {
         const error = await response.json();
         console.error('Course update failed:', error);
