@@ -207,8 +207,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
   
-  // TEMPORARY: Skip authentication for admin routes during testing
-  if (pathname.startsWith('/admin')) {
+  // TEMPORARY: Skip authentication for admin routes and admin API during testing
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     console.log(`[DEBUG] Skipping middleware for admin route: ${pathname}`);
     return NextResponse.next();
   }

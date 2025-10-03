@@ -175,8 +175,16 @@ export async function PUT(
     return NextResponse.json(courseWithRelations);
   } catch (error) {
     console.error('Error updating course:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return NextResponse.json(
-      { error: 'Failed to update course' },
+      { 
+        error: 'Failed to update course', 
+        details: errorMessage,
+        timestamp: new Date().toISOString() 
+      },
       { status: 500 }
     );
   }
@@ -197,8 +205,16 @@ export async function DELETE(
     return NextResponse.json({ message: 'Course deleted successfully' });
   } catch (error) {
     console.error('Error deleting course:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return NextResponse.json(
-      { error: 'Failed to delete course' },
+      { 
+        error: 'Failed to delete course', 
+        details: errorMessage,
+        timestamp: new Date().toISOString() 
+      },
       { status: 500 }
     );
   }

@@ -215,7 +215,8 @@ export default function CreateCoursePage() {
         router.push(`/admin/courses/${course.id}` as any);
       } else {
         const error = await response.json();
-        alert('Error creating course: ' + error.message);
+        console.error('Course creation failed:', error);
+        alert(`Error creating course: ${error.message || 'Unknown error'}\n${error.details ? 'Details: ' + error.details : ''}`);
       }
     } catch (error) {
       console.error('Error creating course:', error);

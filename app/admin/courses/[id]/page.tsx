@@ -113,7 +113,8 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
         alert('Course updated successfully!');
       } else {
         const error = await response.json();
-        alert('Error updating course: ' + error.message);
+        console.error('Course update failed:', error);
+        alert(`Error updating course: ${error.message || 'Unknown error'}\n${error.details ? 'Details: ' + error.details : ''}`);
       }
     } catch (error) {
       console.error('Error updating course:', error);
@@ -140,7 +141,8 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
         router.push('/admin/courses');
       } else {
         const error = await response.json();
-        alert('Error deleting course: ' + error.message);
+        console.error('Course deletion failed:', error);
+        alert(`Error deleting course: ${error.message || 'Unknown error'}\n${error.details ? 'Details: ' + error.details : ''}`);
       }
     } catch (error) {
       console.error('Error deleting course:', error);
