@@ -51,6 +51,14 @@ export async function POST(request: NextRequest) {
       modules,
     } = body;
 
+    // Validate required fields
+    if (!title || !subtitle) {
+      return NextResponse.json(
+        { error: 'Title and subtitle are required', details: { title: !!title, subtitle: !!subtitle } },
+        { status: 400 }
+      );
+    }
+
     // Check if slug already exists
     const existingCourse = await prisma.course.findUnique({
       where: { slug },
@@ -97,8 +105,9 @@ export async function POST(request: NextRequest) {
       }
 
       // Create modules and lessons
-      for (let i = 0; i < modules.length; i++) {
-        const moduleData = modules[i];
+      if (modules && modules.length > 0) {
+        for (let i = 0; i < modules.length; i++) {
+          const moduleData = modules[i];
         
         const newModule = await tx.module.create({
           data: {
@@ -130,6 +139,7 @@ export async function POST(request: NextRequest) {
           });
         }
       }
+      }
 
       return newCourse;
     });
@@ -157,8 +167,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(createdCourse, { status: 201 });
   } catch (error) {
     console.error('Error creating course:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
     return NextResponse.json(
-      { error: 'Failed to create course' },
+      { 
+        error: 'Failed to create course', 
+        details: errorMessage,
+        timestamp: new Date().toISOString() 
+      },
       { status: 500 }
     );
   }
