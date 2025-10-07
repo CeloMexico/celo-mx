@@ -102,6 +102,41 @@ export const MdxComponents = {
     <em className="italic text-white" {...props} />
   ),
 
+  // Images
+  img: (props: ComponentPropsWithoutRef<'img'>) => (
+    <img 
+      className="rounded-lg my-6 max-w-full h-auto shadow-lg"
+      loading="lazy"
+      {...props} 
+    />
+  ),
+
+  // iframe for embeds (YouTube, etc.)
+  iframe: (props: ComponentPropsWithoutRef<'iframe'>) => (
+    <div className="my-6 aspect-video rounded-lg overflow-hidden shadow-lg">
+      <iframe
+        className="w-full h-full border-0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        {...props}
+      />
+    </div>
+  ),
+
+  // div to allow wrapped iframes
+  div: (props: ComponentPropsWithoutRef<'div'>) => (
+    <div {...props} />
+  ),
+
+  // video tag support
+  video: (props: ComponentPropsWithoutRef<'video'>) => (
+    <video 
+      className="w-full rounded-lg my-6 shadow-lg"
+      controls
+      {...props}
+    />
+  ),
+
   // Interactive Components
   Callout,
   Tabs,

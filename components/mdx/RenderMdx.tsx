@@ -19,8 +19,10 @@ export default function RenderMdx({ source }: RenderMdxProps) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeHighlight, rehypeRaw]}
+      rehypePlugins={[rehypeRaw, rehypeHighlight]}
       components={MdxComponents}
+      // Allow dangerous HTML (needed for iframes, videos, etc.)
+      // Note: Only use with trusted content!
     >
       {source}
     </ReactMarkdown>
