@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { COURSE_TOKEN_IDS, getCourseTokenId } from '@/lib/hooks/useSimpleBadge';
+import { LEGACY_COURSE_TOKEN_IDS, getCourseTokenId } from '@/lib/hooks/useSimpleBadge';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 // Course metadata for each token ID
 const COURSE_METADATA: Record<string, {
@@ -141,21 +144,86 @@ export async function GET(
       );
     }
 
-    // Get metadata for this token ID
-    const metadata = COURSE_METADATA[tokenId];
-    
-    if (!metadata) {
+    const tokenIdBigInt = BigInt(tokenId);
+
+    // First check static metadata
+    const staticMetadata = COURSE_METADATA[tokenId];
+    if (staticMetadata) {
+      return NextResponse.json(staticMetadata, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=86400',
+        },
+      });
+    }
+
+    // Try to find course dynamically
+    let course = null;
+
+    // Check legacy courses first
+    for (const [slug, legacyTokenId] of Object.entries(LEGACY_COURSE_TOKEN_IDS)) {
+      if (legacyTokenId === tokenIdBigInt) {
+        course = await prisma.course.findUnique({
+          where: { slug },
+          select: { id: true, slug: true, title: true, subtitle: true }
+        });
+        break;
+      }
+    }
+
+    // If not found in legacy, search all courses to find matching generated token ID
+    if (!course) {
+      const allCourses = await prisma.course.findMany({
+        where: { status: 'PUBLISHED' },
+        select: { id: true, slug: true, title: true, subtitle: true }
+      });
+      
+      for (const dbCourse of allCourses) {
+        const generatedTokenId = getCourseTokenId(dbCourse.slug, dbCourse.id);
+        if (generatedTokenId === tokenIdBigInt) {
+          course = dbCourse;
+          break;
+        }
+      }
+    }
+
+    if (!course) {
       return NextResponse.json(
-        { error: 'Token ID not found' },
+        { error: 'Course not found for token ID' },
         { status: 404 }
       );
     }
 
-    // Return ERC1155 compliant metadata
-    return NextResponse.json(metadata, {
+    // Generate dynamic metadata
+    const dynamicMetadata = {
+      name: `${course.title} - Badge de Inscripción`,
+      description: `Badge otorgado por inscribirse al curso "${course.title}"${course.subtitle ? `: ${course.subtitle}` : ''}.`,
+      image: `https://academy.celo.org/images/badges/${course.slug}.png`,
+      external_url: `https://academy.celo.org/academy/${course.slug}`,
+      attributes: [
+        {
+          trait_type: 'Course',
+          value: course.title
+        },
+        {
+          trait_type: 'Blockchain',
+          value: 'Celo'
+        },
+        {
+          trait_type: 'Badge Type',
+          value: 'Enrollment'
+        },
+        {
+          trait_type: 'Token ID',
+          value: tokenId
+        }
+      ]
+    };
+
+    return NextResponse.json(dynamicMetadata, {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour (shorter for dynamic)
       },
     });
 
@@ -165,6 +233,8 @@ export async function GET(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

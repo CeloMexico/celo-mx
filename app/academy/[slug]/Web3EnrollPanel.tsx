@@ -21,7 +21,7 @@ export default function Web3EnrollPanel({ course }: Web3EnrollPanelProps) {
     isEnrolling,
     isConfirmingEnrollment,
     enrollmentSuccess
-  } = useCourseEnrollmentBadge(course.slug, address);
+  } = useCourseEnrollmentBadge(course.slug, course.id, address);
 
   const handleEnroll = async (course: Course) => {
     if (!address) {
