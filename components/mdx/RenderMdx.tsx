@@ -17,15 +17,13 @@ export default function RenderMdx({ source }: RenderMdxProps) {
   if (!source) return null;
 
   return (
-    <article className="prose prose-invert max-w-none">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight, rehypeRaw]}
-        components={MdxComponents}
-      >
-        {source}
-      </ReactMarkdown>
-    </article>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeHighlight, rehypeRaw]}
+      components={MdxComponents}
+    >
+      {source}
+    </ReactMarkdown>
   );
 }
 

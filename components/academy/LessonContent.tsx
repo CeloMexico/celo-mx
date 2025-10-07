@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import { CourseWithRels } from './LessonLayout';
+import { ReadingProgress } from '@/components/course/ReadingProgress';
 
 type LessonContentProps = {
   course: CourseWithRels;
@@ -63,8 +66,10 @@ export default function LessonContent({
   const nextHref = getNextHref();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
-      {/* Lesson Header */}
+    <>
+      <ReadingProgress />
+      <div className="flex flex-col h-[calc(100vh-80px)]">
+        {/* Lesson Header */}
       <div className="border-b border-white/10 bg-black/30 px-6 py-4">
         <div className="flex items-center space-x-3 mb-2">
           <div className="w-2 h-2 rounded-full bg-celo-yellow" />
@@ -107,7 +112,9 @@ export default function LessonContent({
             </div>
           ) : (
             <div className="rounded-2xl border border-white/10 bg-black/30 p-6 md:p-8">
-              {children}
+              <div className="prose-course">
+                {children}
+              </div>
             </div>
           )}
         </div>
@@ -149,7 +156,8 @@ export default function LessonContent({
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
