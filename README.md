@@ -1,46 +1,74 @@
-# CELO Mexico Website
+# 🇲🇽 CELO Mexico Academy
 
-Sitio web oficial de CELO Mexico - El hub para builders y comunidad en México.
+> Plataforma educativa descentralizada para desarrolladores blockchain en México
 
-## 🚀 Características
+[![Production Status](https://img.shields.io/badge/status-production-green)](./PRODUCTION_STATUS.md)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- **Next.js 14** con App Router
-- **TypeScript** para type safety
-- **Tailwind CSS** para estilos
-- **Framer Motion** para animaciones
+CELO Mexico Academy es una plataforma educativa descentralizada que combina cursos de desarrollo blockchain con NFT badges y certificaciones on-chain.
+
+## ✨ Características Principales
+
+### 🎓 Academia
+- **Cursos Estructurados** con módulos y lecciones
+- **NFT Badges** por inscripción y completación
+- **Certificados On-Chain** verificables en blockchain
+- **Seguimiento de Progreso** personalizado
+- **Sistema de Instructores** con perfiles dedicados
+
+### 🔐 Tecnología
+- **Next.js 15** con App Router y RSC
+- **TypeScript** con strict mode
+- **Tailwind CSS** para estilos responsivos
 - **Privy** para autenticación de wallets
-- **Prisma** para base de datos
-- **Responsive Design** optimizado para móviles
+- **Wagmi + Viem** para interacción Web3
+- **Prisma + PostgreSQL** para base de datos
+- **Smart Contracts** en Celo Alfajores testnet
 
 ## 📁 Estructura del Proyecto
 
 ```
-├── app/                    # App Router de Next.js 14
-│   ├── (site)/            # Rutas públicas del sitio
-│   │   ├── academy/       # Página de academia
-│   │   ├── marketplace/   # Marketplace de NFTs
-│   │   └── page.tsx       # Página principal
-│   ├── api/               # API routes
-│   ├── dashboard/         # Panel de administración
-│   └── ramps/             # On-ramp de criptomonedas
-├── components/            # Componentes reutilizables
-│   ├── academy/          # Componentes específicos de academia
-│   ├── marketplace/      # Componentes del marketplace
-│   └── ui/               # Componentes base de UI
-├── lib/                  # Utilidades y configuración
-├── public/               # Archivos estáticos
-│   ├── fonts/           # Fuentes optimizadas
-│   └── icons/           # Iconos SVG
-└── prisma/              # Esquema de base de datos
+├── app/                       # Next.js 15 App Router
+│   ├── academy/              # Rutas de la academia
+│   │   ├── [slug]/          # Páginas dinámicas de cursos
+│   │   └── page.tsx         # Catálogo de cursos
+│   ├── admin/                # Panel de administración
+│   │   ├── courses/         # CRUD de cursos
+│   │   ├── instructors/     # Gestión de instructores
+│   │   └── page.tsx         # Dashboard admin
+│   ├── api/                  # API Routes
+│   │   ├── admin/           # APIs administrativas
+│   │   ├── health/          # Health checks
+│   │   ├── metadata/        # NFT metadata endpoints
+│   │   └── progress/        # Seguimiento de progreso
+│   └── page.tsx              # Página principal
+├── components/               # Componentes React
+│   ├── academy/             # Componentes de cursos
+│   ├── admin/               # Componentes admin
+│   ├── theme/               # Sistema de temas
+│   └── ui/                  # Componentes base
+├── lib/                      # Utilidades y configuración
+│   ├── hooks/               # Custom React hooks
+│   ├── prisma.ts            # Cliente Prisma
+│   └── wagmi.ts             # Configuración Web3
+├── prisma/                   # Base de datos
+│   └── schema.prisma        # Esquema de la BD
+├── scripts/                  # Scripts de deployment
+│   ├── deploy-and-monitor.sh
+│   └── monitor-deployment.sh
+└── public/                   # Assets estáticos
 ```
 
-## 🛠️ Setup del Proyecto
+## 🚀 Quick Start
 
 ### Prerrequisitos
 
-- Node.js 18+ 
-- pnpm (recomendado) o npm
-- Git
+- **Node.js** 20.0.0 o superior (recomendado: 20.19.4)
+- **npm** o **pnpm**
+- **Git**
+- **PostgreSQL** (o cuenta de Supabase)
 
 ### Instalación
 
@@ -81,10 +109,21 @@ Sitio web oficial de CELO Mexico - El hub para builders y comunidad en México.
 
 5. **Ejecutar en desarrollo**
    ```bash
+   npm run dev
+   # o
    pnpm dev
    ```
 
    El sitio estará disponible en [http://localhost:3000](http://localhost:3000)
+
+6. **Verificar la instalación**
+   ```bash
+   # Health check
+   curl http://localhost:3000/api/health
+   
+   # Database check
+   npx prisma studio
+   ```
 
 ## 🎨 Assets Externos
 
@@ -106,35 +145,52 @@ Este proyecto utiliza assets externos para optimizar el tamaño del repositorio:
 
 ```bash
 # Desarrollo
-pnpm dev
+npm run dev              # Servidor de desarrollo
+npm run build            # Build para producción
+npm run start            # Servidor de producción
 
-# Build para producción
-pnpm build
+# Calidad de Código
+npm run lint             # ESLint
+npm run type-check       # TypeScript check
+npm run format           # Prettier
 
-# Iniciar servidor de producción
-pnpm start
+# Base de Datos
+npm run db:studio        # Prisma Studio (GUI)
+npm run db:push          # Sincronizar esquema
+npm run db:migrate       # Crear migración
+npm run db:seed          # Poblar datos
 
-# Linting
-pnpm lint
-
-# Type checking
-pnpm type-check
-
-# Base de datos
-pnpm prisma studio    # Abrir Prisma Studio
-pnpm prisma generate  # Generar cliente Prisma
-pnpm prisma db push   # Sincronizar esquema
+# Deployment
+./scripts/deploy-and-monitor.sh -m "message"  # Deploy + monitor
+./scripts/monitor-deployment.sh                # Monitor only
 ```
 
-## 🎯 Tecnologías Utilizadas
+## 🛠️ Stack Tecnológico
 
-- **Framework**: Next.js 14
-- **Lenguaje**: TypeScript
-- **Estilos**: Tailwind CSS
+### Frontend
+- **Framework**: Next.js 15 (App Router, RSC)
+- **Lenguaje**: TypeScript 5.0
+- **Estilos**: Tailwind CSS 3.4
+- **UI Components**: Radix UI, shadcn/ui
 - **Animaciones**: Framer Motion
-- **Autenticación**: Privy
-- **Base de datos**: Prisma + SQLite
-- **Deployment**: Vercel (recomendado)
+
+### Backend
+- **Base de Datos**: PostgreSQL (Supabase)
+- **ORM**: Prisma 5.0
+- **API**: Next.js API Routes
+- **Autenticación**: Privy (Wallet Auth)
+
+### Web3
+- **Blockchain**: Celo Alfajores Testnet
+- **Smart Contracts**: Solidity (SimpleBadge ERC1155)
+- **Web3 Library**: Wagmi + Viem
+- **Wallet Connect**: WalletConnect v2
+
+### DevOps
+- **Hosting**: Vercel
+- **CI/CD**: GitHub Actions + Vercel
+- **Monitoring**: Custom scripts
+- **Database**: Supabase (PostgreSQL)
 
 ## 🤝 Contribución
 
@@ -156,6 +212,118 @@ Si tienes problemas o preguntas:
 2. Busca en los issues existentes
 3. Crea un nuevo issue con detalles del problema
 
+## 📚 Documentación
+
+### Guías Principales
+- [📊 Production Status](./PRODUCTION_STATUS.md) - Estado actual de producción
+- [🚀 Deployment Guide](./DEPLOYMENT_GUIDE.md) - Guía completa de deployment
+- [🎯 NFT Solution](./DYNAMIC_NFT_SOLUTION.md) - Arquitectura de NFT badges
+- [⚙️ Scripts Guide](./scripts/README.md) - Uso de scripts de deployment
+
+### APIs y Endpoints
+- `/api/health` - Health check general
+- `/api/health/db` - Verificación de base de datos
+- `/api/health/env` - Variables de entorno
+- `/api/metadata/milestone/{tokenId}` - Metadata de NFTs
+- `/api/courses` - Listado de cursos
+- `/api/progress` - Seguimiento de progreso
+
+## 🎯 Funcionalidades
+
+### Para Estudiantes
+- ✅ Explorar catálogo de cursos
+- ✅ Conectar wallet (MetaMask, WalletConnect)
+- ✅ Inscribirse a cursos (claim NFT badge)
+- ✅ Completar lecciones y módulos
+- ✅ Obtener certificados on-chain
+- ✅ Ver progreso personal
+
+### Para Administradores
+- ✅ Panel de administración completo
+- ✅ CRUD de cursos, módulos y lecciones
+- ✅ Gestión de instructores
+- ✅ Mint de badges administrativos
+- ✅ Estadísticas y métricas
+
+## 🔐 Seguridad
+
+- ✅ Autenticación basada en wallets (Privy)
+- ✅ Protección de rutas administrativas
+- ✅ Validación de tokens JWT
+- ✅ Conexiones SSL a base de datos
+- ✅ Variables de entorno encriptadas
+- ✅ Validación de direcciones on-chain
+
+## 📊 Estado de Producción
+
+**Status**: 🟢 **EN PRODUCCIÓN**
+
+- **Deployment**: Vercel
+- **Uptime**: 99.9%
+- **Database**: PostgreSQL (Supabase)
+- **Smart Contract**: Deployed on Alfajores
+
+Ver [PRODUCTION_STATUS.md](./PRODUCTION_STATUS.md) para más detalles.
+
 ---
 
-**CELO Mexico** - Construyendo el futuro de las finanzas descentralizadas en México 🇲🇽# Trigger redeploy
+## 🤝 Contribución
+
+¿Quieres contribuir? ¡Genial! Sigue estos pasos:
+
+1. Fork el proyecto
+2. Crea tu feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add: Amazing feature'`)
+4. Push al branch (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+### Estándares de Código
+- TypeScript estricto (no `any`)
+- ESLint + Prettier configurados
+- Commits convencionales (feat:, fix:, docs:, etc.)
+- Tests para nuevas funcionalidades
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+
+---
+
+## 📞 Soporte
+
+### Canales de Soporte
+- 📧 Email: contact@celomexico.org
+- 💬 Discord: [Celo Mexico Community](https://discord.gg/celo)
+- 🐦 Twitter: [@CeloMexico](https://twitter.com/CeloMexico)
+- 📱 Telegram: [t.me/CeloMexico](https://t.me/CeloMexico)
+
+### Reportar Issues
+1. Revisa los [issues existentes](https://github.com/CeloMX/celo-mx/issues)
+2. Crea un nuevo issue con:
+   - Descripción clara del problema
+   - Pasos para reproducir
+   - Capturas de pantalla (si aplica)
+   - Información del entorno
+
+---
+
+## 🙏 Agradecimientos
+
+- [Celo Foundation](https://celo.org) por el soporte
+- [Privy](https://privy.io) por la solución de autenticación
+- [Vercel](https://vercel.com) por el hosting
+- [Supabase](https://supabase.com) por la base de datos
+- Comunidad de desarrolladores de Celo México
+
+---
+
+<div align="center">
+  <strong>CELO Mexico Academy</strong><br>
+  Construyendo el futuro de las finanzas descentralizadas en México 🇲🇽
+  <br><br>
+  <a href="https://celomexico.org">Website</a> ·
+  <a href="./PRODUCTION_STATUS.md">Status</a> ·
+  <a href="./DEPLOYMENT_GUIDE.md">Docs</a>
+</div>
