@@ -14,6 +14,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
 import dynamic from "next/dynamic";
+import { useAccount } from "wagmi";
+import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
+import { CoursePaywall } from "@/components/academy/CoursePaywall";
 
 // Dynamically import the Web3 enrollment panel to avoid SSR issues
 const Web3EnrollPanel = dynamic(
@@ -37,6 +40,17 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const { address, isConnected } = useAccount();
+
+  const {
+    hasBadge,
+    hasClaimed,
+    isLoading,
+    enrollInCourse,
+    isEnrolling,
+    isConfirmingEnrollment,
+    enrollmentSuccess,
+  } = useCourseEnrollmentBadge(course.slug, course.id, address);
 
   useEffect(() => {
     setIsMounted(true);
@@ -64,6 +78,54 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     }
   };
 
+  const handleEnroll = async () => {
+    try {
+      await enrollInCourse();
+    } catch (error) {
+      console.error("Enrollment error:", error);
+    }
+  };
+
+  // Show loading state while checking enrollment
+  if (!isMounted || isLoading) {
+    return (
+      <CoursePaywall
+        courseTitle={course.title}
+        courseSlug={course.slug}
+        reason="LOADING"
+      />
+    );
+  }
+
+  // Check if user has access
+  const hasAccess = hasBadge || hasClaimed || enrollmentSuccess;
+
+  // Show paywall if not enrolled
+  if (!isConnected || !address) {
+    return (
+      <CoursePaywall
+        courseTitle={course.title}
+        courseSlug={course.slug}
+        reason="WALLET_NOT_CONNECTED"
+        isWalletConnected={false}
+      />
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <CoursePaywall
+        courseTitle={course.title}
+        courseSlug={course.slug}
+        reason="NOT_ENROLLED"
+        isWalletConnected={true}
+        onEnroll={handleEnroll}
+        isEnrolling={isEnrolling || isConfirmingEnrollment}
+      />
+    );
+  }
+
+  // User is enrolled, show full course content
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
