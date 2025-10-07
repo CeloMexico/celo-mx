@@ -2,10 +2,33 @@
 
 > Plataforma educativa descentralizada para desarrolladores blockchain en México
 
-[![Production Status](https://img.shields.io/badge/status-production-green)](./PRODUCTION_STATUS.md)
+[![Production Status](https://img.shields.io/badge/status-production-green)](./docs/deployment/PRODUCTION_STATUS.md)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+---
+
+## 📚 Documentation Menu
+
+### 🚀 Deployment
+- [Production Status](./docs/deployment/PRODUCTION_STATUS.md) - Current production state and metrics
+- [Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [Deployment Summary](./docs/deployment/DEPLOYMENT_SUMMARY.md) - Quick deployment overview
+
+### 🔧 Technical
+- [Course Paywall System](./docs/technical/COURSE_PAYWALL.md) - NFT-based access control implementation
+- [Dynamic NFT Solution](./docs/technical/DYNAMIC_NFT_SOLUTION.md) - Token ID generation architecture
+
+### 📖 Reference
+- [Project Rules](./docs/reference/PROJECT_RULES.md) - **⚠️ READ BEFORE CODING** - Critical rules and conventions
+- [Feature Request Template](./docs/reference/FEATURE_REQUEST_TEMPLATE.md) - How to request new features
+- [Docs Cleanup Plan](./docs/reference/DOCS_CLEANUP_PLAN.md) - Documentation organization roadmap
+
+### 📜 Scripts
+- [Scripts Guide](./scripts/README.md) - Deployment and monitoring scripts
+
+---
 
 CELO Mexico Academy es una plataforma educativa descentralizada que combina cursos de desarrollo blockchain con NFT badges y certificaciones on-chain.
 
@@ -215,10 +238,11 @@ Si tienes problemas o preguntas:
 ## 📚 Documentación
 
 ### Guías Principales
-- [📊 Production Status](./PRODUCTION_STATUS.md) - Estado actual de producción
-- [🚀 Deployment Guide](./DEPLOYMENT_GUIDE.md) - Guía completa de deployment
-- [🎯 NFT Solution](./DYNAMIC_NFT_SOLUTION.md) - Arquitectura de NFT badges
+- [📊 Production Status](./docs/deployment/PRODUCTION_STATUS.md) - Estado actual de producción
+- [🚀 Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md) - Guía completa de deployment
+- [🎯 NFT Solution](./docs/technical/DYNAMIC_NFT_SOLUTION.md) - Arquitectura de NFT badges
 - [⚙️ Scripts Guide](./scripts/README.md) - Uso de scripts de deployment
+- [📖 Project Rules](./docs/reference/PROJECT_RULES.md) - Reglas y convenciones del proyecto
 
 ### APIs y Endpoints
 - `/api/health` - Health check general
@@ -263,7 +287,7 @@ Si tienes problemas o preguntas:
 - **Database**: PostgreSQL (Supabase)
 - **Smart Contract**: Deployed on Alfajores
 
-Ver [PRODUCTION_STATUS.md](./PRODUCTION_STATUS.md) para más detalles.
+Ver [PRODUCTION_STATUS.md](./docs/deployment/PRODUCTION_STATUS.md) para más detalles.
 
 ---
 
@@ -324,6 +348,7 @@ Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detal
   Construyendo el futuro de las finanzas descentralizadas en México 🇲🇽
   <br><br>
   <a href="https://celomexico.org">Website</a> ·
-  <a href="./PRODUCTION_STATUS.md">Status</a> ·
-  <a href="./DEPLOYMENT_GUIDE.md">Docs</a>
+  <a href="./docs/deployment/PRODUCTION_STATUS.md">Status</a> ·
+  <a href="./docs/deployment/DEPLOYMENT_GUIDE.md">Docs</a> ·
+  <a href="./docs/reference/PROJECT_RULES.md">Rules</a>
 </div>
