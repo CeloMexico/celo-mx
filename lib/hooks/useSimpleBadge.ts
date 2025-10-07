@@ -66,7 +66,16 @@ const getContractAddress = (): Address => {
   if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
     throw new Error('SimpleBadge contract address not configured');
   }
-  return address as Address;
+  
+  // Trim whitespace and validate the address format
+  const trimmedAddress = address.trim();
+  
+  // Basic validation: should start with 0x and be 42 characters long
+  if (!trimmedAddress.startsWith('0x') || trimmedAddress.length !== 42) {
+    throw new Error(`Invalid contract address format: ${trimmedAddress}`);
+  }
+  
+  return trimmedAddress as Address;
 };
 
 // Hook to check if a user has claimed a specific badge
