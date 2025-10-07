@@ -3,6 +3,9 @@ import { prisma } from '@/lib/db'
 import RenderMdx from '@/components/mdx/RenderMdx'
 import LessonLayout from '@/components/academy/LessonLayout'
 import { getCourseBySlug, COURSES } from '@/data/academy'
+import { LessonAccessWrapper } from './LessonAccessWrapper'
+import { cookies } from 'next/headers'
+import type { Address } from 'viem'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -125,12 +128,28 @@ export default async function CoursePage(props: any) {
   const lesson = mod?.lessons.find((ll: any) => ll.index === s)
   if (!mod || !lesson || lesson.status !== 'PUBLISHED') return notFound()
 
+  // Get user address from cookies (set by Privy auth)
+  // This is a simplified approach - in production you'd want more robust auth
+  const cookieStore = await cookies()
+  const privyToken = cookieStore.get('privy-token')
+  
+  // For now, we'll do client-side verification
+  // In a future iteration, you could decode the Privy token server-side
+  const serverHasAccess = false // Will be verified client-side
+
   return (
-    <LessonLayout 
-      course={courseWithRels} 
-      current={{ moduleIndex: m, subIndex: s }}
+    <LessonAccessWrapper
+      courseId={course.id}
+      courseSlug={course.slug}
+      courseTitle={course.title}
+      serverHasAccess={serverHasAccess}
     >
-      <RenderMdx source={lesson.contentMdx ?? ''} />
-    </LessonLayout>
+      <LessonLayout 
+        course={courseWithRels} 
+        current={{ moduleIndex: m, subIndex: s }}
+      >
+        <RenderMdx source={lesson.contentMdx ?? ''} />
+      </LessonLayout>
+    </LessonAccessWrapper>
   )
 }
