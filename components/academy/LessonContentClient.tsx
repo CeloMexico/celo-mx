@@ -78,8 +78,8 @@ export function LessonContentClient({
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-6 md:p-8">
-                <div className="prose-course">
+              <div className="rounded-2xl border-2 border-celo-yellow/30 bg-gradient-to-br from-black/50 to-black/30 p-6 md:p-10 shadow-2xl">
+                <div className="prose prose-lg prose-invert max-w-none prose-headings:text-celo-yellow prose-p:text-white/90 prose-p:text-lg prose-p:leading-relaxed prose-a:text-celo-yellow prose-a:underline prose-strong:text-celo-yellow prose-code:text-celo-yellow prose-code:bg-white/10 prose-code:px-1 prose-code:rounded">
                   {children}
                 </div>
               </div>
