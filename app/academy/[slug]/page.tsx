@@ -95,8 +95,8 @@ export default async function CoursePage(props: any) {
       lessonsCount: courseWithRels.modules.reduce((total, mod) => total + mod.lessons.length, 0),
       isFree: true, // Default, could be enhanced with pricing
       priceUSD: 0,
-      coverUrl: '/images/course-placeholder.jpg', // Placeholder
-      promoVideoUrl: undefined, // Could be enhanced with promo videos
+      coverUrl: course.coverUrl || '/images/course-placeholder.jpg',
+      promoVideoUrl: course.promoVideoUrl || undefined,
       outcomes: ['Comprender los fundamentos de blockchain', 'Desarrollar en Celo'], // Default outcomes
       prerequisites: [], // Could be enhanced with prerequisites
       modules: courseWithRels.modules.map(module => ({
