@@ -77,9 +77,9 @@ export default async function CoursePage(props: any) {
 
   // If no modules exist or no lesson parameters provided, show course overview
   if (courseWithRels.modules.length === 0 || !m || !s) {
-    const { CourseDetailClient } = await import('./CourseDetailClient')
+    const { CourseDetailWrapper } = await import('./CourseDetailWrapper')
     
-    // Transform course data for CourseDetailClient
+    // Transform course data for CourseDetailWrapper
     const courseForClient = {
       id: course.id,
       slug: course.slug,
@@ -120,7 +120,7 @@ export default async function CoursePage(props: any) {
       createdAt: course.createdAt?.toISOString() || new Date().toISOString()
     }
     
-    return <CourseDetailClient course={courseForClient} />
+    return <CourseDetailWrapper course={courseForClient} />
   }
 
   // Show lesson content if specific lesson is requested
