@@ -6,6 +6,20 @@ import { getCourseBySlug, COURSES } from '@/data/academy'
 import { LessonAccessWrapper } from './LessonAccessWrapper'
 import { cookies } from 'next/headers'
 import type { Address } from 'viem'
+import dynamic from 'next/dynamic'
+
+// Import CourseDetailWrapper with SSR disabled (uses Wagmi hooks)
+const CourseDetailWrapper = dynamic(
+  () => import('./CourseDetailWrapper').then(mod => ({ default: mod.CourseDetailWrapper })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-celo-yellow">Cargando curso...</div>
+      </div>
+    )
+  }
+)
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -77,8 +91,6 @@ export default async function CoursePage(props: any) {
 
   // If no modules exist or no lesson parameters provided, show course overview
   if (courseWithRels.modules.length === 0 || !m || !s) {
-    const { CourseDetailWrapper } = await import('./CourseDetailWrapper')
-    
     // Transform course data for CourseDetailWrapper
     const courseForClient = {
       id: course.id,
