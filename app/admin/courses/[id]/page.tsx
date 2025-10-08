@@ -372,6 +372,38 @@ className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cover Image URL
+            </label>
+            <input
+              type="url"
+              value={course.coverUrl || ''}
+              onChange={(e) => updateField('coverUrl', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Recommended: 1200x675px (16:9 ratio)
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Promo Video URL
+            </label>
+            <input
+              type="url"
+              value={course.promoVideoUrl || ''}
+              onChange={(e) => updateField('promoVideoUrl', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-gray-900 bg-white"
+              placeholder="https://youtube.com/watch?v=..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              YouTube video URL (watch or embed format)
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Category
             </label>
             <select
