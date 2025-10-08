@@ -3,14 +3,15 @@
 import { EnrollPanel } from "@/components/academy/EnrollPanel";
 import { Course } from "@/components/academy/types";
 import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
-import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Web3EnrollPanelProps {
   course: Course;
 }
 
 export default function Web3EnrollPanel({ course }: Web3EnrollPanelProps) {
-  const { address } = useAccount();
+  const { wallet } = useAuth();
+  const address = wallet.address;
   const {
     hasBadge,
     hasClaimed,
@@ -21,7 +22,7 @@ export default function Web3EnrollPanel({ course }: Web3EnrollPanelProps) {
     isEnrolling,
     isConfirmingEnrollment,
     enrollmentSuccess
-  } = useCourseEnrollmentBadge(course.slug, course.id, address);
+  } = useCourseEnrollmentBadge(course.slug, course.id, address as `0x${string}` | undefined);
 
   const handleEnroll = async (course: Course) => {
     if (!address) {

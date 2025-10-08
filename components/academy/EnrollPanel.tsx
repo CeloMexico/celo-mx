@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Course } from "@/components/academy/types";
+import { useAuth } from "@/hooks/useAuth";
 
 interface EnrollmentState {
   hasBadge: boolean;
@@ -26,6 +27,7 @@ interface EnrollPanelProps {
 }
 
 export function EnrollPanel({ course, onEnroll, enrollmentState }: EnrollPanelProps) {
+  const { login } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -39,6 +41,11 @@ export function EnrollPanel({ course, onEnroll, enrollmentState }: EnrollPanelPr
   }, [enrollmentState?.enrollmentSuccess]);
 
   const handleEnroll = () => {
+    // If wallet is not connected, trigger login instead
+    if (enrollmentState && !enrollmentState.isWalletConnected) {
+      login();
+      return;
+    }
     onEnroll(course);
   };
 
