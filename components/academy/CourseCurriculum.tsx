@@ -192,7 +192,7 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
               </div>
             </AccordionTrigger>
             <div className="px-4 pb-2">
-              <ModuleProgress courseSlug={course.slug} moduleIndex={module.index} />
+              <ModuleProgress courseSlug={course.slug} courseId={course.id} moduleIndex={module.index} />
             </div>
             <AccordionContent className="pb-4">
               {/* Submodules Accordion */}

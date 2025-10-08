@@ -7,14 +7,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { markModuleDone } from "@/lib/progress";
 
 export default function ModuleProgress({
-  courseSlug, moduleIndex
-}:{ courseSlug:string; moduleIndex:number }) {
+  courseSlug, courseId, moduleIndex
+}:{ courseSlug:string; courseId:string; moduleIndex:number }) {
   const { wallet, login } = useAuth();
   const address = wallet.address;
   
   const {
-    hasModuleBadge,
-    hasClaimed,
+    hasCompleted,
+    modulesCompleted,
     isLoading,
     completeModule,
     completionHash,
@@ -22,7 +22,7 @@ export default function ModuleProgress({
     isCompleting,
     isConfirmingCompletion,
     completionSuccess,
-  } = useModuleCompletion(courseSlug, moduleIndex, address as `0x${string}` | undefined);
+  } = useModuleCompletion(courseSlug, courseId, moduleIndex, address as `0x${string}` | undefined);
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -60,7 +60,7 @@ export default function ModuleProgress({
   }
 
   // Already completed
-  if (hasModuleBadge || hasClaimed || completionSuccess) {
+  if (hasCompleted || completionSuccess) {
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-emerald-600">

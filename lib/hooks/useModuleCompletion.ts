@@ -1,24 +1,38 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { type Address } from 'viem';
-import { moduleTokenId } from '@/lib/milestones';
+import { getCourseTokenId } from '@/lib/hooks/useSimpleBadge';
 
-// MilestoneBadge contract ABI - focused on the functions we need for modules
-const MILESTONE_BADGE_ABI = [
+// SimpleBadge contract ABI - for module completion tracking
+const SIMPLE_BADGE_ABI = [
   {
     type: 'function',
-    name: 'claim',
-    inputs: [{ name: 'tokenId', type: 'uint256' }],
+    name: 'completeModule',
+    inputs: [
+      { name: 'courseTokenId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint256' },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'claimed',
+    name: 'hasCompletedModule',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'tokenId', type: 'uint256' },
+      { name: 'courseTokenId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint256' },
     ],
     outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'getModulesCompleted',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'courseTokenId', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
   },
   {
@@ -33,11 +47,11 @@ const MILESTONE_BADGE_ABI = [
   },
 ] as const;
 
-// Get contract address from environment
+// Get contract address from environment (same as SimpleBadge)
 const getContractAddress = (): Address => {
   const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    throw new Error('MilestoneBadge contract address not configured');
+    throw new Error('SimpleBadge contract address not configured');
   }
   
   const trimmedAddress = address.trim();
@@ -49,47 +63,53 @@ const getContractAddress = (): Address => {
   return trimmedAddress as Address;
 };
 
-// Hook to check if a user has claimed a specific module badge
-export function useHasModuleBadge(userAddress?: Address, tokenId?: bigint) {
+// Hook to check if a user has completed a specific module
+export function useHasCompletedModule(
+  userAddress?: Address, 
+  courseTokenId?: bigint,
+  moduleIndex?: number
+) {
   return useReadContract({
     address: getContractAddress(),
-    abi: MILESTONE_BADGE_ABI,
-    functionName: 'balanceOf',
-    args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
+    abi: SIMPLE_BADGE_ABI,
+    functionName: 'hasCompletedModule',
+    args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
+      ? [userAddress, courseTokenId, BigInt(moduleIndex)] 
+      : undefined,
     query: {
-      enabled: !!userAddress && tokenId !== undefined,
+      enabled: !!userAddress && courseTokenId !== undefined && moduleIndex !== undefined,
     },
   });
 }
 
-// Hook to check if a user has claimed a specific module
-export function useHasClaimedModule(userAddress?: Address, tokenId?: bigint) {
+// Hook to get the total modules completed for a course
+export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: MILESTONE_BADGE_ABI,
-    functionName: 'claimed',
-    args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
+    abi: SIMPLE_BADGE_ABI,
+    functionName: 'getModulesCompleted',
+    args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
     query: {
-      enabled: !!userAddress && tokenId !== undefined,
+      enabled: !!userAddress && courseTokenId !== undefined,
     },
   });
 }
 
-// Hook to claim a module completion badge
-export function useClaimModuleBadge() {
+// Hook to complete a module (updates the NFT metadata state)
+export function useCompleteModuleBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
 
-  const claimModule = (tokenId: bigint) => {
+  const completeModule = (courseTokenId: bigint, moduleIndex: number) => {
     return writeContract({
       address: getContractAddress(),
-      abi: MILESTONE_BADGE_ABI,
-      functionName: 'claim',
-      args: [tokenId],
+      abi: SIMPLE_BADGE_ABI,
+      functionName: 'completeModule',
+      args: [courseTokenId, BigInt(moduleIndex)],
     });
   };
 
   return {
-    claimModule,
+    completeModule,
     hash,
     error,
     isPending,
@@ -106,13 +126,13 @@ export function useModuleTransactionStatus(hash?: `0x${string}`) {
   });
 }
 
-// Combined hook for claiming module badges with status tracking
-export function useClaimModuleBadgeWithStatus() {
-  const { claimModule, hash, error, isPending } = useClaimModuleBadge();
+// Combined hook for completing modules with status tracking
+export function useCompleteModuleWithStatus() {
+  const { completeModule, hash, error, isPending } = useCompleteModuleBadge();
   const { isLoading: isConfirming, isSuccess, error: confirmError } = useModuleTransactionStatus(hash);
 
   return {
-    claimModule,
+    completeModule,
     hash,
     error: error || confirmError,
     isPending,
@@ -123,24 +143,28 @@ export function useClaimModuleBadgeWithStatus() {
 
 // Hook specifically for module completion with all the data needed
 export function useModuleCompletion(
-  courseSlug: string, 
+  courseSlug: string,
+  courseId: string,
   moduleIndex: number, 
   userAddress?: Address
 ) {
-  const tokenId = moduleTokenId(courseSlug, moduleIndex);
-  const hasModuleBadge = useHasModuleBadge(userAddress, tokenId);
-  const hasClaimed = useHasClaimedModule(userAddress, tokenId);
-  const { claimModule, hash, error, isPending, isConfirming, isSuccess } = useClaimModuleBadgeWithStatus();
+  // Use the course tokenId - all modules update the SAME NFT
+  const courseTokenId = getCourseTokenId(courseSlug, courseId);
+  
+  const hasCompleted = useHasCompletedModule(userAddress, courseTokenId, moduleIndex);
+  const modulesCompleted = useModulesCompleted(userAddress, courseTokenId);
+  const { completeModule: completeModuleTx, hash, error, isPending, isConfirming, isSuccess } = useCompleteModuleWithStatus();
 
   const completeModule = () => {
-    return claimModule(tokenId);
+    return completeModuleTx(courseTokenId, moduleIndex);
   };
 
   return {
-    tokenId,
-    hasModuleBadge: (hasModuleBadge.data ?? 0n) > 0n,
-    hasClaimed: hasClaimed.data || false,
-    isLoading: hasModuleBadge.isLoading || hasClaimed.isLoading,
+    courseTokenId,
+    moduleIndex,
+    hasCompleted: hasCompleted.data || false,
+    modulesCompleted: Number(modulesCompleted.data ?? 0n),
+    isLoading: hasCompleted.isLoading || modulesCompleted.isLoading,
     completeModule,
     completionHash: hash,
     completionError: error,
