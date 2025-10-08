@@ -24,10 +24,11 @@ import { getYouTubeVideoId, getYouTubeThumbnail } from "@/lib/youtube";
 
 interface CourseCurriculumProps {
   course: Course;
+  isEnrolled?: boolean;
 }
 
 
-export function CourseCurriculum({ course }: CourseCurriculumProps) {
+export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculumProps) {
   const [expandedContent, setExpandedContent] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<CurriculumItem | null>(null);
@@ -214,6 +215,24 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pb-3">
+                      {/* Locked message for non-enrolled users */}
+                      {!isEnrolled ? (
+                        <div className="p-8 text-center bg-gradient-to-br from-muted/30 to-muted/10 rounded-lg border-2 border-dashed border-muted">
+                          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          </div>
+                          <h4 className="font-semibold text-lg mb-2">Contenido Bloqueado</h4>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Inscríbete en el curso para acceder a este contenido
+                          </p>
+                          <Badge variant="secondary" className="text-xs">
+                            {submodule.items.length} elementos disponibles después de inscribirse
+                          </Badge>
+                        </div>
+                      ) : (
+                        <>
                       {/* Direct content display for submodules */}
                       {submodule.content && (
                         <div className="mb-6 p-6 bg-muted/20 rounded-lg border border-muted">
@@ -501,6 +520,8 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                           );
                         })}
                       </div>
+                      </>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 ))}

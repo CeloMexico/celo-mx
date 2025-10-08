@@ -164,7 +164,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               )}
 
               {/* Course Curriculum */}
-              <CourseCurriculum course={course} />
+              <CourseCurriculum course={course} isEnrolled={false} />
 
               {/* Instructor */}
               <div>
@@ -244,7 +244,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                 </TabsContent>
 
                 <TabsContent value="syllabus" className="mt-6">
-                  <CourseCurriculum course={course} />
+                  <CourseCurriculum course={course} isEnrolled={false} />
                 </TabsContent>
 
                 <TabsContent value="instructor" className="mt-6">
