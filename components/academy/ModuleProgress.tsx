@@ -1,30 +1,143 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2, ExternalLink, Wallet } from "lucide-react";
+import { useModuleCompletion } from "@/lib/hooks/useModuleCompletion";
+import { useAuth } from "@/hooks/useAuth";
+import { markModuleDone } from "@/lib/progress";
 
 export default function ModuleProgress({
   courseSlug, moduleIndex
 }:{ courseSlug:string; moduleIndex:number }) {
-  // Simplified version without NFT connections
-  const [done, setDone] = useState(false);
+  const { wallet, login } = useAuth();
+  const address = wallet.address;
+  
+  const {
+    hasModuleBadge,
+    hasClaimed,
+    isLoading,
+    completeModule,
+    completionHash,
+    completionError,
+    isCompleting,
+    isConfirmingCompletion,
+    completionSuccess,
+  } = useModuleCompletion(courseSlug, moduleIndex, address as `0x${string}` | undefined);
 
-  function completeModule() {
-    setDone(true);
-  }
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  if (done) {
+  // Mark module as done in local storage when blockchain confirmation succeeds
+  useEffect(() => {
+    if (completionSuccess) {
+      markModuleDone(courseSlug, moduleIndex);
+      setShowSuccess(true);
+      const timer = setTimeout(() => setShowSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [completionSuccess, courseSlug, moduleIndex]);
+
+  const handleComplete = async () => {
+    if (!address) {
+      login();
+      return;
+    }
+
+    try {
+      await completeModule();
+    } catch (error) {
+      console.error("Module completion error:", error);
+    }
+  };
+
+  // Show loading state while checking blockchain
+  if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-emerald-600">
-        <CheckCircle2 className="h-4 w-4" />
-        <span className="text-sm font-medium">Módulo completado</span>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-sm">Verificando...</span>
       </div>
     );
   }
 
+  // Already completed
+  if (hasModuleBadge || hasClaimed || completionSuccess) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-emerald-600">
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="text-sm font-medium">Módulo completado</span>
+        </div>
+        
+        {/* Success Message with Transaction Link */}
+        {showSuccess && completionHash && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 text-green-800 font-medium mb-1">
+              <CheckCircle2 className="w-4 h-4" />
+              ¡Badge de Módulo Obtenido!
+            </div>
+            <a 
+              href={`https://alfajores.celoscan.io/tx/${completionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+            >
+              Ver Transacción <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        )}
+        
+        {completionHash && !showSuccess && (
+          <a 
+            href={`https://alfajores.celoscan.io/tx/${completionHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+          >
+            Ver Badge en Blockchain <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // Error state
+  if (completionError) {
+    return (
+      <div className="space-y-2">
+        <Button onClick={handleComplete} className="w-full md:w-auto" variant="destructive">
+          Reintentar Completar
+        </Button>
+        <p className="text-xs text-red-600">
+          {completionError.message || "Error al completar el módulo"}
+        </p>
+      </div>
+    );
+  }
+
+  // Not connected
+  if (!address) {
+    return (
+      <Button onClick={login} className="w-full md:w-auto" variant="outline">
+        <Wallet className="w-4 h-4 mr-2" />
+        Conectar para Completar
+      </Button>
+    );
+  }
+
+  // Completing/Confirming
+  if (isCompleting || isConfirmingCompletion) {
+    return (
+      <Button disabled className="w-full md:w-auto">
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        {isCompleting ? "Firmando..." : "Confirmando..."}
+      </Button>
+    );
+  }
+
+  // Ready to complete
   return (
-    <Button onClick={completeModule} className="w-full md:w-auto">
-      Completar módulo
+    <Button onClick={handleComplete} className="w-full md:w-auto">
+      Completar Módulo
     </Button>
   );
 }
