@@ -1,7 +1,7 @@
 # Project Rules & Conventions
 
-**Last Updated:** 2025-10-07  
-**Version:** 1.0.0
+**Last Updated:** 2025-10-08  
+**Version:** 1.1.0
 
 ## 🚨 CRITICAL RULES - DO NOT BREAK
 
@@ -68,23 +68,35 @@ ADMIN_WALLETS
 NEXT_PUBLIC_ADMIN_WALLETS
 ```
 
+**Optional Variables:**
+```
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID  # Only if WalletConnect is needed
+```
+
+**Connectors Policy:**
+- WalletConnect MUST NOT be initialized without a valid `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
+- When the project ID is not set, the app must not perform any Web3Modal/AppKit remote config calls
+
 **DO NOT:**
 - Hardcode contract addresses in components
 - Commit `.env.local` or `.env` files
 - Use production credentials in development
+- Ship a default WalletConnect projectId like `fallback-id` or `your_walletconnect_project_id`
 
 ### 5. Client/Server Component Rules
 
-**RULE:** Wallet and blockchain interactions must be client-side only.
+**RULE:** Wallet and blockchain interactions must be client-side only, and always under WagmiProvider.
 
 **Implementation:**
 - Use `"use client"` for components using Wagmi hooks
 - Use dynamic imports with `ssr: false` for Web3 components
 - Server components handle database queries and static data
+- Providers: `Providers.tsx` MUST always render `<WagmiProvider>` around children. Do not render children without it (no pre-mount fallback that bypasses WagmiProvider).
 
 **DO NOT:**
 - Use Wagmi hooks in server components
 - Attempt blockchain calls during SSR
+- Render children outside of WagmiProvider at any time
 - Mix client and server state without proper boundaries
 
 ### 6. Admin Access Control
@@ -133,14 +145,16 @@ Course (1) → Module (many) → Lesson (many)
 
 ### 9. Blockchain Contract Interactions
 
-**RULE:** All contract interactions use the SimpleBadge contract ABI.
+**RULE:** All contract interactions use the SimpleBadge contract ABI and follow the dynamic NFT model.
 
 **Implementation:**
 - Contract ABI in `lib/hooks/useSimpleBadge.ts`
-- Functions: `claim`, `hasBadge`, `claimed`, `balanceOf`, `adminMint`
+- Course enrollment mints exactly 1 NFT per course (tokenId)
+- Module completion updates on-chain progress state for the same NFT (no additional mints)
 - Network: Celo Alfajores testnet
 
 **DO NOT:**
+- Mint additional NFTs per module (one NFT per course only)
 - Modify contract ABI without verifying against deployed contract
 - Call contract functions without proper error handling
 - Skip transaction confirmation checks
@@ -229,12 +243,15 @@ type: brief description
 ## ⚠️ Known Issues & Workarounds
 
 ### Issue: Wallet Not Connecting
-- **Cause:** Privy configuration or browser extension conflict
-- **Fix:** Check `NEXT_PUBLIC_PRIVY_APP_ID` and clear browser cache
+- **Cause:** Privy configuration, missing WalletConnect projectId, or browser extension conflict
+- **Fix:**
+  - Ensure `NEXT_PUBLIC_PRIVY_APP_ID` is set
+  - If using WalletConnect, set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` or disable the connector
+  - Clear browser cache and ensure components are under WagmiProvider
 
 ### Issue: NFT Badge Not Detected
-- **Cause:** RPC rate limiting or contract address mismatch
-- **Fix:** Verify contract address and check transaction on CeloScan
+- **Cause:** RPC rate limiting, contract address mismatch, or calling wagmi hooks outside WagmiProvider
+- **Fix:** Verify `WagmiProvider` wraps the tree, contract address is correct, and check the transaction on CeloScan
 
 ### Issue: Course Content Not Loading
 - **Cause:** Database connection issues or missing migrations
