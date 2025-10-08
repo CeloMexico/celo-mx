@@ -3,6 +3,7 @@
 import { Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CoursePaywallProps {
   courseTitle: string;
@@ -21,6 +22,8 @@ export function CoursePaywall({
   onEnroll,
   isEnrolling = false,
 }: CoursePaywallProps) {
+  const { login } = useAuth();
+  
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full">
@@ -59,6 +62,7 @@ export function CoursePaywall({
               <div className="flex justify-center pt-2">
                 <Button
                   size="lg"
+                  onClick={login}
                   className="bg-celo-yellow hover:bg-celo-yellow/90 text-black font-bold"
                 >
                   Conectar Wallet
