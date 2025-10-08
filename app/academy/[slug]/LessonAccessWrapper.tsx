@@ -1,6 +1,6 @@
 "use client";
 
-import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
 import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
 import { CoursePaywall } from "@/components/academy/CoursePaywall";
 import { useEffect, useState } from "react";
@@ -20,8 +20,12 @@ export function LessonAccessWrapper({
   courseTitle,
   serverHasAccess,
 }: LessonAccessWrapperProps) {
-  const { address, isConnected } = useAccount();
+  const { isAuthenticated, isLoading: authLoading, wallet } = useAuth();
   const [mounted, setMounted] = useState(false);
+  
+  // Use Privy's wallet info instead of Wagmi
+  const address = wallet.address;
+  const isConnected = isAuthenticated && !!address;
 
   const {
     hasBadge,
@@ -38,8 +42,8 @@ export function LessonAccessWrapper({
     setMounted(true);
   }, []);
 
-  // While hydrating, show loading state
-  if (!mounted) {
+  // While hydrating or auth loading, show loading state
+  if (!mounted || authLoading) {
     return (
       <CoursePaywall
         courseTitle={courseTitle}
