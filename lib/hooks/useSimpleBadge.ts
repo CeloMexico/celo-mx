@@ -1,4 +1,4 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
 import { type Address, parseEther } from 'viem';
 
 // SimpleBadge contract ABI - focused on the functions we need
@@ -120,8 +120,21 @@ export function useBadgeBalance(userAddress?: Address, tokenId?: bigint) {
 // Hook to claim a badge (user function)
 export function useClaimBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { isConnected } = useAccount();
+  const { connectAsync, connectors } = useConnect();
 
-  const claimBadge = (tokenId: bigint) => {
+  const claimBadge = async (tokenId: bigint) => {
+    // Ensure a connector is connected before writing
+    if (!isConnected) {
+      // Prefer injected if available
+      const injectedConnector = connectors.find((c) => c.id === 'injected' && (c as any).ready);
+      const connector = injectedConnector || connectors[0];
+      if (!connector) {
+        throw new Error('No wallet connector available. On mobile, open in a web3-enabled browser or configure WalletConnect.');
+      }
+      await connectAsync({ connector });
+    }
+
     return writeContract({
       address: getContractAddress(),
       abi: SIMPLE_BADGE_ABI,

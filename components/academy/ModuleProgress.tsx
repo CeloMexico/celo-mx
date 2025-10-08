@@ -1,16 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, ExternalLink, Wallet } from "lucide-react";
+import { CheckCircle2, Loader2, ExternalLink, Wallet, Lock as LockIcon } from "lucide-react";
 import { useModuleCompletion } from "@/lib/hooks/useModuleCompletion";
 import { useAuth } from "@/hooks/useAuth";
 import { markModuleDone } from "@/lib/progress";
+import { useHasBadge, getCourseTokenId } from "@/lib/hooks/useSimpleBadge";
 
 export default function ModuleProgress({
   courseSlug, courseId, moduleIndex
 }:{ courseSlug:string; courseId:string; moduleIndex:number }) {
   const { wallet, login } = useAuth();
   const address = wallet.address;
+
+  const tokenId = getCourseTokenId(courseSlug, courseId);
+  const enrolled = useHasBadge(address as `0x${string}` | undefined, tokenId);
   
   const {
     hasCompleted,
@@ -49,8 +53,8 @@ export default function ModuleProgress({
     }
   };
 
-  // Show loading state while checking blockchain
-  if (isLoading) {
+  // Show loading state while checking enrollment/blockchain
+  if (isLoading || enrolled.isLoading) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -110,6 +114,19 @@ export default function ModuleProgress({
         <p className="text-xs text-red-600">
           {completionError.message || "Error al completar el módulo"}
         </p>
+      </div>
+    );
+  }
+
+  // Not enrolled gate
+  if (!enrolled.data) {
+    return (
+      <div className="space-y-2">
+        <Button disabled className="w-full md:w-auto" variant="outline">
+          <LockIcon />
+          Inscríbete para desbloquear
+        </Button>
+        <p className="text-xs text-muted-foreground">Debes inscribirte en el curso para completar este módulo.</p>
       </div>
     );
   }

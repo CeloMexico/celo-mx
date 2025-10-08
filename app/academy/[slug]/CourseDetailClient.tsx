@@ -14,6 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
 import dynamic from "next/dynamic";
+import { useAuth } from "@/hooks/useAuth";
+import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
 
 // Dynamically import the Web3 enrollment panel to avoid SSR issues
 const Web3EnrollPanel = dynamic(
@@ -41,6 +43,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Enrollment status (client-only)
+  const { wallet } = useAuth();
+  const address = wallet.address as `0x${string}` | undefined;
+  const enrollment = useCourseEnrollmentBadge(course.slug, course.id, address);
+  const isEnrolled = !!enrollment.hasBadge || !!enrollment.enrollmentSuccess;
 
   // Fallback enrollment handler for when Web3 isn't available
   const handleFallbackEnroll = (course: Course) => {
@@ -164,7 +172,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               )}
 
               {/* Course Curriculum */}
-              <CourseCurriculum course={course} isEnrolled={false} />
+              <CourseCurriculum course={course} isEnrolled={isEnrolled} />
 
               {/* Instructor */}
               <div>
@@ -244,7 +252,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                 </TabsContent>
 
                 <TabsContent value="syllabus" className="mt-6">
-                  <CourseCurriculum course={course} isEnrolled={false} />
+                  <CourseCurriculum course={course} isEnrolled={isEnrolled} />
                 </TabsContent>
 
                 <TabsContent value="instructor" className="mt-6">

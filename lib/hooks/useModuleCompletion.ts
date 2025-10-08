@@ -1,4 +1,4 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/hooks/useSimpleBadge';
 
@@ -98,8 +98,20 @@ export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigin
 // Hook to complete a module (updates the NFT metadata state)
 export function useCompleteModuleBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { isConnected } = useAccount();
+  const { connectAsync, connectors } = useConnect();
 
-  const completeModule = (courseTokenId: bigint, moduleIndex: number) => {
+  const completeModule = async (courseTokenId: bigint, moduleIndex: number) => {
+    // Ensure connector is connected before write
+    if (!isConnected) {
+      const injectedConnector = connectors.find((c) => c.id === 'injected' && (c as any).ready);
+      const connector = injectedConnector || connectors[0];
+      if (!connector) {
+        throw new Error('No wallet connector available. On mobile, open in a web3-enabled browser or configure WalletConnect.');
+      }
+      await connectAsync({ connector });
+    }
+
     return writeContract({
       address: getContractAddress(),
       abi: SIMPLE_BADGE_ABI,
