@@ -35,7 +35,7 @@ export function LessonAccessWrapper({
     isEnrolling,
     isConfirmingEnrollment,
     enrollmentSuccess,
-  } = useCourseEnrollmentBadge(courseSlug, courseId, address);
+  } = useCourseEnrollmentBadge(courseSlug, courseId, address as `0x${string}` | undefined);
 
   // Handle hydration
   useEffect(() => {
