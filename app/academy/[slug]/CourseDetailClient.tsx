@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
+import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl, getYouTubeEmbedFromUrl, isYouTubeUrl } from "@/lib/youtube";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
@@ -315,28 +315,43 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               ✕
             </Button>
             {(() => {
-              const videoId = getYouTubeVideoId(course.promoVideoUrl);
-              if (videoId) {
+              // Try to build a valid YouTube embed URL
+              const embedUrl = getYouTubeEmbedFromUrl(course.promoVideoUrl);
+              if (embedUrl) {
                 return (
                   <iframe
-                    src={getYouTubeEmbedUrl(videoId)}
+                    src={embedUrl}
                     title={`Video de ${course.title}`}
                     className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
                 );
-              } else {
+              }
+
+              // If not YouTube, try to embed the raw URL (e.g., Vimeo or direct mp4 in an iframe)
+              if (course.promoVideoUrl) {
                 return (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <Play className="w-16 h-16 mx-auto mb-4" />
-                      <p className="text-lg">¡Vista previa del video estará disponible pronto!</p>
-                      <p className="text-sm opacity-75">Esto mostrará el video de introducción del curso</p>
-                    </div>
-                  </div>
+                  <iframe
+                    src={course.promoVideoUrl}
+                    title={`Media de ${course.title}`}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
                 );
               }
+
+              // Fallback visual if nothing could be embedded
+              return (
+                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <Play className="w-16 h-16 mx-auto mb-4" />
+                    <p className="text-lg">¡Vista previa del video estará disponible pronto!</p>
+                    <p className="text-sm opacity-75">Esto mostrará el video de introducción del curso</p>
+                  </div>
+                </div>
+              );
             })()}
           </div>
         </div>

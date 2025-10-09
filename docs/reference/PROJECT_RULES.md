@@ -113,6 +113,23 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID  # Only if WalletConnect is needed
 - Hardcode admin addresses
 - Expose admin API routes without authentication
 
+### 7. Media & Embeds
+
+RULE: Course media must render reliably across common providers.
+
+Implementation:
+- MDX rendering must keep `rehype-raw` enabled to allow trusted iframe/video HTML
+- `components/mdx/MdxComponents.tsx` must export handlers for `iframe`, `video`, and `img`
+- `lib/youtube.ts` must support YouTube URL variants: watch, youtu.be, embed, shorts, live
+- `CourseDetailClient` should embed using `getYouTubeEmbedFromUrl(url)` and fall back to embedding the raw `promoVideoUrl` if not YouTube (e.g., Vimeo)
+
+DO NOT:
+- Remove `rehype-raw` from MDX
+- Assume only one YouTube URL format
+- Block iframes via component wrappers without providing an allowed embed path
+
+---
+
 ### 7. Styling & Theme System
 
 **RULE:** Use Tailwind CSS with the custom Celo theme.
@@ -210,6 +227,19 @@ type: brief description
 2. Optimize images with Next.js Image component
 3. Minimize client-side bundle size
 4. Use React Server Components when possible
+
+---
+
+## 📱 Mobile Safari Signing Policy
+
+- Mobile Safari does not expose an injected EIP-1193 provider.
+- With Privy v1 + Wagmi v2, contract writes still require a ready wagmi connector.
+- Therefore, you MUST either:
+  1) Enable WalletConnect by setting `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (preferred short-term), or
+  2) Instruct users to open the site in their wallet's in-app browser (which injects a provider), or
+  3) Plan the migration to Privy v3 + `@privy-io/wagmi` (long-term fix) to use the embedded wallet as a wagmi connector.
+
+Do not ship a default WalletConnect projectId. The app is coded to include WalletConnect only when the env var is set.
 
 ---
 

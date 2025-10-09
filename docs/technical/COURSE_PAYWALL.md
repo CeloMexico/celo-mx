@@ -206,6 +206,39 @@ if (hasBadge || hasClaimed) {
 
 ---
 
+## Mobile Signing (Safari) and Privy
+
+### Why transactions may fail on mobile Safari
+
+- The app uses Privy for authentication and Wagmi for contract writes.
+- Wagmi requires a ready EIP-1193 wallet connector to sign transactions (e.g., injected provider or WalletConnect session).
+- On desktop, an injected provider (e.g., MetaMask) is typically present, so signing works.
+- On mobile Safari/Chrome, there is no injected provider. Without WalletConnect configured, Wagmi has no ready connector and writes fail with errors like "provider not found" or "connector not connected".
+
+### Supported solutions that do NOT break desktop
+
+1) Enable WalletConnect
+- Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in your environment (Vercel).
+- Our code only enables the WalletConnect connector when this variable is present.
+- Desktop behavior remains unchanged; mobile users can connect/sign via their wallet app.
+
+2) Use a wallet's in-app browser
+- Open the site inside the wallet's in-app browser (e.g., MetaMask Browser).
+- This provides an injected provider so the current flow works without WalletConnect.
+
+3) Future (recommended): Upgrade to Privy v3 + `@privy-io/wagmi`
+- Privy v3 exposes a first-class wagmi connector for the embedded wallet.
+- This removes the need for WalletConnect on mobile Safari.
+- This is a larger migration and should be planned separately to avoid desktop regressions.
+
+### Current safeguards implemented
+
+- The application now always renders `WagmiProvider` around children to prevent provider-not-found crashes.
+- Write hooks auto-connect to a ready connector if available; if none are available, a clear error message is shown.
+- Module completion is gated by enrollment both in the UI and smart contract.
+
+---
+
 ## Configuration
 
 ### Environment Variables
