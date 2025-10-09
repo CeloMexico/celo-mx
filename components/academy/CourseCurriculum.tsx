@@ -236,13 +236,13 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                       {/* Direct content display for submodules */}
                       {submodule.content && (
                         <div className="mb-6 p-6 bg-muted/20 rounded-lg border border-muted">
-                          <div className="prose prose-sm max-w-none dark:prose-invert text-gray-800 dark:text-gray-100">
+                          <div className="prose prose-sm max-w-none dark:prose-invert text-gray-900 dark:text-white">
                             <div className="space-y-4 text-sm leading-relaxed">
                               {submodule.content.split('\n').map((line, index) => {
                                 // Handle headers
                                 if (line.startsWith('## ')) {
                                   return (
-                                    <h2 key={index} className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4 border-b-2 border-gray-300 dark:border-gray-600 pb-3">
+                                    <h2 key={index} className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4 border-b-2 border-gray-300 dark:border-white/40 pb-3">
                                       {line.replace('## ', '')}
                                     </h2>
                                   );
@@ -257,11 +257,11 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                 if (line.includes('**') && !line.startsWith('-')) {
                                   const parts = line.split(/(\*\*.*?\*\*)/g);
                                   return (
-                                    <p key={index} className="text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                    <p key={index} className="text-gray-700 dark:text-white/90 leading-relaxed mb-3">
                                       {parts.map((part, partIndex) => {
                                         if (part.startsWith('**') && part.endsWith('**')) {
                                           return (
-                                            <span key={partIndex} className="font-bold text-gray-900" dangerouslySetInnerHTML={{ __html: makeLinksClickable(part.replace(/\*\*/g, '')) }} />
+                                            <span key={partIndex} className="font-bold text-gray-900 dark:text-white" dangerouslySetInnerHTML={{ __html: makeLinksClickable(part.replace(/\*\*/g, '')) }} />
                                           );
                                         }
                                         return <span key={partIndex} dangerouslySetInnerHTML={{ __html: makeLinksClickable(part) }} />;
@@ -277,10 +277,10 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                   const description = parts.slice(1).join(':').trim();
                                   return (
                                     <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                      <span className="text-gray-500 mt-1 text-lg">•</span>
+                                      <span className="text-gray-500 dark:text-white/70 mt-1 text-lg">•</span>
                                       <div>
-                                        <span className="font-bold text-gray-900 text-base" dangerouslySetInnerHTML={{ __html: makeLinksClickable(title + ':') }}></span>
-                                        <span className="text-gray-700 ml-1" dangerouslySetInnerHTML={{ __html: makeLinksClickable(description) }}></span>
+                                        <span className="font-bold text-gray-900 dark:text-white text-base" dangerouslySetInnerHTML={{ __html: makeLinksClickable(title + ':') }}></span>
+                                        <span className="text-gray-700 dark:text-white/90 ml-1" dangerouslySetInnerHTML={{ __html: makeLinksClickable(description) }}></span>
                                       </div>
                                     </div>
                                   );
@@ -289,15 +289,15 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                 if (line.startsWith('- ')) {
                                   return (
                                     <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                      <span className="text-gray-500 mt-1">•</span>
-                                      <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace('- ', '')) }}></span>
+                                      <span className="text-gray-500 dark:text-white/70 mt-1">•</span>
+                                      <span className="text-gray-700 dark:text-white/90" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace('- ', '')) }}></span>
                                     </div>
                                   );
                                 }
                                 // Handle regular paragraphs
                                 if (line.trim() && !line.startsWith('##') && !line.startsWith('-')) {
                                   return (
-                                    <p key={index} className="text-gray-700 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line) }}></p>
+                                    <p key={index} className="text-gray-700 dark:text-white/90 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line) }}></p>
                                   );
                                 }
                                 // Handle empty lines
@@ -436,13 +436,13 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                               {/* Content display */}
                               {item.content && isExpanded && (
                                 <div className="ml-0 p-6 bg-muted/20 rounded-lg border border-muted">
-                                  <div className="prose prose-sm max-w-none dark:prose-invert text-gray-700 dark:text-gray-100">
+                                  <div className="prose prose-sm max-w-none dark:prose-invert text-gray-900 dark:text-white">
                                     <div className="space-y-4 text-sm leading-relaxed">
                                       {item.content.split('\n').map((line, index) => {
                                         // Handle headers
                                         if (line.startsWith('## ')) {
                                           return (
-                                            <h2 key={index} className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4 border-b-2 border-gray-300 dark:border-gray-600 pb-3">
+                                            <h2 key={index} className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4 border-b-2 border-gray-300 dark:border-white/40 pb-3">
                                               {line.replace('## ', '')}
                                             </h2>
                                           );
@@ -450,7 +450,7 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                         // Handle bold text lines (complete lines in bold)
                                         if (line.startsWith('**') && line.endsWith('**')) {
                                           return (
-                                            <div key={index} className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2">
+                                            <div key={index} className="font-bold text-gray-900 dark:text-white text-base mb-2">
                                               {line.replace(/\*\*/g, '')}
                                             </div>
                                           );
@@ -459,7 +459,7 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                         if (line.includes('**') && !line.startsWith('-')) {
                                           const parts = line.split(/(\*\*.*?\*\*)/g);
                                           return (
-                                            <p key={index} className="text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                            <p key={index} className="text-gray-700 dark:text-white/90 leading-relaxed mb-3">
                                               {parts.map((part, partIndex) => {
                                                 if (part.startsWith('**') && part.endsWith('**')) {
                                                   return (
@@ -481,10 +481,10 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                           const description = parts.slice(1).join(':').trim();
                                           return (
                                             <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                              <span className="text-gray-500 dark:text-gray-400 mt-1 text-lg">•</span>
+                                              <span className="text-gray-500 dark:text-white/70 mt-1 text-lg">•</span>
                                               <div>
-                                                <span className="font-bold text-gray-900 dark:text-gray-100 text-base">{title}:</span>
-                                                <span className="text-gray-700 dark:text-gray-200 ml-1">{description}</span>
+                                                <span className="font-bold text-gray-900 dark:text-white text-base">{title}:</span>
+                                                <span className="text-gray-700 dark:text-white/90 ml-1">{description}</span>
                                               </div>
                                             </div>
                                           );
@@ -493,15 +493,15 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                         if (line.startsWith('- ')) {
                                           return (
                                             <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                              <span className="text-gray-500 dark:text-gray-400 mt-1">•</span>
-                                              <span className="text-gray-700 dark:text-gray-200">{line.replace('- ', '')}</span>
+                                              <span className="text-gray-500 dark:text-white/70 mt-1">•</span>
+                                              <span className="text-gray-700 dark:text-white/90">{line.replace('- ', '')}</span>
                                             </div>
                                           );
                                         }
                                         // Handle regular paragraphs
                                         if (line.trim() && !line.startsWith('##') && !line.startsWith('-')) {
                                           return (
-                                            <p key={index} className="text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                            <p key={index} className="text-gray-700 dark:text-white/90 leading-relaxed mb-3">
                                               {line}
                                             </p>
                                           );

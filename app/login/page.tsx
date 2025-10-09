@@ -12,6 +12,7 @@ function LoginContent() {
   const { isAuthenticated, isLoading, login } = useAuth();
   
   const redirect = searchParams.get('redirect') || '/';
+  const error = searchParams.get('error');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -96,6 +97,11 @@ function LoginContent() {
             <p className="text-gray-600 dark:text-gray-400">
               Conecta tu wallet para acceder al dashboard
             </p>
+            {error === 'admin_required' && (
+              <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/30 dark:border-red-800 dark:text-red-200">
+                Acceso restringido: solo administradores pueden entrar al panel de administración.
+              </div>
+            )}
           </div>
 
           {/* Login Button */}

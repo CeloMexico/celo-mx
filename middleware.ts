@@ -22,9 +22,9 @@ const RATE_LIMIT_CONFIG = {
  * Protected route patterns
  */
 const PROTECTED_ROUTES = {
-  admin: /^\/admin/,
+  admin: /^\/admin(?!\/access-denied)/, // protect /admin but allow an access-denied page if added later
   api: {
-    admin: /^\/api\/admin-api/,  // Changed to avoid conflicts with /admin pages
+    admin: /^\/api\/admin\b/,
     protected: /^\/api\/(progress|user)/,
   },
 } as const;
@@ -207,9 +207,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
   
-  // TEMPORARY: Skip authentication for admin routes and admin API during testing
-  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-    console.log(`[DEBUG] Skipping middleware for admin route: ${pathname}`);
+  // Do not bypass admin checks in production. Allow login page to proceed.
+  if (pathname.startsWith('/login')) {
     return NextResponse.next();
   }
   
@@ -250,9 +249,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       
       if (isAdminPage) {
         console.log(`[DEBUG] Redirecting to login for admin page: ${pathname}`);
-        // Redirect to login page for web requests
+        // Redirect to login page with explicit admin-required error
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
+        loginUrl.searchParams.set('error', 'admin_required');
         return NextResponse.redirect(loginUrl);
       }
       
@@ -269,8 +269,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
         });
         
         if (isAdminPage) {
-          // Redirect to main app
-          return NextResponse.redirect(new URL('/', request.url));
+          // Redirect to login with a clear error message for admin-only area
+          const loginUrl = new URL('/login', request.url);
+          loginUrl.searchParams.set('redirect', pathname);
+          loginUrl.searchParams.set('error', 'admin_required');
+          return NextResponse.redirect(loginUrl);
         }
         
         return createForbiddenResponse('Admin role required');
