@@ -104,10 +104,11 @@ export function useCompleteModuleBadge() {
   const completeModule = async (courseTokenId: bigint, moduleIndex: number) => {
     // Ensure connector is connected before write
     if (!isConnected) {
-      const injectedConnector = connectors.find((c) => c.id === 'injected' && (c as any).ready);
-      const connector = injectedConnector || connectors[0];
+      const ready = connectors.filter((c) => (c as any)?.ready);
+      const injectedConnector = ready.find((c) => c.id === 'injected');
+      const connector = injectedConnector || ready[0];
       if (!connector) {
-        throw new Error('No wallet connector available. On mobile, open in a web3-enabled browser or configure WalletConnect.');
+        throw new Error('No wallet connector available. On mobile, open the site in your wallet\'s in-app browser (e.g., MetaMask) or configure WalletConnect in environment.');
       }
       await connectAsync({ connector });
     }
