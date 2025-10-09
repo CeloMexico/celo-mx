@@ -35,7 +35,7 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
   
   // Simple function to convert markdown links to clickable HTML
   const makeLinksClickable = (text: string) => {
-    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">$1</a>');
+    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline font-medium">$1</a>');
   };
 
   // Function to handle video click
@@ -236,13 +236,13 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                       {/* Direct content display for submodules */}
                       {submodule.content && (
                         <div className="mb-6 p-6 bg-muted/20 rounded-lg border border-muted">
-                          <div className="prose prose-sm max-w-none text-gray-700">
+                          <div className="prose prose-sm max-w-none dark:prose-invert text-gray-800 dark:text-gray-100">
                             <div className="space-y-4 text-sm leading-relaxed">
                               {submodule.content.split('\n').map((line, index) => {
                                 // Handle headers
                                 if (line.startsWith('## ')) {
                                   return (
-                                    <h2 key={index} className="text-2xl font-bold text-gray-900 mt-8 mb-4 border-b-2 border-gray-300 pb-3">
+                                    <h2 key={index} className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4 border-b-2 border-gray-300 dark:border-gray-600 pb-3">
                                       {line.replace('## ', '')}
                                     </h2>
                                   );
@@ -250,14 +250,14 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
                                 // Handle bold text lines (complete lines in bold)
                                 if (line.startsWith('**') && line.endsWith('**')) {
                                   return (
-                                    <div key={index} className="font-bold text-gray-900 text-base mb-2" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace(/\*\*/g, '')) }} />
+                                    <div key={index} className="font-bold text-gray-900 dark:text-gray-100 text-base mb-2" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace(/\*\*/g, '')) }} />
                                   );
                                 }
                                 // Handle paragraphs with bold text inline
                                 if (line.includes('**') && !line.startsWith('-')) {
                                   const parts = line.split(/(\*\*.*?\*\*)/g);
                                   return (
-                                    <p key={index} className="text-gray-700 leading-relaxed mb-3">
+                                    <p key={index} className="text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
                                       {parts.map((part, partIndex) => {
                                         if (part.startsWith('**') && part.endsWith('**')) {
                                           return (
