@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LEGACY_COURSE_TOKEN_IDS, getCourseTokenId } from '@/lib/hooks/useSimpleBadge';
+import { LEGACY_COURSE_TOKEN_IDS, getCourseTokenId } from '@/lib/courseToken';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

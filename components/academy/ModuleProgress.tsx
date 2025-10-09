@@ -5,7 +5,8 @@ import { CheckCircle2, Loader2, ExternalLink, Wallet, Lock as LockIcon } from "l
 import { useModuleCompletion } from "@/lib/hooks/useModuleCompletion";
 import { useAuth } from "@/hooks/useAuth";
 import { markModuleDone } from "@/lib/progress";
-import { useHasBadge, getCourseTokenId } from "@/lib/hooks/useSimpleBadge";
+import { useHasBadge } from "@/lib/hooks/useSimpleBadge";
+import { getCourseTokenId } from "@/lib/courseToken";
 
 export default function ModuleProgress({
   courseSlug, courseId, moduleIndex

@@ -5,7 +5,7 @@
 
 import { createPublicClient, http, type Address } from 'viem';
 import { celoAlfajores } from 'viem/chains';
-import { generateTokenIdFromCourseId, LEGACY_COURSE_TOKEN_IDS } from './hooks/useSimpleBadge';
+import { generateTokenIdFromCourseId, LEGACY_COURSE_TOKEN_IDS } from '@/lib/courseToken';
 
 // SimpleBadge contract ABI - only what we need for verification
 const SIMPLE_BADGE_ABI = [

@@ -1,6 +1,8 @@
+'use client';
+
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
 import { type Address } from 'viem';
-import { getCourseTokenId } from '@/lib/hooks/useSimpleBadge';
+import { getCourseTokenId } from '@/lib/courseToken';
 
 // SimpleBadge contract ABI - for module completion tracking
 const SIMPLE_BADGE_ABI = [
