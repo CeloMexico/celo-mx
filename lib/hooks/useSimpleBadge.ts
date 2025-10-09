@@ -1,5 +1,7 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
-import { type Address, parseEther } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
+import { useState } from 'react';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 
 // SimpleBadge contract ABI - focused on the functions we need
 const SIMPLE_BADGE_ABI = [
@@ -119,36 +121,116 @@ export function useBadgeBalance(userAddress?: Address, tokenId?: bigint) {
 
 // Hook to claim a badge (user function)
 export function useClaimBadge() {
-  const { writeContract, data: hash, error, isPending } = useWriteContract();
+  const { writeContract, data: wagmiHash, error: wagmiError, isPending } = useWriteContract();
   const { isConnected } = useAccount();
   const { connectAsync, connectors } = useConnect();
+  const { ready, authenticated } = usePrivy();
+  const { wallets } = useWallets();
+  const [fallbackHash, setFallbackHash] = useState<`0x${string}` | undefined>(undefined);
+  const [fallbackError, setFallbackError] = useState<Error | null>(null);
 
   const claimBadge = async (tokenId: bigint) => {
-    // Ensure a connector is connected before writing
-    if (!isConnected) {
-      // Use only connectors that are ready
-      const ready = connectors.filter((c) => (c as any)?.ready);
-      // Prefer injected if available
-      const injectedConnector = ready.find((c) => c.id === 'injected');
-      const connector = injectedConnector || ready[0];
-      if (!connector) {
-        throw new Error('No wallet connector available. On mobile, open the site in your wallet\'s in-app browser (e.g., MetaMask) or configure WalletConnect in environment.');
+    // 1) Try wagmi connector path first
+    try {
+      if (!isConnected) {
+        const readyConnectors = connectors.filter((c) => (c as any)?.ready);
+        const injected = readyConnectors.find((c) => c.id === 'injected');
+        const connector = injected || readyConnectors[0];
+        if (connector) {
+          await connectAsync({ connector });
+        }
       }
-      await connectAsync({ connector });
+      if (isConnected) {
+        return await writeContract({
+          address: getContractAddress(),
+          abi: SIMPLE_BADGE_ABI,
+          functionName: 'claim',
+          args: [tokenId],
+        });
+      }
+    } catch (_) {
+      // fallthrough to Privy fallback
     }
 
-    return writeContract({
-      address: getContractAddress(),
-      abi: SIMPLE_BADGE_ABI,
-      functionName: 'claim',
-      args: [tokenId],
-    });
+    // 2) Privy embedded wallet fallback (mobile Safari without connectors)
+    try {
+      if (!ready || !authenticated || !wallets || wallets.length === 0) {
+        throw new Error('No Privy wallet available. Please sign in to Privy.');
+      }
+      const primary = wallets[0] as any;
+      if (typeof primary.getEthereumProvider !== 'function') {
+        throw new Error('Privy provider unavailable in this environment.');
+      }
+      const provider = await primary.getEthereumProvider();
+
+      // Ensure we're on Celo Alfajores before sending tx (chainId 44787 = 0xaef3)
+      await ensureCeloAlfajores(provider);
+
+      const data = encodeFunctionData({
+        abi: SIMPLE_BADGE_ABI,
+        functionName: 'claim',
+        args: [tokenId],
+      });
+      const from = primary.address || (await provider.request({ method: 'eth_accounts' }))[0];
+      const txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{ from, to: getContractAddress(), data, value: '0x0' }],
+      });
+      setFallbackHash(txHash as `0x${string}`);
+      return txHash;
+    } catch (err: any) {
+      setFallbackError(err instanceof Error ? err : new Error(String(err)));
+      throw err;
+    }
   };
+
+  // Ensure Privy provider is connected to Celo Alfajores (44787)
+  async function ensureCeloAlfajores(provider: any) {
+    try {
+      const desiredHex = '0xaef3'; // 44787
+      const current = await provider.request({ method: 'eth_chainId' });
+      if (typeof current === 'string' && current.toLowerCase() === desiredHex) return;
+      try {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: desiredHex }],
+        });
+        return;
+      } catch (switchErr: any) {
+        // 4902: Unrecognized chain
+        if (switchErr?.code === 4902 || /unrecognized|unknown chain/i.test(String(switchErr?.message))) {
+          try {
+            await provider.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: desiredHex,
+                chainName: 'Celo Alfajores',
+                nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
+                rpcUrls: ['https://alfajores-forno.celo-testnet.org'],
+                blockExplorerUrls: ['https://alfajores.celoscan.io'],
+              }],
+            });
+            // Try switching again after adding
+            await provider.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: desiredHex }],
+            });
+            return;
+          } catch (_) {
+            // If add/switch fails, continue; the tx may still succeed if provider routes correctly
+          }
+        }
+        // If other switch errors, proceed without hard fail
+      }
+    } catch (_) {
+      // Ignore chain detection errors; best-effort only
+    }
+  }
 
   return {
     claimBadge,
-    hash,
-    error,
+    hash: (wagmiHash as `0x${string}` | undefined) || fallbackHash,
+    error: wagmiError || fallbackError,
     isPending,
   };
 }
