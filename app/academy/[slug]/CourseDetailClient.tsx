@@ -112,11 +112,20 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         </>
                       );
                     } else {
+                      // No valid YouTube ID; fall back to course cover image if available
                       return (
                         <>
-                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <span className="text-white font-semibold text-2xl text-center px-8">{course.title}</span>
-                          </div>
+                          {course.coverUrl ? (
+                            <img
+                              src={course.coverUrl}
+                              alt={`Imagen de portada de ${course.title}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                              <span className="text-white font-semibold text-2xl text-center px-8">{course.title}</span>
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                             <Button
                               size="lg"
@@ -133,9 +142,20 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   })()}
                 </div>
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-white font-semibold text-2xl text-center px-8">{course.title}</span>
-                </div>
+                // No promo video -> show cover image if present, else gradient fallback
+                <>
+                  {course.coverUrl ? (
+                    <img
+                      src={course.coverUrl}
+                      alt={`Imagen de portada de ${course.title}`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <span className="text-white font-semibold text-2xl text-center px-8">{course.title}</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
