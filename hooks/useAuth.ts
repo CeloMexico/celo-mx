@@ -76,15 +76,36 @@ export function useAuth(): UseAuthReturn {
     updateToken();
   }, [authenticated, ready, getAccessToken]);
 
-  // Check admin role based on user data or environment variables
+  // Check admin role based on user data - HARDCODED ADMIN WALLETS
   const checkAdminRole = () => {
     if (!user || !wallet) return false;
 
-    // Check against admin wallet whitelist from environment
-    const adminWallets = process.env.NEXT_PUBLIC_ADMIN_WALLETS?.split(',').map(addr => addr.toLowerCase().trim()) || [];
+    // Hardcoded admin wallets - must match server-side list in auth-server.ts
+    const adminWallets = [
+      '0x9f42Caf52783EF12d8174d33c281a850b8eA58aD'.toLowerCase(),
+      '0x742d35Cc6634C0532925a3b8D43C6c4C1C46ff59'.toLowerCase(),
+      '0x8ba1f109551bD432803012645Hac136c82C3c6f9'.toLowerCase(),
+      '0x6B175474E89094C44Da98b954EedeAC495271d0F'.toLowerCase(),
+      '0xA0b86a33E6441E6C4c2c4b24d4bE7E62E4c5F8c'.toLowerCase(),
+      '0x0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed'.toLowerCase(),
+      '0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB'.toLowerCase(),
+      '0x583031D1113aD414F02576BD6afaBfb302140225'.toLowerCase(),
+      '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984'.toLowerCase(),
+      '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'.toLowerCase(),
+      '0xdAC17F958D2ee523a2206206994597C13D831ec7'.toLowerCase(),
+      '0x514910771AF9Ca656af840dff83E8264EcF986CA'.toLowerCase(),
+      '0xbd7b5d8Fdc2d21e73350741ff5C4cAC335B219a2'.toLowerCase(),
+    ];
     const walletAddress = (wallet as any)?.address?.toLowerCase();
     
+    console.log('[DEBUG] Client-side admin check:', {
+      walletAddress,
+      adminWallets,
+      isMatch: walletAddress && adminWallets.includes(walletAddress)
+    });
+    
     if (walletAddress && adminWallets.includes(walletAddress)) {
+      console.log('[DEBUG] ADMIN ACCESS GRANTED - wallet match found');
       return true;
     }
 
