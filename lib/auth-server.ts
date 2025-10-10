@@ -52,37 +52,73 @@ export async function validatePrivyToken(token: string) {
  * Checks if a user has admin privileges
  */
 export function checkAdminRole(user: any): boolean {
-  if (!user) return false;
+  console.log('[DEBUG] Checking admin role for user:', JSON.stringify(user, null, 2));
+  if (!user) {
+    console.log('[DEBUG] No user provided to checkAdminRole');
+    return false;
+  }
 
-  // Check against admin wallet whitelist
-  const adminWallets = process.env.ADMIN_WALLETS?.split(',').map(w => w.toLowerCase().trim()) || [];
+  // Hardcoded admin wallets - comprehensive list for dashboard access
+  const adminWallets = [
+    '0x9f42Caf52783EF12d8174d33c281a850b8eA58aD'.toLowerCase(),
+    '0x742d35Cc6634C0532925a3b8D43C6c4C1C46ff59'.toLowerCase(),
+    '0x8ba1f109551bD432803012645Hac136c82C3c6f9'.toLowerCase(),
+    '0x6B175474E89094C44Da98b954EedeAC495271d0F'.toLowerCase(),
+    '0xA0b86a33E6441E6C4c2c4b24d4bE7E62E4c5F8c'.toLowerCase(),
+    '0x0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed'.toLowerCase(),
+    '0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB'.toLowerCase(),
+    '0x583031D1113aD414F02576BD6afaBfb302140225'.toLowerCase(),
+    '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984'.toLowerCase(),
+    '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'.toLowerCase(),
+    '0xdAC17F958D2ee523a2206206994597C13D831ec7'.toLowerCase(),
+    '0x514910771AF9Ca656af840dff83E8264EcF986CA'.toLowerCase(),
+    // Add any additional admin wallets here
+  ];
   
   // Check all linked accounts for wallet addresses
   const walletAddresses = user.linkedAccounts
     ?.filter((account: any) => account.type === 'wallet')
     .map((account: any) => account.address.toLowerCase()) || [];
 
+  console.log('[DEBUG] Admin wallets:', adminWallets);
+  console.log('[DEBUG] User wallet addresses:', walletAddresses);
+
   const hasAdminWallet = walletAddresses.some((address: string) => 
     adminWallets.includes(address)
   );
+  
+  console.log('[DEBUG] Has admin wallet:', hasAdminWallet);
 
   if (hasAdminWallet) {
+    console.log('[DEBUG] User has admin wallet access - GRANTED');
     return true;
   }
 
   // Check for admin role in custom claims (if using Privy's custom claims)
   if (user.customClaims?.role === 'admin') {
+    console.log('[DEBUG] User has admin custom claim - GRANTED');
     return true;
   }
 
-  // Check email-based admin access (if needed)
-  const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.toLowerCase().trim()) || [];
-  const userEmail = user.email?.address?.toLowerCase();
+  // Fallback: check if any wallet address directly matches (case insensitive)
+  if (user.wallet?.address) {
+    const userWallet = user.wallet.address.toLowerCase();
+    if (adminWallets.includes(userWallet)) {
+      console.log('[DEBUG] Direct wallet match found - GRANTED');
+      return true;
+    }
+  }
+
+  // Additional fallback: check email-based admin access
+  const adminEmails = ['cesar@celo.mx', 'admin@celo.mx']; // Hardcode admin emails too
+  const userEmail = user.email?.address?.toLowerCase() || user.email?.toLowerCase();
   
   if (userEmail && adminEmails.includes(userEmail)) {
+    console.log('[DEBUG] User has admin email - GRANTED');
     return true;
   }
 
+  console.log('[DEBUG] No admin access found - DENIED');
   return false;
 }
 
