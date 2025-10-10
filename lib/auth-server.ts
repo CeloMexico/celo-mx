@@ -159,15 +159,19 @@ export async function getAuthenticatedUser(request: Request) {
     console.log('[DEBUG] Found token in Authorization header');
   }
 
-  // Try to get token from cookies if not in header
-  if (!token) {
-    const cookies = request.headers.get('cookie');
-    console.log('[DEBUG] Cookies:', cookies ? 'present' : 'none');
-    if (cookies) {
-      const tokenMatch = cookies.match(/privy-token=([^;]+)/);
+  // Try to get token and wallet from cookies if not in header
+  const cookiesHeader = request.headers.get('cookie');
+  console.log('[DEBUG] Cookies:', cookiesHeader ? 'present' : 'none');
+  let walletFromCookie: string | null = null;
+  if (cookiesHeader) {
+    if (!token) {
+      const tokenMatch = cookiesHeader.match(/privy-token=([^;]+)/);
       token = tokenMatch ? decodeURIComponent(tokenMatch[1]) : null;
       console.log('[DEBUG] Token from cookies:', token ? 'found' : 'not found');
     }
+    const walletMatch = cookiesHeader.match(/wallet-address=([^;]+)/);
+    walletFromCookie = walletMatch ? decodeURIComponent(walletMatch[1]) : null;
+    console.log('[DEBUG] Wallet from cookie:', walletFromCookie || 'none');
   }
 
   if (!token) {
@@ -187,6 +191,31 @@ export async function getAuthenticatedUser(request: Request) {
     isAdmin: validation.isAdmin,
     error: validation.error
   });
+
+  // Fallback: if not admin yet, but wallet cookie exists, try with wallet from cookie
+  if (validation.isValid && !validation.isAdmin && walletFromCookie) {
+    const fallbackUser = {
+      ...(validation.user || {}),
+      wallet: { address: walletFromCookie },
+      linkedAccounts: [
+        ...((validation.user && (validation.user as any).linkedAccounts) || []),
+        { type: 'wallet', address: walletFromCookie },
+      ],
+    } as any;
+    const fallbackAdmin = checkAdminRole(fallbackUser);
+    console.log('[DEBUG] Fallback admin check with cookie wallet:', {
+      walletFromCookie,
+      fallbackAdmin,
+    });
+    if (fallbackAdmin) {
+      return {
+        isAuthenticated: true,
+        isAdmin: true,
+        user: fallbackUser,
+        error: undefined,
+      };
+    }
+  }
 
   return {
     isAuthenticated: validation.isValid,

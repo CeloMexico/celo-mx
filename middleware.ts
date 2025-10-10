@@ -22,7 +22,7 @@ const RATE_LIMIT_CONFIG = {
  * Protected route patterns
  */
 const PROTECTED_ROUTES = {
-  admin: /^\/admin\/NEVER_MATCH_THIS_PATH/, // DISABLED - allow client-side admin auth only
+  admin: /^\/admin(?!\/access-denied)/, // Re-enable admin gate
   api: {
     admin: /^\/api\/admin\b/,
     protected: /^\/api\/(progress|user)/,

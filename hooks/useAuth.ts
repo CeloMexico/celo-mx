@@ -61,6 +61,12 @@ export function useAuth(): UseAuthReturn {
             // Also set as cookie for SSR
             document.cookie = `privy-token=${token}; path=/; max-age=86400; SameSite=strict`;
           }
+
+          // Persist current wallet address in a cookie for SSR admin checks
+          const currentWallet = (wallet as any)?.address;
+          if (currentWallet) {
+            document.cookie = `wallet-address=${currentWallet}; path=/; max-age=86400; SameSite=strict`;
+          }
         } catch (error) {
           console.error('Failed to get access token:', error);
           setAccessToken(null);
@@ -68,13 +74,14 @@ export function useAuth(): UseAuthReturn {
       } else {
         setAccessToken(null);
         localStorage.removeItem('privy-token');
-        // Clear cookie
+        // Clear cookies
         document.cookie = 'privy-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'wallet-address=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
     };
 
     updateToken();
-  }, [authenticated, ready, getAccessToken]);
+  }, [authenticated, ready, getAccessToken, wallet]);
 
   // Check admin role based on user data - HARDCODED ADMIN WALLETS
   const checkAdminRole = () => {
@@ -138,6 +145,7 @@ export function useAuth(): UseAuthReturn {
       setIsAdmin(false);
       localStorage.removeItem('privy-token');
       document.cookie = 'privy-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'wallet-address=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } catch (error) {
       console.error('Logout error:', error);
     }
