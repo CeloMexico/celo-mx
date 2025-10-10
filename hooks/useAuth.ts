@@ -185,7 +185,7 @@ export function useAuth(): UseAuthReturn {
   };
 }
 
-// Hook for admin-only components
+// Hook for admin-only components - NO REDIRECTS, JUST AUTH DATA
 export function useRequireAdmin() {
   const auth = useAuth();
   
@@ -195,22 +195,11 @@ export function useRequireAdmin() {
       isAdmin: auth.isAdmin,
       nodeEnv: process.env.NODE_ENV,
       currentPath: window.location.pathname,
-      adminWallets: process.env.NEXT_PUBLIC_ADMIN_WALLETS,
       currentWallet: auth.wallet.address
     });
     
-    // TEMPORARILY DISABLED ALL REDIRECTS - Allow admin access for debugging
-    console.log('[DEBUG] Admin redirect is DISABLED for debugging');
-    
-    // const isDevelopment = process.env.NODE_ENV === 'development';
-    // if (!isDevelopment && auth.isAuthenticated && !auth.isAdmin) {
-    //   console.warn('[REDIRECT] Non-admin user attempted to access admin area, redirecting to /', {
-    //     currentPath: window.location.pathname,
-    //     isAuthenticated: auth.isAuthenticated,
-    //     isAdmin: auth.isAdmin
-    //   });
-    //   window.location.href = '/';
-    // }
+    // NO REDIRECTS - Admin access is controlled client-side only
+    console.log('[DEBUG] Client-side admin auth only - no redirects');
   }, [auth.isAuthenticated, auth.isAdmin]);
   
   return auth;
