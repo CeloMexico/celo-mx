@@ -72,6 +72,7 @@ export function checkAdminRole(user: any): boolean {
     '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'.toLowerCase(),
     '0xdAC17F958D2ee523a2206206994597C13D831ec7'.toLowerCase(),
     '0x514910771AF9Ca656af840dff83E8264EcF986CA'.toLowerCase(),
+    '0xbd7b5d8Fdc2d21e73350741ff5C4cAC335B219a2'.toLowerCase(),
     // Add any additional admin wallets here
   ];
   
