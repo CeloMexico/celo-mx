@@ -141,6 +141,7 @@ Rules and invariants (from docs/reference/PROJECT_RULES.md)
 Important references
 - README: README.md (Quick Start, endpoints, and links)
 - Project rules: docs/reference/PROJECT_RULES.md
+- Collaboration guide: docs/COLLABORATION_GUIDE.md (for multiple developers)
 - Course paywall: docs/technical/COURSE_PAYWALL.md
 - Dynamic NFT solution: docs/technical/DYNAMIC_NFT_SOLUTION.md
 - Deployment guide: docs/deployment/DEPLOYMENT_GUIDE.md

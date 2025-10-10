@@ -1,4 +1,4 @@
-const nextJest = require('next/jest')
+import nextJest from 'next/jest.js'
 
 // Create Jest config with Next.js
 const createJestConfig = nextJest({
@@ -11,20 +11,21 @@ const customJestConfig = {
   // Test environment
   testEnvironment: 'jsdom',
   
-  // Setup files
-  setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.js'],
+  // Setup files (configured below)
   
-  // Module paths
-  moduleNameMapping: {
+  // Module name mapping
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
   
-  // Test patterns
+  // Test patterns (exclude Playwright tests)
   testMatch: [
     '<rootDir>/tests/**/*.{test,spec}.{js,jsx,ts,tsx}',
     '<rootDir>/app/**/*.{test,spec}.{js,jsx,ts,tsx}',
     '<rootDir>/components/**/*.{test,spec}.{js,jsx,ts,tsx}',
     '<rootDir>/lib/**/*.{test,spec}.{js,jsx,ts,tsx}',
+    '!<rootDir>/tests/e2e/**/*',
+    '!<rootDir>/tests/smoke/**/*',
   ],
   
   // Ignore patterns
@@ -108,12 +109,10 @@ const customJestConfig = {
   // Test timeout (30 seconds for integration tests)
   testTimeout: 30000,
   
-  // Global setup and teardown
-  globalSetup: '<rootDir>/tests/setup/global.setup.js',
-  globalTeardown: '<rootDir>/tests/setup/global.teardown.js',
-  
-  // Environment variables for testing
-  setupFiles: ['<rootDir>/tests/setup/env.setup.js'],
+  // Environment variables for testing (commented out until files exist)
+  // globalSetup: '<rootDir>/tests/setup/global.setup.js',
+  // globalTeardown: '<rootDir>/tests/setup/global.teardown.js',
+  // setupFiles: ['<rootDir>/tests/setup/env.setup.js'],
   
   // Transform ignore patterns
   transformIgnorePatterns: [
@@ -144,19 +143,12 @@ const customJestConfig = {
   // Error on deprecated features
   errorOnDeprecated: true,
   
-  // Collect coverage from untested files
-  collectCoverageFrom: [
-    ...require('./jest.config.js').collectCoverageFrom || [],
-    '!**/*.stories.{js,ts,tsx}', // Exclude Storybook files
-    '!**/tests/**', // Exclude test files themselves
-  ],
   
-  // Custom matchers
+  // Setup files after env (only include existing files)
   setupFilesAfterEnv: [
     '<rootDir>/tests/setup/jest.setup.js',
-    '<rootDir>/tests/setup/custom-matchers.js',
   ],
 }
 
 // Export the Jest configuration
-module.exports = createJestConfig(customJestConfig)
+export default createJestConfig(customJestConfig)
