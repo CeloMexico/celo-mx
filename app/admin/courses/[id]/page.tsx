@@ -575,6 +575,21 @@ className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus
                         onChange={(e) => updateLesson(moduleIndex, lessonIndex, 'summary', e.target.value)}
                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                       />
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          Lesson Content (MDX)
+                        </label>
+                        <textarea
+                          placeholder="Write your lesson content in MDX format...\n\n# Lesson Title\n\nThis is a paragraph with **bold** and *italic* text.\n\n## Section\n\n- List item 1\n- List item 2\n\n```javascript\nconsole.log('Hello World');\n```"
+                          rows={8}
+                          value={lesson.contentMdx || ''}
+                          onChange={(e) => updateLesson(moduleIndex, lessonIndex, 'contentMdx', e.target.value)}
+                          className="w-full px-2 py-1 text-xs font-mono border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          MDX supports Markdown syntax with React components. Use # for headings, ** for bold, * for italic, ``` for code blocks.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
