@@ -92,6 +92,12 @@ export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
       enabled: !!userAddress && tokenId !== undefined,
+      // Cache for 30 seconds to reduce redundant calls
+      staleTime: 30 * 1000,
+      // Keep in cache for 5 minutes
+      gcTime: 5 * 60 * 1000,
+      // Retry failed requests
+      retry: 2,
     },
   });
 }
@@ -105,6 +111,12 @@ export function useHasClaimed(userAddress?: Address, tokenId?: bigint) {
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
       enabled: !!userAddress && tokenId !== undefined,
+      // Cache for 30 seconds to reduce redundant calls
+      staleTime: 30 * 1000,
+      // Keep in cache for 5 minutes
+      gcTime: 5 * 60 * 1000,
+      // Retry failed requests
+      retry: 2,
     },
   });
 }
@@ -118,6 +130,12 @@ export function useBadgeBalance(userAddress?: Address, tokenId?: bigint) {
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
       enabled: !!userAddress && tokenId !== undefined,
+      // Cache for 30 seconds to reduce redundant calls
+      staleTime: 30 * 1000,
+      // Keep in cache for 5 minutes
+      gcTime: 5 * 60 * 1000,
+      // Retry failed requests
+      retry: 2,
     },
   });
 }

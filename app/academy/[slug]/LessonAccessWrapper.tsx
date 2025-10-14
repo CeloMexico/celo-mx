@@ -1,105 +1,98 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
 import { CoursePaywall } from "@/components/academy/CoursePaywall";
 import { useEffect, useState } from "react";
+import { useEnrollment, useHasAccess } from "@/lib/contexts/EnrollmentContext";
 
 interface LessonAccessWrapperProps {
   children: React.ReactNode;
-  courseId: string;
-  courseSlug: string;
   courseTitle: string;
-  serverHasAccess: boolean;
 }
 
 export function LessonAccessWrapper({
   children,
-  courseId,
-  courseSlug,
   courseTitle,
-  serverHasAccess,
 }: LessonAccessWrapperProps) {
-  const { isAuthenticated, isLoading: authLoading, wallet } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const enrollment = useEnrollment();
+  const hasAccess = useHasAccess();
   
-  // Use Privy's wallet info instead of Wagmi
-  const address = wallet.address;
-  const isConnected = isAuthenticated && !!address;
-
-  const {
-    hasBadge,
-    hasClaimed,
-    isLoading,
-    enrollInCourse,
-    isEnrolling,
-    isConfirmingEnrollment,
-    enrollmentSuccess,
-  } = useCourseEnrollmentBadge(courseSlug, courseId, address as `0x${string}` | undefined);
+  console.log('[LESSON ACCESS WRAPPER] Component state:', {
+    mounted,
+    isLoading: enrollment.isLoading,
+    isWalletConnected: enrollment.isWalletConnected,
+    hasAccess,
+  });
 
   // Handle hydration
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // While hydrating or auth loading, show loading state
-  if (!mounted || authLoading) {
+  // While hydrating, show loading state
+  if (!mounted) {
+    console.log('[LESSON ACCESS WRAPPER] Not mounted yet, showing loading');
     return (
       <CoursePaywall
         courseTitle={courseTitle}
-        courseSlug={courseSlug}
+        courseSlug=""
+        reason="LOADING"
+      />
+    );
+  }
+
+  // If checking enrollment status
+  if (enrollment.isLoading) {
+    console.log('[LESSON ACCESS WRAPPER] Enrollment loading, showing loading state');
+    return (
+      <CoursePaywall
+        courseTitle={courseTitle}
+        courseSlug=""
         reason="LOADING"
       />
     );
   }
 
   // If wallet is not connected
-  if (!isConnected || !address) {
+  if (!enrollment.isWalletConnected) {
+    console.log('[LESSON ACCESS WRAPPER] Wallet not connected, showing wallet connection prompt');
     return (
       <CoursePaywall
         courseTitle={courseTitle}
-        courseSlug={courseSlug}
+        courseSlug=""
         reason="WALLET_NOT_CONNECTED"
         isWalletConnected={false}
       />
     );
   }
 
-  // If checking enrollment status
-  if (isLoading) {
-    return (
-      <CoursePaywall
-        courseTitle={courseTitle}
-        courseSlug={courseSlug}
-        reason="LOADING"
-      />
-    );
-  }
-
-  // Check if user has access (either from server verification or client check)
-  const hasAccess = serverHasAccess || hasBadge || hasClaimed || enrollmentSuccess;
-
+  // Check if user has access
   if (!hasAccess) {
+    console.log('[LESSON ACCESS WRAPPER] No access, showing enrollment prompt');
+    
     const handleEnroll = async () => {
       try {
-        await enrollInCourse();
+        console.log('[LESSON ACCESS WRAPPER] Attempting enrollment...');
+        await enrollment.enrollInCourse();
+        console.log('[LESSON ACCESS WRAPPER] Enrollment successful');
       } catch (error) {
-        console.error("Enrollment error:", error);
+        console.error('[LESSON ACCESS WRAPPER] Enrollment error:', error);
       }
     };
 
     return (
       <CoursePaywall
         courseTitle={courseTitle}
-        courseSlug={courseSlug}
+        courseSlug=""
         reason="NOT_ENROLLED"
         isWalletConnected={true}
         onEnroll={handleEnroll}
-        isEnrolling={isEnrolling || isConfirmingEnrollment}
+        isEnrolling={enrollment.isEnrolling || enrollment.isConfirmingEnrollment}
       />
     );
   }
 
   // User has access, show the lesson content
+  console.log('[LESSON ACCESS WRAPPER] Access granted, rendering lesson content');
   return <>{children}</>;
 }

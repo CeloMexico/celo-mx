@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl, getYouTubeEmbedFromUrl, isYouTubeUrl } from "@/lib/youtube";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
-import { useCourseEnrollmentBadge } from "@/lib/hooks/useSimpleBadge";
+import { EnrollmentProvider, useEnrollment } from "@/lib/contexts/EnrollmentContext";
 
 // Dynamically import the Web3 enrollment panel to avoid SSR issues
 const Web3EnrollPanel = dynamic(
@@ -35,7 +35,8 @@ interface CourseDetailClientProps {
   course: Course;
 }
 
-export function CourseDetailClient({ course }: CourseDetailClientProps) {
+// Inner component that uses enrollment context
+function CourseDetailInner({ course }: CourseDetailClientProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -44,11 +45,17 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     setIsMounted(true);
   }, []);
 
-  // Enrollment status (client-only)
-  const { wallet } = useAuth();
-  const address = wallet.address as `0x${string}` | undefined;
-  const enrollment = useCourseEnrollmentBadge(course.slug, course.id, address);
-  const isEnrolled = !!enrollment.hasBadge || !!enrollment.enrollmentSuccess;
+  // Get enrollment status from context
+  const enrollment = useEnrollment();
+  const isEnrolled = enrollment.hasBadge || enrollment.hasClaimed || enrollment.enrollmentSuccess || enrollment.serverHasAccess;
+  
+  console.log('[COURSE DETAIL] Enrollment status:', {
+    hasBadge: enrollment.hasBadge,
+    hasClaimed: enrollment.hasClaimed,
+    enrollmentSuccess: enrollment.enrollmentSuccess,
+    serverHasAccess: enrollment.serverHasAccess,
+    isEnrolled,
+  });
 
   // Fallback enrollment handler for when Web3 isn't available
   const handleFallbackEnroll = (course: Course) => {
@@ -377,5 +384,20 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         </div>
       )}
     </div>
+  );
+}
+
+// Main export component with enrollment provider
+export function CourseDetailClient({ course }: CourseDetailClientProps) {
+  console.log('[COURSE DETAIL CLIENT] Initializing for course:', course.slug);
+  
+  return (
+    <EnrollmentProvider
+      courseSlug={course.slug}
+      courseId={course.id}
+      serverHasAccess={false} // Course detail page doesn't have server verification
+    >
+      <CourseDetailInner course={course} />
+    </EnrollmentProvider>
   );
 }

@@ -225,3 +225,23 @@ export async function getAuthenticatedUser(request: Request) {
     error: validation.error || undefined,
   };
 }
+
+/**
+ * Extract user wallet address from authentication
+ */
+export function getUserWalletAddress(user: any): string | null {
+  if (!user) return null;
+  
+  // Try linked accounts first (most reliable)
+  const walletAccount = user.linkedAccounts?.find((account: any) => account.type === 'wallet');
+  if (walletAccount?.address) {
+    return walletAccount.address.toLowerCase();
+  }
+  
+  // Fallback to direct wallet property
+  if (user.wallet?.address) {
+    return user.wallet.address.toLowerCase();
+  }
+  
+  return null;
+}

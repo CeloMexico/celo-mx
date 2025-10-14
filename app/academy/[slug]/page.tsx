@@ -4,8 +4,11 @@ import RenderMdx from '@/components/mdx/RenderMdx'
 import LessonLayout from '@/components/academy/LessonLayout'
 import { getCourseBySlug, COURSES } from '@/data/academy'
 import { LessonAccessWrapper } from './LessonAccessWrapper'
+import { EnrollmentProvider } from '@/lib/contexts/EnrollmentContext'
 import { cookies } from 'next/headers'
 import type { Address } from 'viem'
+import { getAuthenticatedUser, getUserWalletAddress } from '@/lib/auth-server'
+import { verifyEnrollmentAccess } from '@/lib/enrollment-verification'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -128,28 +131,76 @@ export default async function CoursePage(props: any) {
   const lesson = mod?.lessons.find((ll: any) => ll.index === s)
   if (!mod || !lesson || lesson.status !== 'PUBLISHED') return notFound()
 
-  // Get user address from cookies (set by Privy auth)
-  // This is a simplified approach - in production you'd want more robust auth
-  const cookieStore = await cookies()
-  const privyToken = cookieStore.get('privy-token')
+  // Server-side enrollment verification
+  console.log('[SERVER] Starting server-side enrollment verification');
+  let serverHasAccess = false;
+  let userWalletAddress: string | null = null;
   
-  // For now, we'll do client-side verification
-  // In a future iteration, you could decode the Privy token server-side
-  const serverHasAccess = false // Will be verified client-side
+  try {
+    // Create a fake request object from the current context
+    const cookieStore = await cookies();
+    const cookiesString = cookieStore.toString();
+    
+    // Create a minimal request-like object for auth
+    const fakeRequest = {
+      headers: {
+        get: (name: string) => {
+          if (name === 'cookie') {
+            return cookiesString;
+          }
+          return null;
+        }
+      }
+    } as Request;
+    
+    console.log('[SERVER] Getting authenticated user...');
+    const authResult = await getAuthenticatedUser(fakeRequest);
+    
+    if (authResult.isAuthenticated && authResult.user) {
+      userWalletAddress = getUserWalletAddress(authResult.user);
+      console.log('[SERVER] User wallet address:', userWalletAddress ? 'found' : 'not found');
+      
+      if (userWalletAddress) {
+        console.log('[SERVER] Verifying enrollment access...');
+        const enrollmentResult = await verifyEnrollmentAccess(
+          userWalletAddress as Address,
+          course.slug,
+          course.id
+        );
+        
+        serverHasAccess = enrollmentResult.hasAccess;
+        console.log('[SERVER] Server-side enrollment verification result:', {
+          hasAccess: serverHasAccess,
+          reason: enrollmentResult.reason,
+          courseSlug: course.slug,
+          courseId: course.id
+        });
+      }
+    } else {
+      console.log('[SERVER] User not authenticated:', authResult.error);
+    }
+  } catch (error) {
+    console.error('[SERVER] Error during server-side enrollment verification:', error);
+    // Fallback to client-side verification on error
+    serverHasAccess = false;
+  }
 
   return (
-    <LessonAccessWrapper
-      courseId={course.id}
+    <EnrollmentProvider
       courseSlug={course.slug}
-      courseTitle={course.title}
+      courseId={course.id}
       serverHasAccess={serverHasAccess}
     >
-      <LessonLayout 
-        course={courseWithRels} 
-        current={{ moduleIndex: m, subIndex: s }}
+      <LessonAccessWrapper
+        courseTitle={course.title}
       >
-        <RenderMdx source={lesson.contentMdx ?? ''} />
-      </LessonLayout>
-    </LessonAccessWrapper>
+        <LessonLayout 
+          course={courseWithRels} 
+          current={{ moduleIndex: m, subIndex: s }}
+        >
+          <RenderMdx source={lesson.contentMdx ?? ''} />
+        </LessonLayout>
+      </LessonAccessWrapper>
+    </EnrollmentProvider>
   )
 }

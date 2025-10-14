@@ -95,9 +95,21 @@ export async function hasUserClaimedBadge(
   courseSlug: string,
   courseId?: string
 ): Promise<boolean> {
+  const startTime = Date.now();
+  console.log('[ENROLLMENT VERIFICATION] Checking claimed badge:', {
+    userAddress,
+    courseSlug,
+    courseId,
+  });
+  
   try {
     const contractAddress = getContractAddress();
     const tokenId = getCourseTokenId(courseSlug, courseId);
+    console.log('[ENROLLMENT VERIFICATION] Contract details:', {
+      contractAddress,
+      tokenId: tokenId.toString(),
+    });
+    
     const publicClient = createPublicWeb3Client();
 
     // Check if user has claimed the badge
@@ -108,9 +120,21 @@ export async function hasUserClaimedBadge(
       args: [userAddress, tokenId],
     });
 
+    const duration = Date.now() - startTime;
+    console.log('[ENROLLMENT VERIFICATION] Claimed check completed:', {
+      hasClaimed,
+      duration: `${duration}ms`,
+    });
+    
     return hasClaimed;
   } catch (error) {
-    console.error('Error checking badge claim status:', error);
+    const duration = Date.now() - startTime;
+    console.error('[ENROLLMENT VERIFICATION] Error checking badge claim status:', {
+      error: error instanceof Error ? error.message : String(error),
+      duration: `${duration}ms`,
+      userAddress,
+      courseSlug,
+    });
     // In case of error, we default to false (not enrolled)
     // This is safer than allowing access by default
     return false;
@@ -125,6 +149,13 @@ export async function hasUserEnrollmentBadge(
   courseSlug: string,
   courseId?: string
 ): Promise<boolean> {
+  const startTime = Date.now();
+  console.log('[ENROLLMENT VERIFICATION] Checking badge balance:', {
+    userAddress,
+    courseSlug,
+    courseId,
+  });
+  
   try {
     const contractAddress = getContractAddress();
     const tokenId = getCourseTokenId(courseSlug, courseId);
@@ -138,9 +169,23 @@ export async function hasUserEnrollmentBadge(
       args: [userAddress, tokenId],
     });
 
-    return balance > 0n;
+    const hasBalance = balance > 0n;
+    const duration = Date.now() - startTime;
+    console.log('[ENROLLMENT VERIFICATION] Balance check completed:', {
+      balance: balance.toString(),
+      hasBalance,
+      duration: `${duration}ms`,
+    });
+
+    return hasBalance;
   } catch (error) {
-    console.error('Error checking badge balance:', error);
+    const duration = Date.now() - startTime;
+    console.error('[ENROLLMENT VERIFICATION] Error checking badge balance:', {
+      error: error instanceof Error ? error.message : String(error),
+      duration: `${duration}ms`,
+      userAddress,
+      courseSlug,
+    });
     return false;
   }
 }
@@ -159,22 +204,47 @@ export async function isUserEnrolledInCourse(
   hasBadge: boolean;
   tokenId: string;
 }> {
+  const startTime = Date.now();
+  console.log('[ENROLLMENT VERIFICATION] Starting comprehensive enrollment check:', {
+    userAddress,
+    courseSlug,
+    courseId,
+  });
+  
   try {
     const tokenId = getCourseTokenId(courseSlug, courseId);
+    console.log('[ENROLLMENT VERIFICATION] Using token ID:', tokenId.toString());
     
     const [hasClaimed, hasBadge] = await Promise.all([
       hasUserClaimedBadge(userAddress, courseSlug, courseId),
       hasUserEnrollmentBadge(userAddress, courseSlug, courseId),
     ]);
 
+    const isEnrolled = hasClaimed || hasBadge;
+    const duration = Date.now() - startTime;
+    
+    console.log('[ENROLLMENT VERIFICATION] Comprehensive check completed:', {
+      isEnrolled,
+      hasClaimed,
+      hasBadge,
+      tokenId: tokenId.toString(),
+      duration: `${duration}ms`,
+    });
+
     return {
-      isEnrolled: hasClaimed || hasBadge,
+      isEnrolled,
       hasClaimed,
       hasBadge,
       tokenId: tokenId.toString(),
     };
   } catch (error) {
-    console.error('Error checking enrollment status:', error);
+    const duration = Date.now() - startTime;
+    console.error('[ENROLLMENT VERIFICATION] Error in comprehensive enrollment check:', {
+      error: error instanceof Error ? error.message : String(error),
+      duration: `${duration}ms`,
+      userAddress,
+      courseSlug,
+    });
     return {
       isEnrolled: false,
       hasClaimed: false,

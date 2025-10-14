@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/cesarangulo/Documents/celo-academy/celo-mx/contracts/MilestoneBadge.sol": {
-      "lastModificationDate": 1759247321863,
-      "contentHash": "c67b7bf8521af6d72766a3f7bd5dbd86",
+      "lastModificationDate": 1759942340472,
+      "contentHash": "a664a8721d98bf7436624ba146ed441d",
       "sourceName": "contracts/MilestoneBadge.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -828,8 +828,8 @@
       ]
     },
     "/Users/cesarangulo/Documents/celo-academy/celo-mx/contracts/SimpleBadge.sol": {
-      "lastModificationDate": 1759247086511,
-      "contentHash": "abc259dee4e8224baf8106c95d26e6ff",
+      "lastModificationDate": 1759942471694,
+      "contentHash": "ec30588a99b062d3b303c8f94250c53e",
       "sourceName": "contracts/SimpleBadge.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -871,7 +871,8 @@
         "^0.8.0"
       ],
       "artifacts": [
-        "SimpleBadge"
+        "SimpleBadge",
+        "Strings"
       ]
     }
   }
