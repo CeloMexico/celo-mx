@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=18.17.0"
   },
   "packageManager": "npm@10",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "vercel-build": "NODE_OPTIONS='--max-old-space-size=4096' prisma generate && NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
@@ -109,6 +110,7 @@
     "@testing-library/user-event": "^14.0.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.14.10",
+    "@types/pg": "^8.15.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
