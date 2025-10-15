@@ -221,9 +221,9 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
 
       // Encode the completeModule function call
       const data = encodeFunctionData({
-        abi: SIMPLE_BADGE_ABI,
+        abi: OPTIMIZED_BADGE_ABI,
         functionName: 'completeModule',
-        args: [tokenId, BigInt(moduleIndex)],
+        args: [tokenId, moduleIndex],
       });
 
       // Execute through ZeroDev with automatic gas sponsorship
@@ -304,7 +304,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
       // Encode the adminMint function call for certificate
       // Use a different token ID for certificates (tokenId + 1000)
       const data = encodeFunctionData({
-        abi: SIMPLE_BADGE_ABI,
+        abi: OPTIMIZED_BADGE_ABI,
         functionName: 'adminMint',
         args: [smartAccountAddress, tokenId + 1000n, 1n],
       });
