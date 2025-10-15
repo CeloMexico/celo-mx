@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { encodeFunctionData, type Address } from 'viem';
-import { useZeroDevSmartAccount } from '@/lib/contexts/ZeroDevSmartAccountContext';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
 
 // SimpleBadge contract ABI for enrollment
@@ -76,7 +76,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
     canSponsorTransaction,
     executeTransaction,
     error: smartAccountError,
-  } = useZeroDevSmartAccount();
+  } = useSmartAccount();
 
   const [enrollmentState, setEnrollmentState] = useState<ZeroDevTransactionState>({
     isProcessing: false,
