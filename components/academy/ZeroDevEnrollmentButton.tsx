@@ -15,7 +15,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { useZeroDevEnrollment } from '@/lib/hooks/useZeroDevEnrollment';
-import { useZeroDevSmartAccount } from '@/lib/contexts/ZeroDevSmartAccountContext';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { usePrivy } from '@privy-io/react-auth';
 
 interface ZeroDevEnrollmentButtonProps {
@@ -37,7 +37,7 @@ export function ZeroDevEnrollmentButton({
     isInitializing,
     canSponsorTransaction,
     error: smartAccountError,
-  } = useZeroDevSmartAccount();
+  } = useSmartAccount();
   
   const {
     enrollWithZeroDev,
