@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { encodeFunctionData, type Address } from 'viem';
-import { useSmartAccount } from '@/lib/contexts/SmartAccountContext';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
 
 // SimpleBadge contract ABI for enrollment

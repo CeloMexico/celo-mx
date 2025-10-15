@@ -15,7 +15,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useSponsoredModuleCompletion } from '@/lib/hooks/useSponsoredEnrollment';
-import { useSmartAccount } from '@/lib/contexts/SmartAccountContext';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { usePrivy } from '@privy-io/react-auth';
 
 interface SponsoredModuleCompletionProps {

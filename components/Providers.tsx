@@ -7,7 +7,7 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { wagmiConfig } from '@/lib/wagmi';
-import { ZeroDevSmartAccountProvider } from '@/lib/contexts/ZeroDevSmartAccountContext';
+import { ZeroDevSmartWalletProvider } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -42,11 +42,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
-          <ZeroDevSmartAccountProvider zeroDevProjectId={zeroDevProjectId}>
+          <ZeroDevSmartWalletProvider zeroDevProjectId={zeroDevProjectId}>
             <ToastProvider>
               {children}
             </ToastProvider>
-          </ZeroDevSmartAccountProvider>
+          </ZeroDevSmartWalletProvider>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
