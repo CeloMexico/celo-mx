@@ -65,6 +65,8 @@ export default function LessonContent({
 
   return (
     <LessonContentClient
+      courseSlug={course.slug}
+      courseId={course.id}
       currentModule={currentModule}
       currentLesson={currentLesson}
       requiresWallet={requiresWallet}

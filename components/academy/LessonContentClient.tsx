@@ -3,8 +3,12 @@
 import React from 'react';
 import { ReadingProgress } from '@/components/course/ReadingProgress';
 import { useAuth } from '@/hooks/useAuth';
+import ModuleProgress from '@/components/academy/ModuleProgress';
+import { useEnrollment } from '@/lib/contexts/EnrollmentContext';
 
 type LessonContentClientProps = {
+  courseSlug?: string;
+  courseId?: string;
   currentModule: {
     id: string;
     index: number;
@@ -26,6 +30,8 @@ type LessonContentClientProps = {
 };
 
 export function LessonContentClient({ 
+  courseSlug,
+  courseId,
   currentModule,
   currentLesson,
   requiresWallet,
@@ -84,10 +90,33 @@ export function LessonContentClient({
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border-2 border-celo-yellow/30 bg-gradient-to-br from-black/50 to-black/30 p-6 md:p-10 shadow-2xl">
-                <div className="prose prose-lg prose-invert max-w-none prose-headings:text-celo-yellow prose-p:text-white/90 prose-p:text-lg prose-p:leading-relaxed prose-a:text-celo-yellow prose-a:underline prose-strong:text-celo-yellow prose-code:text-celo-yellow prose-code:bg-white/10 prose-code:px-1 prose-code:rounded">
-                  {children}
+              <div className="space-y-6">
+                <div className="rounded-2xl border-2 border-celo-yellow/30 bg-gradient-to-br from-black/50 to-black/30 p-6 md:p-10 shadow-2xl">
+                  <div className="prose prose-lg prose-invert max-w-none prose-headings:text-celo-yellow prose-p:text-white/90 prose-p:text-lg prose-p:leading-relaxed prose-a:text-celo-yellow prose-a:underline prose-strong:text-celo-yellow prose-code:text-celo-yellow prose-code:bg-white/10 prose-code:px-1 prose-code:rounded">
+                    {children}
+                  </div>
                 </div>
+                
+                {/* Module Completion Component */}
+                {courseSlug && courseId && (
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-gt italic text-lg text-celo-yellow mb-1">
+                          Complete This Module
+                        </h3>
+                        <p className="font-inter text-white/70 text-sm">
+                          Mark this module as complete to update your NFT progress badge
+                        </p>
+                      </div>
+                    </div>
+                    <ModuleProgress 
+                      courseSlug={courseSlug}
+                      courseId={courseId}
+                      moduleIndex={currentModule.index - 1} // Convert to 0-based index
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

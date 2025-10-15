@@ -80,6 +80,9 @@ export function useHasCompletedModule(
       : undefined,
     query: {
       enabled: !!userAddress && courseTokenId !== undefined && moduleIndex !== undefined,
+      staleTime: 30 * 1000, // 30 seconds
+      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
     },
   });
 }
@@ -93,6 +96,9 @@ export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigin
     args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
     query: {
       enabled: !!userAddress && courseTokenId !== undefined,
+      staleTime: 30 * 1000, // 30 seconds
+      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
     },
   });
 }

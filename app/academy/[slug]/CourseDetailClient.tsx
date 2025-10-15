@@ -16,6 +16,7 @@ import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl, getYouTubeE
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { EnrollmentProvider, useEnrollment } from "@/lib/contexts/EnrollmentContext";
+import { CourseProgressDashboard } from "@/components/academy/CourseProgressDashboard";
 
 // Dynamically import the Web3 enrollment panel to avoid SSR issues
 const Web3EnrollPanel = dynamic(
@@ -318,7 +319,12 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24 space-y-6">
-              <CourseProgress courseSlug={course.slug} totalModules={course.modules.length} />
+              <CourseProgressDashboard 
+                courseSlug={course.slug}
+                courseId={course.id}
+                courseTitle={course.title}
+                modules={course.modules}
+              />
               {isMounted ? (
                 <Web3EnrollPanel course={course} />
               ) : (
