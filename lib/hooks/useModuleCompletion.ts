@@ -4,25 +4,25 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAcc
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/courseToken';
 
-// SimpleBadge contract ABI - for module completion tracking
-const SIMPLE_BADGE_ABI = [
+// Optimized contract ABI - for module completion tracking (lower gas costs)
+const OPTIMIZED_BADGE_ABI = [
   {
     type: 'function',
     name: 'completeModule',
     inputs: [
-      { name: 'courseTokenId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'hasCompletedModule',
+    name: 'isModuleCompleted',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'courseTokenId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
     ],
     outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'view',
@@ -32,9 +32,9 @@ const SIMPLE_BADGE_ABI = [
     name: 'getModulesCompleted',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'courseTokenId', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
     ],
-    outputs: [{ name: '', type: 'uint256' }],
+    outputs: [{ name: '', type: 'uint8' }],
     stateMutability: 'view',
   },
   {
@@ -49,11 +49,12 @@ const SIMPLE_BADGE_ABI = [
   },
 ] as const;
 
-// Get contract address from environment (same as SimpleBadge)
+// Get optimized contract address for lower gas costs
 const getContractAddress = (): Address => {
-  const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
+  const address = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES || 
+                 process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    throw new Error('SimpleBadge contract address not configured');
+    throw new Error('Optimized contract address not configured');
   }
   
   const trimmedAddress = address.trim();
@@ -73,10 +74,10 @@ export function useHasCompletedModule(
 ) {
   return useReadContract({
     address: getContractAddress(),
-    abi: SIMPLE_BADGE_ABI,
-    functionName: 'hasCompletedModule',
+    abi: OPTIMIZED_BADGE_ABI,
+    functionName: 'isModuleCompleted',
     args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
-      ? [userAddress, courseTokenId, BigInt(moduleIndex)] 
+      ? [userAddress, courseTokenId, moduleIndex] 
       : undefined,
     query: {
       enabled: !!userAddress && courseTokenId !== undefined && moduleIndex !== undefined,
@@ -91,7 +92,7 @@ export function useHasCompletedModule(
 export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: SIMPLE_BADGE_ABI,
+    abi: OPTIMIZED_BADGE_ABI,
     functionName: 'getModulesCompleted',
     args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
     query: {
@@ -123,9 +124,9 @@ export function useCompleteModuleBadge() {
 
     return writeContract({
       address: getContractAddress(),
-      abi: SIMPLE_BADGE_ABI,
+      abi: OPTIMIZED_BADGE_ABI,
       functionName: 'completeModule',
-      args: [courseTokenId, BigInt(moduleIndex)],
+      args: [courseTokenId, moduleIndex],
     });
   };
 

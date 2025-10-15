@@ -6,13 +6,13 @@ import { encodeFunctionData, type Address } from 'viem';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
 
-// SimpleBadge contract ABI for enrollment
-const SIMPLE_BADGE_ABI = [
+// Optimized contract ABI for lower gas costs
+const OPTIMIZED_BADGE_ABI = [
   {
     type: 'function',
-    name: 'claim',
+    name: 'enroll',
     inputs: [
-      { name: 'tokenId', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -21,8 +21,8 @@ const SIMPLE_BADGE_ABI = [
     type: 'function',
     name: 'completeModule',
     inputs: [
-      { name: 'courseTokenId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -42,7 +42,9 @@ interface UseSponsoredEnrollmentProps {
 }
 
 const getContractAddress = (): Address => {
-  const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
+  // Use optimized contract for lower gas costs
+  const address = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES || 
+                 process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
     throw new Error('Contract address not configured');
   }
@@ -110,10 +112,10 @@ export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnr
         contractAddress,
       });
 
-      // Encode the claim function call
+      // Encode the enroll function call (optimized contract)
       const data = encodeFunctionData({
-        abi: SIMPLE_BADGE_ABI,
-        functionName: 'claim',
+        abi: OPTIMIZED_BADGE_ABI,
+        functionName: 'enroll',
         args: [tokenId],
       });
 
@@ -260,22 +262,11 @@ export function useSponsoredModuleCompletion({
         contractAddress,
       });
 
-      // Encode the completeModule function call
+      // Encode the completeModule function call (optimized contract)
       const data = encodeFunctionData({
-        abi: [
-          {
-            type: 'function',
-            name: 'completeModule',
-            inputs: [
-              { name: 'tokenId', type: 'uint256' },
-              { name: 'moduleIndex', type: 'uint256' },
-            ],
-            outputs: [],
-            stateMutability: 'nonpayable',
-          },
-        ],
+        abi: OPTIMIZED_BADGE_ABI,
         functionName: 'completeModule',
-        args: [tokenId, BigInt(moduleIndex)],
+        args: [tokenId, moduleIndex],
       });
 
       // Execute sponsored transaction through smart account
