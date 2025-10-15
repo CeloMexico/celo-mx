@@ -12,18 +12,25 @@ import { ZeroDevSmartAccountProvider } from '@/lib/contexts/ZeroDevSmartAccountC
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
+  // Privy configuration (following Motus pattern)
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID!;
+  const clientId = process.env.NEXT_PUBLIC_PRIVY_CLIENT_ID; // Optional for v2.16.0
+
   // ZeroDev Project ID - for now using test project from Motus
   // TODO: Create dedicated Celo Academy ZeroDev project
   const zeroDevProjectId = process.env.NEXT_PUBLIC_ZERODEV_PROJECT_ID || 'e46f4ac3-404e-42fc-a3d3-1c75846538a8';
 
   return (
     <PrivyProvider
-      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID as string}
+      appId={appId}
+      clientId={clientId}
       config={{
         loginMethods: ['wallet', 'email'],
         appearance: {
           theme: 'light',
           accentColor: '#FCFF52',
+          walletList: ['metamask', 'detected_wallets'],
+          showWalletLoginFirst: false,
         },
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
