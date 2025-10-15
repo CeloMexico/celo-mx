@@ -369,7 +369,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
   }, []);
 
   // Combine errors from smart account and transaction states
-  const combinedError = smartAccountError?.message || 
+  const combinedError = smartAccountError || 
                        enrollmentState.error || 
                        moduleCompletionState.error || 
                        certificateState.error;
