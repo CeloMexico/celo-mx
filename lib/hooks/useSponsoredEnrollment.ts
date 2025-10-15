@@ -10,10 +10,19 @@ import { getCourseTokenId } from '@/lib/courseToken';
 const SIMPLE_BADGE_ABI = [
   {
     type: 'function',
-    name: 'claimBadge',
+    name: 'claim',
     inputs: [
       { name: 'tokenId', type: 'uint256' },
-      { name: 'to', type: 'address' },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'completeModule',
+    inputs: [
+      { name: 'courseTokenId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint256' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -101,11 +110,11 @@ export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnr
         contractAddress,
       });
 
-      // Encode the claimBadge function call
+      // Encode the claim function call
       const data = encodeFunctionData({
         abi: SIMPLE_BADGE_ABI,
-        functionName: 'claimBadge',
-        args: [tokenId, smartAccountAddress],
+        functionName: 'claim',
+        args: [tokenId],
       });
 
       // Execute sponsored transaction through smart account

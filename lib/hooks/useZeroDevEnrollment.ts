@@ -10,10 +10,9 @@ import { getCourseTokenId } from '@/lib/courseToken';
 const SIMPLE_BADGE_ABI = [
   {
     type: 'function',
-    name: 'claimBadge',
+    name: 'claim',
     inputs: [
       { name: 'tokenId', type: 'uint256' },
-      { name: 'to', type: 'address' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -22,7 +21,7 @@ const SIMPLE_BADGE_ABI = [
     type: 'function',
     name: 'completeModule',
     inputs: [
-      { name: 'tokenId', type: 'uint256' },
+      { name: 'courseTokenId', type: 'uint256' },
       { name: 'moduleIndex', type: 'uint256' },
     ],
     outputs: [],
@@ -135,11 +134,11 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
         contractAddress,
       });
 
-      // Encode the claimBadge function call
+      // Encode the claim function call
       const data = encodeFunctionData({
         abi: SIMPLE_BADGE_ABI,
-        functionName: 'claimBadge',
-        args: [tokenId, smartAccountAddress],
+        functionName: 'claim',
+        args: [tokenId],
       });
 
       // Execute through ZeroDev with automatic gas sponsorship
