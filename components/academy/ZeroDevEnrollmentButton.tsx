@@ -126,7 +126,7 @@ export function ZeroDevEnrollmentButton({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Error configurando smart account: {smartAccountError.message}
+                Error configurando smart account: {smartAccountError}
               </AlertDescription>
             </Alert>
           )}
