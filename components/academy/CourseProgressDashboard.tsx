@@ -12,6 +12,7 @@ import { getCourseTokenId } from '@/lib/courseToken';
 import { useAuth } from '@/hooks/useAuth';
 import { courseProgressPercent } from '@/lib/progress';
 import { CertificateGenerator } from '@/components/certificates/CertificateGenerator';
+import { SponsoredModuleCompletion } from '@/components/academy/SponsoredModuleCompletion';
 import type { Address } from 'viem';
 
 interface Module {
@@ -250,47 +251,65 @@ function ModuleProgressItem({
   const isLoading = hasCompleted.isLoading;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors">
-      <div className="flex-shrink-0">
-        {isLoading ? (
-          <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
-        ) : isCompleted ? (
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
-        ) : (
-          <Circle className="h-5 w-5 text-gray-400" />
-        )}
-      </div>
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-gray-900">
-            Module {moduleIndex + 1}: {module.title}
-          </p>
-          {isCompleted && (
-            <Badge variant="outline" className="text-xs">
-              Completed
-            </Badge>
+    <div className="space-y-3">
+      {/* Module Info */}
+      <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors">
+        <div className="flex-shrink-0">
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+          ) : isCompleted ? (
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+          ) : (
+            <Circle className="h-5 w-5 text-gray-400" />
           )}
         </div>
-        {module.summary && (
-          <p className="text-xs text-gray-500 mt-1">
-            {module.summary}
-          </p>
-        )}
-        {module.lessons && (
-          <p className="text-xs text-gray-400 mt-1">
-            {module.lessons.length} lesson{module.lessons.length !== 1 ? 's' : ''}
-          </p>
-        )}
-      </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-900">
+              Module {moduleIndex + 1}: {module.title}
+            </p>
+            {isCompleted && (
+              <Badge variant="outline" className="text-xs">
+                Completed
+              </Badge>
+            )}
+          </div>
+          {module.summary && (
+            <p className="text-xs text-gray-500 mt-1">
+              {module.summary}
+            </p>
+          )}
+          {module.lessons && (
+            <p className="text-xs text-gray-400 mt-1">
+              {module.lessons.length} lesson{module.lessons.length !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
 
-      <div className="text-right text-xs text-gray-500">
-        {isCompleted ? (
-          <span className="text-green-600 font-medium">✓ Done</span>
-        ) : (
-          <span>Pending</span>
-        )}
+        <div className="text-right text-xs text-gray-500">
+          {isCompleted ? (
+            <span className="text-green-600 font-medium">✓ Done</span>
+          ) : (
+            <span>Pending</span>
+          )}
+        </div>
       </div>
+      
+      {/* Sponsored Module Completion - Only show if enrolled and not completed */}
+      {isEnrolled && !isCompleted && !isLoading && (
+        <div className="pl-8">
+          <SponsoredModuleCompletion
+            courseSlug={courseSlug}
+            courseId={courseId}
+            moduleIndex={moduleIndex}
+            moduleTitle={module.title}
+            isCompleted={isCompleted}
+            isEnrolled={isEnrolled}
+            className="max-w-md"
+          />
+        </div>
+      )}
     </div>
   );
 }
