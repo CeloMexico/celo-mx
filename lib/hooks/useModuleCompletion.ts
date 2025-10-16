@@ -51,19 +51,21 @@ const OPTIMIZED_BADGE_ABI = [
 
 // Get optimized contract address for lower gas costs
 const getContractAddress = (): Address => {
-  const address = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES || 
-                 process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    throw new Error('Optimized contract address not configured');
+  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
+  
+  // Use optimized contract if available
+  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = optimizedAddress.trim();
+    if (trimmed.startsWith('0x') && trimmed.length === 42) {
+      console.log('[MODULE COMPLETION] Using optimized contract from env:', trimmed);
+      return trimmed as Address;
+    }
   }
   
-  const trimmedAddress = address.trim();
-  
-  if (!trimmedAddress.startsWith('0x') || trimmedAddress.length !== 42) {
-    throw new Error(`Invalid contract address format: ${trimmedAddress}`);
-  }
-  
-  return trimmedAddress as Address;
+  // TEMPORARY FALLBACK: Hardcoded optimized contract
+  const hardcodedOptimized = '0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0';
+  console.log('[MODULE COMPLETION] Using hardcoded optimized contract:', hardcodedOptimized);
+  return hardcodedOptimized as Address;
 };
 
 // Hook to check if a user has completed a specific module

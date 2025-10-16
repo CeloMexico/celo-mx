@@ -42,19 +42,38 @@ interface UseSponsoredEnrollmentProps {
 }
 
 const getContractAddress = (): Address => {
-  // Use optimized contract for lower gas costs
-  const address = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES || 
-                 process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    throw new Error('Contract address not configured');
+  // CRITICAL: Use optimized contract for lower gas costs
+  // Priority order: 
+  // 1. Optimized contract (preferred)
+  // 2. Hardcoded optimized address as fallback
+  // 3. Legacy contract (last resort)
+  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
+  const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
+  
+  // Use optimized contract if available
+  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = optimizedAddress.trim();
+    if (trimmed.startsWith('0x') && trimmed.length === 42) {
+      console.log('[CONTRACT ADDRESS] Using optimized contract from env:', trimmed);
+      return trimmed as Address;
+    }
   }
   
-  const trimmedAddress = address.trim();
-  if (!trimmedAddress.startsWith('0x') || trimmedAddress.length !== 42) {
-    throw new Error(`Invalid contract address format: ${trimmedAddress}`);
-  }
+  // TEMPORARY FALLBACK: Hardcoded optimized contract (until Vercel env vars are set)
+  const hardcodedOptimized = '0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0';
+  console.log('[CONTRACT ADDRESS] Using hardcoded optimized contract:', hardcodedOptimized);
+  return hardcodedOptimized as Address;
   
-  return trimmedAddress as Address;
+  // This legacy fallback is commented out to prevent using wrong contract
+  // if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+  //   const trimmed = legacyAddress.trim();
+  //   if (trimmed.startsWith('0x') && trimmed.length === 42) {
+  //     console.log('[CONTRACT ADDRESS] Using legacy contract:', trimmed);
+  //     return trimmed as Address;
+  //   }
+  // }
+  
+  // throw new Error('No valid contract address found');
 };
 
 export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnrollmentProps) {
