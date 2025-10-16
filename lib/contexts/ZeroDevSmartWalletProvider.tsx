@@ -42,11 +42,12 @@ const SmartWalletContext = createContext<SmartWalletContextType>({
 
 export const ZeroDevSmartWalletProvider = ({
   children,
-  zeroDevProjectId = "e46f4ac3-404e-42fc-a3d3-1c75846538a8",
+  zeroDevProjectId = process.env.NEXT_PUBLIC_ZERODEV_PROJECT_ID || "e46f4ac3-404e-42fc-a3d3-1c75846538a8",
 }: {
   children: React.ReactNode;
   zeroDevProjectId?: string;
 }) => {
+  console.log('[ZERODEV] Provider initialized with project ID:', zeroDevProjectId);
   const { wallets } = useWallets();
   const { authenticated } = usePrivy();
   const [kernelClient, setKernelClient] = useState<any>(null);

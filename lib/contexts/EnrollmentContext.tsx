@@ -72,11 +72,20 @@ export function EnrollmentProvider({
 
   // Determine enrollment function to use
   const enrollInCourse = async () => {
+    console.log('[ENROLLMENT CONTEXT] Enrollment decision:', {
+      privyAuthenticated,
+      canSponsorTransaction,
+      isSmartAccountReady,
+      willUseSponsored: privyAuthenticated && canSponsorTransaction
+    });
+    
     if (privyAuthenticated && canSponsorTransaction) {
-      console.log('[ENROLLMENT CONTEXT] Using sponsored enrollment');
+      console.log('[ENROLLMENT CONTEXT] ✅ Using sponsored enrollment (gas-free)');
       await sponsoredEnrollment.enrollWithSponsorship();
     } else {
-      console.log('[ENROLLMENT CONTEXT] Falling back to legacy enrollment');
+      console.log('[ENROLLMENT CONTEXT] ⚠️ Falling back to legacy enrollment (requires gas)', {
+        reason: !privyAuthenticated ? 'Not authenticated with Privy' : 'Cannot sponsor transactions'
+      });
       await legacyEnrollment.enrollInCourse();
     }
   };
