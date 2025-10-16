@@ -6,6 +6,7 @@ import { useCourseEnrollmentBadge } from '@/lib/hooks/useSimpleBadge';
 import { useSponsoredEnrollment } from '@/lib/hooks/useSponsoredEnrollment';
 import { usePrivy } from '@privy-io/react-auth';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 
 interface EnrollmentState {
@@ -43,6 +44,7 @@ export function EnrollmentProvider({
   const { isAuthenticated, wallet } = useAuth();
   const { authenticated: privyAuthenticated } = usePrivy();
   const { isSmartAccountReady, canSponsorTransaction } = useSmartAccount();
+  const queryClient = useQueryClient();
   const userAddress = wallet?.address as Address | undefined;
   const isWalletConnected = isAuthenticated && !!userAddress;
 
@@ -55,20 +57,35 @@ export function EnrollmentProvider({
     canSponsorTransaction,
   });
 
-  // Use legacy enrollment for badge checking (read-only)
-  const legacyEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
+  // Use optimized enrollment for both read and write operations (CRITICAL FIX)
+  const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
   
   // Use sponsored enrollment for write operations (enrollment)
   const sponsoredEnrollment = useSponsoredEnrollment({ courseSlug, courseId });
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state:', {
-    hasBadge: legacyEnrollment.hasBadge,
-    hasClaimed: legacyEnrollment.hasClaimed,
-    isLoading: legacyEnrollment.isLoading,
+    hasBadge: optimizedEnrollment.hasBadge,
+    hasClaimed: optimizedEnrollment.hasClaimed,
+    isLoading: optimizedEnrollment.isLoading,
     sponsoredEnrollmentSuccess: sponsoredEnrollment.enrollmentSuccess,
     canUseSponsored: canSponsorTransaction,
     serverHasAccess,
+    readContract: 'optimized (should match write contract)',
   });
+
+  // CRITICAL: Invalidate cache after successful sponsored enrollment
+  useEffect(() => {
+    if (sponsoredEnrollment.enrollmentSuccess) {
+      console.log('[ENROLLMENT CONTEXT] 🔄 Invalidating cache after successful sponsored enrollment');
+      // Invalidate all read contract queries to force refresh
+      queryClient.invalidateQueries({ queryKey: ['readContract'] });
+      
+      // Small delay to ensure transaction is indexed
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['readContract'] });
+      }, 2000);
+    }
+  }, [sponsoredEnrollment.enrollmentSuccess, queryClient]);
 
   // Determine enrollment function to use
   const enrollInCourse = async () => {
@@ -86,20 +103,20 @@ export function EnrollmentProvider({
       console.log('[ENROLLMENT CONTEXT] ⚠️ Falling back to legacy enrollment (requires gas)', {
         reason: !privyAuthenticated ? 'Not authenticated with Privy' : 'Cannot sponsor transactions'
       });
-      await legacyEnrollment.enrollInCourse();
+      await optimizedEnrollment.enrollInCourse();
     }
   };
 
   const enrollmentState: EnrollmentState = {
-    hasBadge: legacyEnrollment.hasBadge,
-    hasClaimed: legacyEnrollment.hasClaimed,
-    isLoading: legacyEnrollment.isLoading || sponsoredEnrollment.isLoading,
+    hasBadge: optimizedEnrollment.hasBadge,
+    hasClaimed: optimizedEnrollment.hasClaimed,
+    isLoading: optimizedEnrollment.isLoading || sponsoredEnrollment.isLoading,
     enrollInCourse,
-    enrollmentHash: sponsoredEnrollment.enrollmentHash || legacyEnrollment.enrollmentHash,
-    enrollmentError: sponsoredEnrollment.enrollmentError ? new Error(sponsoredEnrollment.enrollmentError) : legacyEnrollment.enrollmentError,
-    isEnrolling: sponsoredEnrollment.isEnrolling || legacyEnrollment.isEnrolling,
-    isConfirmingEnrollment: legacyEnrollment.isConfirmingEnrollment,
-    enrollmentSuccess: sponsoredEnrollment.enrollmentSuccess || legacyEnrollment.enrollmentSuccess,
+    enrollmentHash: sponsoredEnrollment.enrollmentHash || optimizedEnrollment.enrollmentHash,
+    enrollmentError: sponsoredEnrollment.enrollmentError ? new Error(sponsoredEnrollment.enrollmentError) : optimizedEnrollment.enrollmentError,
+    isEnrolling: sponsoredEnrollment.isEnrolling || optimizedEnrollment.isEnrolling,
+    isConfirmingEnrollment: optimizedEnrollment.isConfirmingEnrollment,
+    enrollmentSuccess: sponsoredEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess,
     serverHasAccess,
     isWalletConnected,
     userAddress,
