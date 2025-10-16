@@ -6,13 +6,13 @@ import { encodeFunctionData, type Address } from 'viem';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
 
-// Optimized contract ABI for lower gas costs
-const OPTIMIZED_BADGE_ABI = [
+// EMERGENCY FIX: Use legacy contract ABI (optimized contract not deployed)
+const LEGACY_BADGE_ABI = [
   {
     type: 'function',
-    name: 'enroll',
+    name: 'claim',
     inputs: [
-      { name: 'courseId', type: 'uint256' },
+      { name: 'tokenId', type: 'uint256' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -21,8 +21,8 @@ const OPTIMIZED_BADGE_ABI = [
     type: 'function',
     name: 'completeModule',
     inputs: [
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
+      { name: 'courseTokenId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint256' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -53,22 +53,21 @@ interface UseZeroDevEnrollmentProps {
 }
 
 const getContractAddress = (): Address => {
-  // CRITICAL: Use optimized contract for lower gas costs
-  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
+  // EMERGENCY FIX: Use legacy contract (optimized contract not deployed)
+  const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   
-  // Use optimized contract if available
-  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = optimizedAddress.trim();
+  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = legacyAddress.trim();
     if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[ZERODEV CONTRACT] Using optimized contract from env:', trimmed);
+      console.log('[ZERODEV CONTRACT] Using LEGACY contract (emergency fix):', trimmed);
       return trimmed as Address;
     }
   }
   
-  // TEMPORARY FALLBACK: Hardcoded optimized contract
-  const hardcodedOptimized = '0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0';
-  console.log('[ZERODEV CONTRACT] Using hardcoded optimized contract:', hardcodedOptimized);
-  return hardcodedOptimized as Address;
+  // Hardcoded legacy fallback
+  const hardcodedLegacy = '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3';
+  console.log('[ZERODEV CONTRACT] Using hardcoded LEGACY contract:', hardcodedLegacy);
+  return hardcodedLegacy as Address;
 };
 
 export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollmentProps) {
@@ -139,10 +138,10 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
         contractAddress,
       });
 
-      // Encode the enroll function call (optimized contract)
+      // Encode the claim function call (legacy contract)
       const data = encodeFunctionData({
-        abi: OPTIMIZED_BADGE_ABI,
-        functionName: 'enroll',
+        abi: LEGACY_BADGE_ABI,
+        functionName: 'claim',
         args: [tokenId],
       });
 
@@ -222,11 +221,11 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
         contractAddress,
       });
 
-      // Encode the completeModule function call
+      // Encode the completeModule function call (legacy contract)
       const data = encodeFunctionData({
-        abi: OPTIMIZED_BADGE_ABI,
+        abi: LEGACY_BADGE_ABI,
         functionName: 'completeModule',
-        args: [tokenId, moduleIndex],
+        args: [tokenId, BigInt(moduleIndex)],
       });
 
       // Execute through ZeroDev with automatic gas sponsorship
@@ -304,10 +303,10 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
         contractAddress,
       });
 
-      // Encode the adminMint function call for certificate
+      // Encode the adminMint function call for certificate (legacy contract)
       // Use a different token ID for certificates (tokenId + 1000)
       const data = encodeFunctionData({
-        abi: OPTIMIZED_BADGE_ABI,
+        abi: LEGACY_BADGE_ABI,
         functionName: 'adminMint',
         args: [smartAccountAddress, tokenId + 1000n, 1n],
       });

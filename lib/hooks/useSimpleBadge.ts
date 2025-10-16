@@ -6,108 +6,87 @@ import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { LEGACY_COURSE_TOKEN_IDS, generateTokenIdFromCourseId, getCourseTokenId } from '@/lib/courseToken';
 
-// Optimized contract ABI - matches the deployed OptimizedSimpleBadge contract
-const OPTIMIZED_BADGE_ABI = [
+// Legacy SimpleBadge contract ABI (the one that actually exists)
+const LEGACY_BADGE_ABI = [
   {
     type: 'function',
-    name: 'enroll',
-    inputs: [{ name: 'courseId', type: 'uint256' }],
+    name: 'claim',
+    inputs: [{ name: 'tokenId', type: 'uint256' }],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'completeModule',
+    name: 'adminMint',
     inputs: [
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
+      { name: 'to', type: 'address' },
+      { name: 'tokenId', type: 'uint256' },
+      { name: 'amount', type: 'uint256' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'isEnrolled',
+    name: 'hasBadge',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
+      { name: 'tokenId', type: 'uint256' },
     ],
     outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'isModuleCompleted',
+    name: 'claimed',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
+      { name: 'tokenId', type: 'uint256' },
     ],
     outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'getModulesCompleted',
+    name: 'balanceOf',
     inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
+      { name: 'account', type: 'address' },
+      { name: 'id', type: 'uint256' },
     ],
-    outputs: [{ name: '', type: 'uint8' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'totalModulesCompleted',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'uint8' }],
+    outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
   },
 ] as const;
 
-// Get contract address - prioritize optimized contract for consistency
+// EMERGENCY FIX: Use legacy contract that actually exists
 const getContractAddress = (): Address => {
-  // CRITICAL: Use same contract for both read and write operations
-  // Priority: optimized contract > legacy contract > hardcoded optimized
-  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
+  // CRITICAL: The hardcoded optimized address doesn't exist!
+  // Reverting to legacy contract until we properly deploy optimized
   const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   
-  // Use optimized contract if available (same as write operations)
-  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = optimizedAddress.trim();
+  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = legacyAddress.trim();
     if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[SIMPLE BADGE] Using optimized contract for reads:', trimmed);
+      console.log('[SIMPLE BADGE] Using LEGACY contract (optimized contract not deployed):', trimmed);
       return trimmed as Address;
     }
   }
   
-  // TEMPORARY FALLBACK: Use hardcoded optimized contract (matches write operations)
-  const hardcodedOptimized = '0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0';
-  console.log('[SIMPLE BADGE] Using hardcoded optimized contract for reads:', hardcodedOptimized);
-  return hardcodedOptimized as Address;
-  
-  // Legacy fallback disabled to maintain consistency
-  // if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-  //   const trimmed = legacyAddress.trim();
-  //   if (trimmed.startsWith('0x') && trimmed.length === 42) {
-  //     console.log('[SIMPLE BADGE] Using legacy contract:', trimmed);
-  //     return trimmed as Address;
-  //   }
-  // }
+  // Fallback to hardcoded legacy address
+  const hardcodedLegacy = '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3';
+  console.log('[SIMPLE BADGE] Using hardcoded LEGACY contract:', hardcodedLegacy);
+  return hardcodedLegacy as Address;
 };
 
-// Hook to check if a user is enrolled in a course (optimized contract)
-export function useHasBadge(userAddress?: Address, courseId?: bigint) {
+// Hook to check if a user has a badge (legacy contract)
+export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: OPTIMIZED_BADGE_ABI,
-    functionName: 'isEnrolled',
-    args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
+    abi: LEGACY_BADGE_ABI,
+    functionName: 'hasBadge',
+    args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
-      enabled: !!userAddress && courseId !== undefined,
+      enabled: !!userAddress && tokenId !== undefined,
       // Cache for 30 seconds to reduce redundant calls
       staleTime: 30 * 1000,
       // Keep in cache for 5 minutes
@@ -118,12 +97,12 @@ export function useHasBadge(userAddress?: Address, courseId?: bigint) {
   });
 }
 
-// Hook to check if a user is enrolled (same as useHasBadge for compatibility)
+// Hook to check if a user is enrolled (using legacy contract claimed mapping)
 export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: OPTIMIZED_BADGE_ABI,
-    functionName: 'isEnrolled',
+    abi: LEGACY_BADGE_ABI,
+    functionName: 'claimed',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
       enabled: !!userAddress && courseId !== undefined,
@@ -137,12 +116,12 @@ export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
   });
 }
 
-// Hook to get user's completed modules count for a course
+// Hook to get user's badge balance (using legacy balanceOf)
 export function useBadgeBalance(userAddress?: Address, courseId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: OPTIMIZED_BADGE_ABI,
-    functionName: 'getModulesCompleted',
+    abi: LEGACY_BADGE_ABI,
+    functionName: 'balanceOf',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
       enabled: !!userAddress && courseId !== undefined,
@@ -180,8 +159,8 @@ export function useClaimBadge() {
       if (isConnected) {
         return await writeContract({
           address: getContractAddress(),
-          abi: OPTIMIZED_BADGE_ABI,
-          functionName: 'enroll',
+          abi: LEGACY_BADGE_ABI,
+          functionName: 'claim',
           args: [courseId],
         });
       }
@@ -204,8 +183,8 @@ export function useClaimBadge() {
       await ensureCeloAlfajores(provider);
 
       const data = encodeFunctionData({
-        abi: OPTIMIZED_BADGE_ABI,
-        functionName: 'enroll',
+        abi: LEGACY_BADGE_ABI,
+        functionName: 'claim',
         args: [courseId],
       });
       const from = primary.address || (await provider.request({ method: 'eth_accounts' }))[0];
@@ -277,13 +256,12 @@ export function useAdminMintBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
 
   const adminMint = (to: Address, courseId: bigint, amount: bigint = 1n) => {
-    // Note: adminMint function may not exist in optimized contract
-    // This is kept for legacy compatibility but may need updating
+    // Using legacy adminMint function
     return writeContract({
       address: getContractAddress(),
-      abi: OPTIMIZED_BADGE_ABI,
-      functionName: 'enroll', // Using enroll instead of adminMint for consistency
-      args: [courseId], // Simplified args for optimized contract
+      abi: LEGACY_BADGE_ABI,
+      functionName: 'adminMint',
+      args: [to, courseId, amount],
     });
   };
 
