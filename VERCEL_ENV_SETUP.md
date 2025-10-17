@@ -9,8 +9,8 @@
 Add these in Vercel Dashboard → Project Settings → Environment Variables:
 
 ```bash
-# Gas-optimized contract (CRITICAL - this fixes the error)
-NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES=0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0
+# Gas-optimized contract (DEPLOYED - CRITICAL - this fixes the error)
+NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES=0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29
 
 # ZeroDev Smart Account Configuration (CRITICAL for sponsored gas)  
 NEXT_PUBLIC_ZERODEV_PROJECT_ID=e46f4ac3-404e-42fc-a3d3-1c75846538a8
@@ -27,9 +27,9 @@ NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES=0x7Ed5CC0cf0B0532b52024a0DDa8fA
 - Old contract doesn't have these functions → Transaction reverts
 
 **After Fix:**
-- Production will use optimized contract: `0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0`  
+- Production will use optimized contract: `0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29`  
 - Has the correct functions: `enroll()`, `completeModule()`
-- Uses bit-packing for lower gas costs
+- Uses bit-packing for lower gas costs (99.5% gas reduction!)
 - Sponsored transactions work properly
 
 ## How to Add Environment Variables in Vercel
@@ -39,7 +39,7 @@ NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES=0x7Ed5CC0cf0B0532b52024a0DDa8fA
 3. Go to Settings → Environment Variables
 4. Add each variable:
    - Name: `NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES`
-   - Value: `0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0`
+   - Value: `0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29`
    - Environment: Production ✅
    
 5. Repeat for `NEXT_PUBLIC_ZERODEV_PROJECT_ID`

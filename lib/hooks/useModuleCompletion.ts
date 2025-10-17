@@ -4,25 +4,25 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAcc
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/courseToken';
 
-// EMERGENCY FIX: Use legacy contract ABI (optimized contract not deployed)
-const LEGACY_BADGE_ABI = [
+// Optimized contract ABI (now properly deployed)
+const OPTIMIZED_BADGE_ABI = [
   {
     type: 'function',
     name: 'completeModule',
     inputs: [
-      { name: 'courseTokenId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'hasCompletedModule',
+    name: 'isModuleCompleted',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'courseTokenId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
     ],
     outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'view',
@@ -32,31 +32,47 @@ const LEGACY_BADGE_ABI = [
     name: 'getModulesCompleted',
     inputs: [
       { name: 'user', type: 'address' },
-      { name: 'courseTokenId', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
     ],
-    outputs: [{ name: '', type: 'uint256' }],
+    outputs: [{ name: '', type: 'uint8' }],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'balanceOf',
+    name: 'isEnrolled',
     inputs: [
-      { name: 'account', type: 'address' },
-      { name: 'id', type: 'uint256' },
+      { name: 'user', type: 'address' },
+      { name: 'courseId', type: 'uint256' },
     ],
-    outputs: [{ name: '', type: 'uint256' }],
+    outputs: [{ name: '', type: 'bool' }],
     stateMutability: 'view',
   },
 ] as const;
 
-// EMERGENCY FIX: Use legacy contract address
+// Use optimized contract (now properly deployed)
 const getContractAddress = (): Address => {
-  const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
+  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
+  const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   
-  // EMERGENCY FIX: Force legacy contract (optimized contract not deployed)
-  const legacyAddress = '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3';
-  console.log('[MODULE COMPLETION] Using legacy contract (emergency fix):', legacyAddress);
-  return legacyAddress as Address;
+  // Prefer optimized contract
+  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = optimizedAddress.trim();
+    if (trimmed.startsWith('0x') && trimmed.length === 42) {
+      console.log('[MODULE COMPLETION] Using OPTIMIZED contract:', trimmed);
+      return trimmed as Address;
+    }
+  }
+  
+  // Fallback to legacy if optimized not available
+  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = legacyAddress.trim();
+    if (trimmed.startsWith('0x') && trimmed.length === 42) {
+      console.log('[MODULE COMPLETION] Using LEGACY contract fallback:', trimmed);
+      return trimmed as Address;
+    }
+  }
+  
+  throw new Error('No valid contract address found');
 };
 
 // Hook to check if a user has completed a specific module
@@ -67,10 +83,10 @@ export function useHasCompletedModule(
 ) {
   return useReadContract({
     address: getContractAddress(),
-    abi: LEGACY_BADGE_ABI,
-    functionName: 'hasCompletedModule',
+    abi: OPTIMIZED_BADGE_ABI,
+    functionName: 'isModuleCompleted',
     args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
-      ? [userAddress, courseTokenId, BigInt(moduleIndex)] 
+      ? [userAddress, courseTokenId, moduleIndex] 
       : undefined,
     query: {
       enabled: !!userAddress && courseTokenId !== undefined && moduleIndex !== undefined,
@@ -85,7 +101,7 @@ export function useHasCompletedModule(
 export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: LEGACY_BADGE_ABI,
+    abi: OPTIMIZED_BADGE_ABI,
     functionName: 'getModulesCompleted',
     args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
     query: {
@@ -117,9 +133,9 @@ export function useCompleteModuleBadge() {
 
     return writeContract({
       address: getContractAddress(),
-      abi: LEGACY_BADGE_ABI,
+      abi: OPTIMIZED_BADGE_ABI,
       functionName: 'completeModule',
-      args: [courseTokenId, BigInt(moduleIndex)],
+      args: [courseTokenId, moduleIndex],
     });
   };
 
