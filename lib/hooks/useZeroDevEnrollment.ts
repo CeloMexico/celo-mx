@@ -300,32 +300,9 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
         contractAddress,
       });
 
-      // Encode the adminMint function call for certificate (legacy contract)
-      // Use a different token ID for certificates (tokenId + 1000)
-      const data = encodeFunctionData({
-        abi: LEGACY_BADGE_ABI,
-        functionName: 'adminMint',
-        args: [smartAccountAddress, tokenId + 1000n, 1n],
-      });
-
-      // Execute through ZeroDev with automatic gas sponsorship
-      const hash = await executeTransaction({
-        to: contractAddress,
-        data,
-        value: 0n,
-      });
-
-      if (hash) {
-        console.log('[ZERODEV CERTIFICATE] Transaction sent:', hash);
-        setCertificateState({
-          isProcessing: false,
-          transactionHash: hash,
-          error: null,
-          success: true,
-        });
-      } else {
-        throw new Error('Transaction execution failed');
-      }
+      // Note: adminMint function doesn't exist in optimized contract
+      // For now, skip certificate generation - focus on enrollment/modules
+      throw new Error('Certificate generation not supported with optimized contract yet');
 
     } catch (error) {
       console.error('[ZERODEV CERTIFICATE] Failed:', error);
