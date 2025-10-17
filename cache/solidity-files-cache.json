@@ -918,6 +918,50 @@
       "artifacts": [
         "OptimizedSimpleBadge"
       ]
+    },
+    "/Users/cesarangulo/Documents/celo-academy/celo-mx/contracts/SimpleOptimizedBadge.sol": {
+      "lastModificationDate": 1760571463353,
+      "contentHash": "b893ec4553ad1aa2f7f62628ca6fbc50",
+      "sourceName": "contracts/SimpleOptimizedBadge.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "SimpleOptimizedBadge"
+      ]
     }
   }
 }

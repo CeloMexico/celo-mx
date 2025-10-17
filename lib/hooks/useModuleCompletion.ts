@@ -52,19 +52,11 @@ const LEGACY_BADGE_ABI = [
 // EMERGENCY FIX: Use legacy contract address
 const getContractAddress = (): Address => {
   const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  // Use optimized contract if available
-  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = optimizedAddress.trim();
-    if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[MODULE COMPLETION] Using optimized contract from env:', trimmed);
-      return trimmed as Address;
-    }
-  }
   
-  // TEMPORARY FALLBACK: Hardcoded optimized contract
-  const hardcodedOptimized = '0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0';
-  console.log('[MODULE COMPLETION] Using hardcoded optimized contract:', hardcodedOptimized);
-  return hardcodedOptimized as Address;
+  // EMERGENCY FIX: Force legacy contract (optimized contract not deployed)
+  const legacyAddress = '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3';
+  console.log('[MODULE COMPLETION] Using legacy contract (emergency fix):', legacyAddress);
+  return legacyAddress as Address;
 };
 
 // Hook to check if a user has completed a specific module

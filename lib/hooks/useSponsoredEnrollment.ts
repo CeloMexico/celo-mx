@@ -6,13 +6,13 @@ import { encodeFunctionData, type Address } from 'viem';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
 
-// EMERGENCY FIX: Use legacy contract ABI (optimized contract not deployed properly)
-const LEGACY_BADGE_ABI = [
+// Optimized contract ABI (now properly deployed)
+const OPTIMIZED_BADGE_ABI = [
   {
     type: 'function',
-    name: 'claim',
+    name: 'enroll',
     inputs: [
-      { name: 'tokenId', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -21,8 +21,8 @@ const LEGACY_BADGE_ABI = [
     type: 'function',
     name: 'completeModule',
     inputs: [
-      { name: 'courseTokenId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint256' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
@@ -42,21 +42,29 @@ interface UseSponsoredEnrollmentProps {
 }
 
 const getContractAddress = (): Address => {
-  // EMERGENCY FIX: Use legacy contract (optimized contract not deployed)
+  // Use optimized contract (now properly deployed)
+  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
   const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
   
-  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = legacyAddress.trim();
+  // Prefer optimized contract
+  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = optimizedAddress.trim();
     if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[SPONSORED ENROLLMENT] Using LEGACY contract (emergency fix):', trimmed);
+      console.log('[SPONSORED ENROLLMENT] Using OPTIMIZED contract:', trimmed);
       return trimmed as Address;
     }
   }
   
-  // Hardcoded legacy fallback
-  const hardcodedLegacy = '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3';
-  console.log('[SPONSORED ENROLLMENT] Using hardcoded LEGACY contract:', hardcodedLegacy);
-  return hardcodedLegacy as Address;
+  // Fallback to legacy if optimized not available
+  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
+    const trimmed = legacyAddress.trim();
+    if (trimmed.startsWith('0x') && trimmed.length === 42) {
+      console.log('[SPONSORED ENROLLMENT] Using LEGACY contract fallback:', trimmed);
+      return trimmed as Address;
+    }
+  }
+  
+  throw new Error('No valid contract address found');
 };
 
 export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnrollmentProps) {
@@ -114,10 +122,10 @@ export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnr
         contractAddress,
       });
 
-      // Encode the claim function call (legacy contract)
+      // Encode the enroll function call (optimized contract)
       const data = encodeFunctionData({
-        abi: LEGACY_BADGE_ABI,
-        functionName: 'claim',
+        abi: OPTIMIZED_BADGE_ABI,
+        functionName: 'enroll',
         args: [tokenId],
       });
 
@@ -264,11 +272,11 @@ export function useSponsoredModuleCompletion({
         contractAddress,
       });
 
-      // Encode the completeModule function call (legacy contract)
+      // Encode the completeModule function call (optimized contract)
       const data = encodeFunctionData({
-        abi: LEGACY_BADGE_ABI,
+        abi: OPTIMIZED_BADGE_ABI,
         functionName: 'completeModule',
-        args: [tokenId, BigInt(moduleIndex)],
+        args: [tokenId, moduleIndex],
       });
 
       // Execute sponsored transaction through smart account
