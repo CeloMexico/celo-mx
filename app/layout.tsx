@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import Providers from '@/components/Providers';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { Providers } from '@/components/Providers';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { Toaster } from '@/components/ui/sonner';
+import { ContractDebug } from '@/components/debug/ContractDebug';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
 
@@ -38,6 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1 overflow-x-hidden">{children}</main>
               <Footer />
             </div>
+            <ContractDebug />
+            <Toaster />
           </Providers>
         </ThemeProvider>
       </body>
