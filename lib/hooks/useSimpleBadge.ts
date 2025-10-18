@@ -6,8 +6,9 @@ import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { LEGACY_COURSE_TOKEN_IDS, generateTokenIdFromCourseId, getCourseTokenId } from '@/lib/courseToken';
 
-// Legacy SimpleBadge contract ABI (the one that actually exists)
-const LEGACY_BADGE_ABI = [
+// Combined ABI supporting both legacy and optimized contracts
+const BADGE_ABI = [
+  // Legacy contract functions
   {
     type: 'function',
     name: 'claim',
@@ -25,16 +26,6 @@ const LEGACY_BADGE_ABI = [
     ],
     outputs: [],
     stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'hasBadge',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'tokenId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -56,33 +47,58 @@ const LEGACY_BADGE_ABI = [
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
   },
+  // Optimized contract functions
+  {
+    type: 'function',
+    name: 'enroll',
+    inputs: [{ name: 'courseId', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'isEnrolled',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'courseId', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'hasBadge',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'tokenId', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'completeModule',
+    inputs: [
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
 ] as const;
 
-// EMERGENCY FIX: Use legacy contract that actually exists
+// Use optimized contract (hardcoded - it's deployed and working)
 const getContractAddress = (): Address => {
-  // CRITICAL: The hardcoded optimized address doesn't exist!
-  // Reverting to legacy contract until we properly deploy optimized
-  const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  
-  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = legacyAddress.trim();
-    if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[SIMPLE BADGE] Using LEGACY contract (optimized contract not deployed):', trimmed);
-      return trimmed as Address;
-    }
-  }
-  
-  // Fallback to hardcoded legacy address
-  const hardcodedLegacy = '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3';
-  console.log('[SIMPLE BADGE] Using hardcoded LEGACY contract:', hardcodedLegacy);
-  return hardcodedLegacy as Address;
+  const optimizedAddress = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
+  console.log('[SIMPLE BADGE] Using OPTIMIZED contract:', optimizedAddress);
+  return optimizedAddress as Address;
 };
 
 // Hook to check if a user has a badge (legacy contract)
 export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: LEGACY_BADGE_ABI,
+    abi: BADGE_ABI,
     functionName: 'hasBadge',
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
@@ -101,8 +117,8 @@ export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
 export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: LEGACY_BADGE_ABI,
-    functionName: 'claimed',
+    abi: BADGE_ABI,
+    functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
       enabled: !!userAddress && courseId !== undefined,
@@ -120,7 +136,7 @@ export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
 export function useBadgeBalance(userAddress?: Address, courseId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
-    abi: LEGACY_BADGE_ABI,
+    abi: BADGE_ABI,
     functionName: 'balanceOf',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
@@ -159,8 +175,8 @@ export function useClaimBadge() {
       if (isConnected) {
         return await writeContract({
           address: getContractAddress(),
-          abi: LEGACY_BADGE_ABI,
-          functionName: 'claim',
+          abi: BADGE_ABI,
+          functionName: 'enroll',
           args: [courseId],
         });
       }
@@ -183,8 +199,8 @@ export function useClaimBadge() {
       await ensureCeloAlfajores(provider);
 
       const data = encodeFunctionData({
-        abi: LEGACY_BADGE_ABI,
-        functionName: 'claim',
+        abi: BADGE_ABI,
+        functionName: 'enroll',
         args: [courseId],
       });
       const from = primary.address || (await provider.request({ method: 'eth_accounts' }))[0];
@@ -256,10 +272,10 @@ export function useAdminMintBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
 
   const adminMint = (to: Address, courseId: bigint, amount: bigint = 1n) => {
-    // Using legacy adminMint function
+    // Using adminMint function (if available in optimized contract)
     return writeContract({
       address: getContractAddress(),
-      abi: LEGACY_BADGE_ABI,
+      abi: BADGE_ABI,
       functionName: 'adminMint',
       args: [to, courseId, amount],
     });
