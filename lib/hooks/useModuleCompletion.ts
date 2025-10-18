@@ -49,30 +49,12 @@ const OPTIMIZED_BADGE_ABI = [
   },
 ] as const;
 
-// Use optimized contract (now properly deployed)
+// DEFINITIVE FIX: Use hardcoded optimized contract address
 const getContractAddress = (): Address => {
-  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
-  const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  
-  // Prefer optimized contract
-  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = optimizedAddress.trim();
-    if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[MODULE COMPLETION] Using OPTIMIZED contract:', trimmed);
-      return trimmed as Address;
-    }
-  }
-  
-  // Fallback to legacy if optimized not available
-  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = legacyAddress.trim();
-    if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[MODULE COMPLETION] Using LEGACY contract fallback:', trimmed);
-      return trimmed as Address;
-    }
-  }
-  
-  throw new Error('No valid contract address found');
+  // HARDCODED: Use the ACTUAL deployed optimized contract
+  const OPTIMIZED_CONTRACT_ADDRESS = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
+  console.log('[MODULE COMPLETION] Using HARDCODED OPTIMIZED contract:', OPTIMIZED_CONTRACT_ADDRESS);
+  return OPTIMIZED_CONTRACT_ADDRESS as Address;
 };
 
 // Hook to check if a user has completed a specific module
