@@ -42,29 +42,10 @@ interface UseSponsoredEnrollmentProps {
 }
 
 const getContractAddress = (): Address => {
-  // Use optimized contract (now properly deployed)
-  const optimizedAddress = process.env.NEXT_PUBLIC_OPTIMIZED_CONTRACT_ADDRESS_ALFAJORES;
-  const legacyAddress = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  
-  // Prefer optimized contract
-  if (optimizedAddress && optimizedAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = optimizedAddress.trim();
-    if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[SPONSORED ENROLLMENT] Using OPTIMIZED contract:', trimmed);
-      return trimmed as Address;
-    }
-  }
-  
-  // Fallback to legacy if optimized not available
-  if (legacyAddress && legacyAddress !== '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    const trimmed = legacyAddress.trim();
-    if (trimmed.startsWith('0x') && trimmed.length === 42) {
-      console.log('[SPONSORED ENROLLMENT] Using LEGACY contract fallback:', trimmed);
-      return trimmed as Address;
-    }
-  }
-  
-  throw new Error('No valid contract address found');
+  // HARDCODED: Use optimized contract directly
+  const optimizedAddress = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
+  console.log('[SPONSORED ENROLLMENT] Using HARDCODED OPTIMIZED contract:', optimizedAddress);
+  return optimizedAddress as Address;
 };
 
 export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnrollmentProps) {
