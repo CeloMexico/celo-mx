@@ -93,10 +93,10 @@ export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
       enabled: !!userAddress && tokenId !== undefined,
-      // Cache for 30 seconds to reduce redundant calls
-      staleTime: 30 * 1000,
-      // Keep in cache for 5 minutes
-      gcTime: 5 * 60 * 1000,
+      // CRITICAL: Short cache time for enrollment status (user might have just enrolled)
+      staleTime: 5 * 1000, // 5 seconds
+      // Keep in cache for 2 minutes
+      gcTime: 2 * 60 * 1000,
       // Retry failed requests
       retry: 2,
     },
@@ -112,10 +112,10 @@ export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
       enabled: !!userAddress && courseId !== undefined,
-      // Cache for 30 seconds to reduce redundant calls
-      staleTime: 30 * 1000,
-      // Keep in cache for 5 minutes
-      gcTime: 5 * 60 * 1000,
+      // CRITICAL: Short cache time for enrollment status (user might have just enrolled)
+      staleTime: 5 * 1000, // 5 seconds
+      // Keep in cache for 2 minutes
+      gcTime: 2 * 60 * 1000,
       // Retry failed requests
       retry: 2,
     },

@@ -73,19 +73,31 @@ export function EnrollmentProvider({
     readContract: 'optimized (should match write contract)',
   });
 
-  // CRITICAL: Invalidate cache after successful sponsored enrollment
+  // CRITICAL: Invalidate cache after successful enrollment (both sponsored and legacy)
   useEffect(() => {
-    if (sponsoredEnrollment.enrollmentSuccess) {
-      console.log('[ENROLLMENT CONTEXT] 🔄 Invalidating cache after successful sponsored enrollment');
-      // Invalidate all read contract queries to force refresh
-      queryClient.invalidateQueries({ queryKey: ['readContract'] });
+    const shouldInvalidate = sponsoredEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess;
+    
+    if (shouldInvalidate) {
+      console.log('[ENROLLMENT CONTEXT] 🔄 Invalidating cache after successful enrollment:', {
+        sponsoredSuccess: sponsoredEnrollment.enrollmentSuccess,
+        legacySuccess: optimizedEnrollment.enrollmentSuccess,
+      });
       
-      // Small delay to ensure transaction is indexed
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['readContract'] });
-      }, 2000);
+      // Aggressive cache invalidation for enrollment-related queries
+      queryClient.invalidateQueries({ queryKey: ['readContract'] });
+      queryClient.refetchQueries({ queryKey: ['readContract'] });
+      
+      // Multiple invalidation attempts to ensure cache refresh
+      const intervals = [500, 1000, 2000, 3000];
+      intervals.forEach(delay => {
+        setTimeout(() => {
+          console.log('[ENROLLMENT CONTEXT] 🔄 Cache invalidation attempt at', delay, 'ms');
+          queryClient.invalidateQueries({ queryKey: ['readContract'] });
+          queryClient.refetchQueries({ queryKey: ['readContract'] });
+        }, delay);
+      });
     }
-  }, [sponsoredEnrollment.enrollmentSuccess, queryClient]);
+  }, [sponsoredEnrollment.enrollmentSuccess, optimizedEnrollment.enrollmentSuccess, queryClient]);
 
   // Determine enrollment function to use
   const enrollInCourse = async () => {

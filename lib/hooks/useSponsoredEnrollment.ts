@@ -131,10 +131,21 @@ export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnr
     } catch (error) {
       console.error('[SPONSORED ENROLLMENT] Enrollment failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Enrollment failed';
-      setState(prev => ({
-        ...prev,
-        enrollmentError: errorMessage,
-      }));
+      
+      // SPECIAL CASE: If user is already enrolled, treat as success
+      if (errorMessage.includes('Already enrolled') || errorMessage.includes('416c726561647920656e726f6c6c6564')) {
+        console.log('[SPONSORED ENROLLMENT] ✅ User already enrolled - treating as success');
+        setState(prev => ({
+          ...prev,
+          enrollmentSuccess: true,
+          enrollmentError: null,
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          enrollmentError: errorMessage,
+        }));
+      }
     } finally {
       setState(prev => ({
         ...prev,
