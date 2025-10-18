@@ -67,16 +67,6 @@ const BADGE_ABI = [
   },
   {
     type: 'function',
-    name: 'hasBadge',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'tokenId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
     name: 'completeModule',
     inputs: [
       { name: 'courseId', type: 'uint256' },
@@ -94,12 +84,12 @@ const getContractAddress = (): Address => {
   return optimizedAddress as Address;
 };
 
-// Hook to check if a user has a badge (legacy contract)
+// Hook to check if a user has a badge (optimized contract uses isEnrolled)
 export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
   return useReadContract({
     address: getContractAddress(),
     abi: BADGE_ABI,
-    functionName: 'hasBadge',
+    functionName: 'isEnrolled',
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
       enabled: !!userAddress && tokenId !== undefined,
