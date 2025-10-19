@@ -3,9 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCourseEnrollmentBadge } from '@/lib/hooks/useSimpleBadge';
-import { useSponsoredEnrollment } from '@/lib/hooks/useSponsoredEnrollment';
+import { useUnifiedEnrollment } from '@/lib/hooks/useUnifiedEnrollment';
 import { usePrivy } from '@privy-io/react-auth';
-import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
 
@@ -43,7 +42,6 @@ export function EnrollmentProvider({
   
   const { isAuthenticated, wallet } = useAuth();
   const { authenticated: privyAuthenticated } = usePrivy();
-  const { isSmartAccountReady, canSponsorTransaction } = useSmartAccount();
   const queryClient = useQueryClient();
   const userAddress = wallet?.address as Address | undefined;
   const isWalletConnected = isAuthenticated && !!userAddress;
@@ -53,33 +51,33 @@ export function EnrollmentProvider({
     privyAuthenticated,
     hasWalletAddress: !!userAddress,
     isWalletConnected,
-    isSmartAccountReady,
-    canSponsorTransaction,
   });
 
-  // Use optimized enrollment for both read and write operations (CRITICAL FIX)
+  // Use optimized enrollment for read operations (badge/claim status)
   const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
   
-  // Use sponsored enrollment for write operations (enrollment)
-  const sponsoredEnrollment = useSponsoredEnrollment({ courseSlug, courseId });
+  // Use UNIFIED enrollment for write operations (handles both sponsored and wallet)
+  const unifiedEnrollment = useUnifiedEnrollment({ courseSlug, courseId });
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state:', {
     hasBadge: optimizedEnrollment.hasBadge,
     hasClaimed: optimizedEnrollment.hasClaimed,
     isLoading: optimizedEnrollment.isLoading,
-    sponsoredEnrollmentSuccess: sponsoredEnrollment.enrollmentSuccess,
-    canUseSponsored: canSponsorTransaction,
+    unifiedEnrollmentSuccess: unifiedEnrollment.enrollmentSuccess,
+    prefersSponsoredMethod: unifiedEnrollment.prefersSponsoredMethod,
+    transactionMethod: unifiedEnrollment.transactionMethod,
     serverHasAccess,
-    readContract: 'optimized (should match write contract)',
+    contractAddress: unifiedEnrollment.contractAddress,
   });
 
-  // CRITICAL: Invalidate cache after successful enrollment (both sponsored and legacy)
+  // CRITICAL: Invalidate cache after successful enrollment (unified approach)
   useEffect(() => {
-    const shouldInvalidate = sponsoredEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess;
+    const shouldInvalidate = unifiedEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess;
     
     if (shouldInvalidate) {
       console.log('[ENROLLMENT CONTEXT] 🔄 Invalidating cache after successful enrollment:', {
-        sponsoredSuccess: sponsoredEnrollment.enrollmentSuccess,
+        unifiedSuccess: unifiedEnrollment.enrollmentSuccess,
+        transactionMethod: unifiedEnrollment.transactionMethod,
         legacySuccess: optimizedEnrollment.enrollmentSuccess,
       });
       
@@ -97,38 +95,30 @@ export function EnrollmentProvider({
         }, delay);
       });
     }
-  }, [sponsoredEnrollment.enrollmentSuccess, optimizedEnrollment.enrollmentSuccess, queryClient]);
+  }, [unifiedEnrollment.enrollmentSuccess, optimizedEnrollment.enrollmentSuccess, queryClient]);
 
-  // Determine enrollment function to use
+  // Use unified enrollment function (handles both sponsored and wallet automatically)
   const enrollInCourse = async () => {
-    console.log('[ENROLLMENT CONTEXT] Enrollment decision:', {
+    console.log('[ENROLLMENT CONTEXT] Using unified enrollment:', {
       privyAuthenticated,
-      canSponsorTransaction,
-      isSmartAccountReady,
-      willUseSponsored: privyAuthenticated && canSponsorTransaction
+      prefersSponsoredMethod: unifiedEnrollment.prefersSponsoredMethod,
+      canEnroll: unifiedEnrollment.canEnroll,
     });
     
-    if (privyAuthenticated && canSponsorTransaction) {
-      console.log('[ENROLLMENT CONTEXT] ✅ Using sponsored enrollment (gas-free)');
-      await sponsoredEnrollment.enrollWithSponsorship();
-    } else {
-      console.log('[ENROLLMENT CONTEXT] ⚠️ Falling back to legacy enrollment (requires gas)', {
-        reason: !privyAuthenticated ? 'Not authenticated with Privy' : 'Cannot sponsor transactions'
-      });
-      await optimizedEnrollment.enrollInCourse();
-    }
+    // The unified hook automatically chooses the best method
+    await unifiedEnrollment.enroll();
   };
 
   const enrollmentState: EnrollmentState = {
     hasBadge: optimizedEnrollment.hasBadge,
     hasClaimed: optimizedEnrollment.hasClaimed,
-    isLoading: optimizedEnrollment.isLoading || sponsoredEnrollment.isLoading,
+    isLoading: optimizedEnrollment.isLoading || unifiedEnrollment.isLoading,
     enrollInCourse,
-    enrollmentHash: sponsoredEnrollment.enrollmentHash || optimizedEnrollment.enrollmentHash,
-    enrollmentError: sponsoredEnrollment.enrollmentError ? new Error(sponsoredEnrollment.enrollmentError) : optimizedEnrollment.enrollmentError,
-    isEnrolling: sponsoredEnrollment.isEnrolling || optimizedEnrollment.isEnrolling,
-    isConfirmingEnrollment: optimizedEnrollment.isConfirmingEnrollment,
-    enrollmentSuccess: sponsoredEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess,
+    enrollmentHash: unifiedEnrollment.enrollmentHash || optimizedEnrollment.enrollmentHash,
+    enrollmentError: unifiedEnrollment.enrollmentError ? new Error(unifiedEnrollment.enrollmentError) : optimizedEnrollment.enrollmentError,
+    isEnrolling: unifiedEnrollment.isEnrolling || optimizedEnrollment.isEnrolling,
+    isConfirmingEnrollment: false, // Unified hook manages this internally
+    enrollmentSuccess: unifiedEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess,
     serverHasAccess,
     isWalletConnected,
     userAddress,

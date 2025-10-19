@@ -163,7 +163,64 @@ After successful transactions:
 3. Confirm no more "Already enrolled" errors for non-enrolled users
 4. Deploy to production with proper environment variables
 
+## CRITICAL FAILURE - January 19, 2025 21:59
+
+### Issue: No Transaction Signing Prompt
+**Problem**: When user clicks "Enroll", no wallet signing prompt appears
+**Result**: No transaction is sent, enrollment appears to work but doesn't persist on page refresh
+**Root Cause**: Transaction execution is silently failing - wallet is not being triggered
+
+### Previous Fix Attempt #6: Unified Contract Configuration
+- **Action**: Created unified contract config, updated all hooks
+- **Result**: FAILED - Still no transaction signing
+- **Outcome**: SAME ISSUE - No wallet prompt, no actual enrollment
+
+### Real Problem Identified - ROOT CAUSE FOUND
+**CRITICAL ISSUE**: The `EnrollmentContext` is calling the wrong enrollment functions!
+
+**Flow Analysis**:
+1. User clicks "Enroll" → `Web3EnrollPanel.handleEnroll()` → `enrollment.enrollInCourse()`
+2. `enrollment.enrollInCourse()` (line 113) → `sponsoredEnrollment.enrollWithSponsorship()`
+3. BUT `enrollWithSponsorship()` expects a specific setup that may not be working
+4. **Fallback** (line 118) → `optimizedEnrollment.enrollInCourse()` (legacy path)
+
+**The Issue**:
+- Both paths are failing to trigger actual wallet signing
+- `sponsoredEnrollment.enrollWithSponsorship()` - No wallet prompt (sponsored transactions?)
+- `optimizedEnrollment.enrollInCourse()` - Also not triggering wallet
+- **UI shows success but no blockchain transaction occurs**
+
+### What We Actually Need to Accomplish
+1. **WORKING WALLET INTEGRATION**: When user clicks enroll, wallet MUST prompt for signature
+2. **ACTUAL TRANSACTION EXECUTION**: Transaction must be sent to blockchain
+3. **ON-CHAIN ENROLLMENT**: User must be actually enrolled in the optimized contract
+4. **PERSISTENT STATE**: Enrollment must persist after page refresh because it's on-chain
+
+### FINAL SOLUTION APPROACH - January 19, 2025 22:01
+
+**USER DIRECTIVE**: Create ONE hook that manages both sponsored and non-sponsored enrollment
+- Same optimized contract for both cases
+- Handle sponsored vs non-sponsored logic internally
+- No more multiple hooks causing confusion
+- Single source of truth for enrollment
+
+### Fix Attempt #7: Unified Enrollment Hook - IMPLEMENTED ✅
+**Action**: Create `useUnifiedEnrollment` hook that:
+1. ✅ Uses the same optimized contract (`0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29`)
+2. ✅ Detects if user can use sponsored transactions
+3. ✅ Falls back to regular wallet signing if sponsored not available
+4. ✅ Single enrollment function that handles both cases
+5. ✅ Consistent cache invalidation for both paths
+6. ✅ Updated EnrollmentContext to use unified hook
+
+**Files Created/Updated**:
+- `lib/hooks/useUnifiedEnrollment.ts` - New unified hook
+- `UNIFIED_ENROLLMENT_SOLUTION.md` - Complete documentation
+- `lib/contexts/EnrollmentContext.tsx` - Updated to use unified hook
+
+**Goal**: One hook to rule them all - no more multiple enrollment paths ✅
+
 ---
 
-**Last Updated**: 2025-01-19  
-**Status**: PHASE 2 COMPLETE - Ready for Testing
+**Last Updated**: 2025-01-19 21:59  
+**Status**: CRITICAL FAILURE - Transactions not being signed
