@@ -1,0 +1,152 @@
+/**
+ * Unified Contract Configuration for Optimized Badge Contract
+ * 
+ * This is the SINGLE SOURCE OF TRUTH for all optimized contract interactions.
+ * ALL hooks and components must import from this file to ensure consistency.
+ * 
+ * Last Updated: 2025-01-19
+ * Contract Address: 0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29 (Celo Alfajores)
+ */
+
+import { type Address } from 'viem';
+
+// HARDCODED OPTIMIZED CONTRACT ADDRESS (verified deployed and working)
+export const OPTIMIZED_CONTRACT_ADDRESS: Address = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
+
+// Optimized contract ABI (ONLY functions that exist in the deployed contract)
+export const OPTIMIZED_BADGE_ABI = [
+  // Enrollment functions
+  {
+    type: 'function',
+    name: 'enroll',
+    inputs: [{ name: 'courseId', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'isEnrolled',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'courseId', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  
+  // Module completion functions
+  {
+    type: 'function',
+    name: 'completeModule',
+    inputs: [
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'isModuleCompleted',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'courseId', type: 'uint256' },
+      { name: 'moduleIndex', type: 'uint8' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  
+  // Progress tracking functions
+  {
+    type: 'function',
+    name: 'getModulesCompleted',
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'courseId', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  
+  // Events
+  {
+    type: 'event',
+    name: 'Enrolled',
+    inputs: [
+      { name: 'user', type: 'address', indexed: true },
+      { name: 'courseId', type: 'uint256', indexed: true },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'ModuleCompleted',
+    inputs: [
+      { name: 'user', type: 'address', indexed: true },
+      { name: 'courseId', type: 'uint256', indexed: true },
+      { name: 'moduleIndex', type: 'uint8', indexed: false },
+    ],
+  },
+] as const;
+
+// Contract configuration object for easy importing
+export const OPTIMIZED_CONTRACT_CONFIG = {
+  address: OPTIMIZED_CONTRACT_ADDRESS,
+  abi: OPTIMIZED_BADGE_ABI,
+} as const;
+
+// Helper function to get contract address (maintains compatibility with existing code)
+export function getOptimizedContractAddress(): Address {
+  console.log('[CONTRACT CONFIG] Using optimized contract:', OPTIMIZED_CONTRACT_ADDRESS);
+  return OPTIMIZED_CONTRACT_ADDRESS;
+}
+
+// Validation function to ensure contract exists
+export function validateContractAddress(): boolean {
+  const address = OPTIMIZED_CONTRACT_ADDRESS;
+  return address !== null && address.length === 42 && address.startsWith('0x');
+}
+
+// Cache configuration for React Query (shared across all hooks)
+export const ENROLLMENT_CACHE_CONFIG = {
+  // Very short stale time for enrollment status (user might have just enrolled)
+  staleTime: 5 * 1000, // 5 seconds
+  // Keep in cache for 2 minutes
+  gcTime: 2 * 60 * 1000,
+  // Retry failed requests
+  retry: 2,
+  // Refetch when window regains focus
+  refetchOnWindowFocus: true,
+  // Refetch when component mounts
+  refetchOnMount: true,
+} as const;
+
+// Module completion cache config (can be cached longer)
+export const MODULE_CACHE_CONFIG = {
+  staleTime: 30 * 1000, // 30 seconds
+  gcTime: 5 * 60 * 1000, // 5 minutes
+  retry: 2,
+  refetchOnWindowFocus: false, // Don't refetch on focus for module progress
+  refetchOnMount: true,
+} as const;
+
+// Legacy contract addresses for reference (DO NOT USE)
+export const LEGACY_ADDRESSES = {
+  DEPRECATED_SIMPLE_BADGE: '0x7Ed5CC0cf0B0532b52024a0DDa8fAE24C6F66dc3',
+  DEPRECATED_OPTIMIZED_ATTEMPT: '0x525D78C03f3AA67951EA1b3fa1aD93DefF134ed0',
+} as const;
+
+// Gas estimation for sponsored transactions
+export const GAS_ESTIMATES = {
+  ENROLLMENT: 50_000n, // Conservative estimate for enroll()
+  MODULE_COMPLETION: 40_000n, // Conservative estimate for completeModule()
+} as const;
+
+// Network configuration
+export const NETWORK_CONFIG = {
+  CHAIN_ID: 44787, // Celo Alfajores
+  CHAIN_ID_HEX: '0xaef3',
+  CHAIN_NAME: 'Celo Alfajores',
+  RPC_URL: 'https://alfajores-forno.celo-testnet.org',
+  EXPLORER_URL: 'https://alfajores.celoscan.io',
+} as const;

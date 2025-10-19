@@ -4,139 +4,57 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAcc
 import { type Address, encodeFunctionData } from 'viem';
 import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useQueryClient } from '@tanstack/react-query';
 import { LEGACY_COURSE_TOKEN_IDS, generateTokenIdFromCourseId, getCourseTokenId } from '@/lib/courseToken';
+import {
+  OPTIMIZED_CONTRACT_CONFIG,
+  getOptimizedContractAddress,
+  ENROLLMENT_CACHE_CONFIG,
+  MODULE_CACHE_CONFIG,
+} from '@/lib/contracts/optimized-badge-config';
 
-// Combined ABI supporting both legacy and optimized contracts
-const BADGE_ABI = [
-  // Legacy contract functions
-  {
-    type: 'function',
-    name: 'claim',
-    inputs: [{ name: 'tokenId', type: 'uint256' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'adminMint',
-    inputs: [
-      { name: 'to', type: 'address' },
-      { name: 'tokenId', type: 'uint256' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'claimed',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'tokenId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'balanceOf',
-    inputs: [
-      { name: 'account', type: 'address' },
-      { name: 'id', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  // Optimized contract functions
-  {
-    type: 'function',
-    name: 'enroll',
-    inputs: [{ name: 'courseId', type: 'uint256' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'isEnrolled',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'completeModule',
-    inputs: [
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-] as const;
-
-// Use optimized contract (hardcoded - it's deployed and working)
-const getContractAddress = (): Address => {
-  const optimizedAddress = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
-  console.log('[SIMPLE BADGE] Using OPTIMIZED contract:', optimizedAddress);
-  return optimizedAddress as Address;
-};
+// Use unified contract configuration (SINGLE SOURCE OF TRUTH)
+const { address: CONTRACT_ADDRESS, abi: CONTRACT_ABI } = OPTIMIZED_CONTRACT_CONFIG;
 
 // Hook to check if a user has a badge (optimized contract uses isEnrolled)
 export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
   return useReadContract({
-    address: getContractAddress(),
-    abi: BADGE_ABI,
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
     functionName: 'isEnrolled',
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
       enabled: !!userAddress && tokenId !== undefined,
-      // CRITICAL: Short cache time for enrollment status (user might have just enrolled)
-      staleTime: 5 * 1000, // 5 seconds
-      // Keep in cache for 2 minutes
-      gcTime: 2 * 60 * 1000,
-      // Retry failed requests
-      retry: 2,
+      ...ENROLLMENT_CACHE_CONFIG,
     },
   });
 }
 
-// Hook to check if a user is enrolled (using legacy contract claimed mapping)
+// Hook to check if a user is enrolled (using optimized contract isEnrolled)
 export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
   return useReadContract({
-    address: getContractAddress(),
-    abi: BADGE_ABI,
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
     functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
       enabled: !!userAddress && courseId !== undefined,
-      // CRITICAL: Short cache time for enrollment status (user might have just enrolled)
-      staleTime: 5 * 1000, // 5 seconds
-      // Keep in cache for 2 minutes
-      gcTime: 2 * 60 * 1000,
-      // Retry failed requests
-      retry: 2,
+      ...ENROLLMENT_CACHE_CONFIG,
     },
   });
 }
 
-// Hook to get user's badge balance (using legacy balanceOf)
+// Hook to check enrollment status (replaces legacy balanceOf)
 export function useBadgeBalance(userAddress?: Address, courseId?: bigint) {
+  // For optimized contract, we use isEnrolled instead of balanceOf
   return useReadContract({
-    address: getContractAddress(),
-    abi: BADGE_ABI,
-    functionName: 'balanceOf',
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
       enabled: !!userAddress && courseId !== undefined,
-      // Cache for 30 seconds to reduce redundant calls
-      staleTime: 30 * 1000,
-      // Keep in cache for 5 minutes
-      gcTime: 5 * 60 * 1000,
-      // Retry failed requests
-      retry: 2,
+      ...MODULE_CACHE_CONFIG,
     },
   });
 }
@@ -148,6 +66,7 @@ export function useClaimBadge() {
   const { connectAsync, connectors } = useConnect();
   const { ready, authenticated } = usePrivy();
   const { wallets } = useWallets();
+  const queryClient = useQueryClient();
   const [fallbackHash, setFallbackHash] = useState<`0x${string}` | undefined>(undefined);
   const [fallbackError, setFallbackError] = useState<Error | null>(null);
 
@@ -163,12 +82,21 @@ export function useClaimBadge() {
         }
       }
       if (isConnected) {
-        return await writeContract({
-          address: getContractAddress(),
-          abi: BADGE_ABI,
+        const hash = await writeContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
           functionName: 'enroll',
           args: [courseId],
         });
+        
+        // Invalidate enrollment cache immediately after transaction is sent
+        setTimeout(() => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+          });
+        }, 1000);
+        
+        return hash;
       }
     } catch (_) {
       // fallthrough to Privy fallback
@@ -189,16 +117,24 @@ export function useClaimBadge() {
       await ensureCeloAlfajores(provider);
 
       const data = encodeFunctionData({
-        abi: BADGE_ABI,
+        abi: CONTRACT_ABI,
         functionName: 'enroll',
         args: [courseId],
       });
       const from = primary.address || (await provider.request({ method: 'eth_accounts' }))[0];
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
-        params: [{ from, to: getContractAddress(), data, value: '0x0' }],
+        params: [{ from, to: CONTRACT_ADDRESS, data, value: '0x0' }],
       });
       setFallbackHash(txHash as `0x${string}`);
+      
+      // Invalidate enrollment cache immediately after transaction is sent
+      setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+        });
+      }, 1000);
+      
       return txHash;
     } catch (err: any) {
       setFallbackError(err instanceof Error ? err : new Error(String(err)));
@@ -257,18 +193,14 @@ export function useClaimBadge() {
   };
 }
 
-// Hook to admin mint badges
+// Hook to admin mint badges (NOT SUPPORTED in optimized contract)
 export function useAdminMintBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
 
   const adminMint = (to: Address, courseId: bigint, amount: bigint = 1n) => {
-    // Using adminMint function (if available in optimized contract)
-    return writeContract({
-      address: getContractAddress(),
-      abi: BADGE_ABI,
-      functionName: 'adminMint',
-      args: [to, courseId, amount],
-    });
+    // adminMint function does not exist in optimized contract
+    console.error('[ADMIN MINT] adminMint function is not available in optimized contract');
+    throw new Error('adminMint function is not supported in optimized contract. Use enroll() instead.');
   };
 
   return {

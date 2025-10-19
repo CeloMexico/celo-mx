@@ -3,31 +3,17 @@
 import { useState, useCallback } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { encodeFunctionData, type Address } from 'viem';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
+import {
+  OPTIMIZED_CONTRACT_CONFIG,
+  ENROLLMENT_CACHE_CONFIG,
+  MODULE_CACHE_CONFIG,
+} from '@/lib/contracts/optimized-badge-config';
 
-// Optimized contract ABI (now properly deployed)
-const OPTIMIZED_BADGE_ABI = [
-  {
-    type: 'function',
-    name: 'enroll',
-    inputs: [
-      { name: 'courseId', type: 'uint256' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'completeModule',
-    inputs: [
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-] as const;
+// Use unified contract configuration (SINGLE SOURCE OF TRUTH)
+const { address: CONTRACT_ADDRESS, abi: CONTRACT_ABI } = OPTIMIZED_CONTRACT_CONFIG;
 
 interface ZeroDevTransactionState {
   isProcessing: boolean;
@@ -41,15 +27,10 @@ interface UseZeroDevEnrollmentProps {
   courseId: string;
 }
 
-const getContractAddress = (): Address => {
-  // HARDCODED: Use optimized contract directly
-  const optimizedAddress = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
-  console.log('[ZERODEV CONTRACT] Using HARDCODED OPTIMIZED contract:', optimizedAddress);
-  return optimizedAddress as Address;
-};
 
 export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollmentProps) {
   const { authenticated, ready } = usePrivy();
+  const queryClient = useQueryClient();
   const {
     kernelClient,
     smartAccountAddress,
@@ -106,7 +87,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
       });
 
       const tokenId = getCourseTokenId(courseSlug, courseId);
-      const contractAddress = getContractAddress();
+      const contractAddress = CONTRACT_ADDRESS;
 
       console.log('[ZERODEV ENROLLMENT] Starting enrollment:', {
         courseSlug,
@@ -118,7 +99,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
 
       // Encode the enroll function call (optimized contract)
       const data = encodeFunctionData({
-        abi: OPTIMIZED_BADGE_ABI,
+        abi: CONTRACT_ABI,
         functionName: 'enroll',
         args: [tokenId],
       });
@@ -138,6 +119,13 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
           error: null,
           success: true,
         });
+        
+        // Invalidate enrollment cache immediately after transaction is sent
+        setTimeout(() => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+          });
+        }, 1000);
       } else {
         throw new Error('Transaction execution failed');
       }
@@ -188,7 +176,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
       });
 
       const tokenId = getCourseTokenId(courseSlug, courseId);
-      const contractAddress = getContractAddress();
+      const contractAddress = CONTRACT_ADDRESS;
 
       console.log('[ZERODEV MODULE] Starting module completion:', {
         courseSlug,
@@ -201,7 +189,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
 
       // Encode the completeModule function call (optimized contract)
       const data = encodeFunctionData({
-        abi: OPTIMIZED_BADGE_ABI,
+        abi: CONTRACT_ABI,
         functionName: 'completeModule',
         args: [tokenId, moduleIndex],
       });
@@ -221,6 +209,16 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
           error: null,
           success: true,
         });
+        
+        // Invalidate module completion cache immediately after transaction is sent
+        setTimeout(() => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isModuleCompleted' }] 
+          });
+          queryClient.invalidateQueries({ 
+            queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'getModulesCompleted' }] 
+          });
+        }, 1000);
       } else {
         throw new Error('Transaction execution failed');
       }
@@ -271,7 +269,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
       });
 
       const tokenId = getCourseTokenId(courseSlug, courseId);
-      const contractAddress = getContractAddress();
+      const contractAddress = CONTRACT_ADDRESS;
 
       console.log('[ZERODEV CERTIFICATE] Starting certificate generation:', {
         courseSlug,
