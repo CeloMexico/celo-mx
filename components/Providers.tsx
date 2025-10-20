@@ -2,7 +2,7 @@
 import { ThemeProvider } from 'next-themes';
 import { ToastProvider } from '@/components/ui/toast';
 import { PrivyProvider } from '@privy-io/react-auth';
-import { celoAlfajores } from 'viem/chains';
+import { celo } from 'viem/chains';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -36,8 +36,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           createOnLogin: 'users-without-wallets',
           requireUserPasswordOnCreate: false,
         },
-        defaultChain: celoAlfajores,
-        supportedChains: [celoAlfajores],
+        defaultChain: celo, // Celo Mainnet
+        supportedChains: [celo], // Only mainnet supported
       }}
     >
       <QueryClientProvider client={queryClient}>

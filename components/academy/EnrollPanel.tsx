@@ -165,7 +165,7 @@ export function EnrollPanel({ course, onEnroll, enrollmentState }: EnrollPanelPr
                 Has obtenido tu badge de inscripción en la blockchain.
               </p>
               <a 
-                href={`https://alfajores.celoscan.io/tx/${enrollmentState.enrollmentHash}`}
+                href={`https://celoscan.io/tx/${enrollmentState.enrollmentHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-800"

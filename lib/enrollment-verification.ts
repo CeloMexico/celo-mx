@@ -1,139 +1,96 @@
 /**
  * Server-side enrollment verification
- * Checks if a user has the required NFT badge to access course content
+ * Checks if a user has enrollment status via the optimized contract
  */
 
 import { createPublicClient, http, type Address } from 'viem';
-import { celoAlfajores } from 'viem/chains';
-import { generateTokenIdFromCourseId, LEGACY_COURSE_TOKEN_IDS } from '@/lib/courseToken';
-
-// SimpleBadge contract ABI - only what we need for verification
-const SIMPLE_BADGE_ABI = [
-  {
-    type: 'function',
-    name: 'balanceOf',
-    inputs: [
-      { name: 'account', type: 'address' },
-      { name: 'id', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'claimed',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'tokenId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-  },
-] as const;
+import { celoAlfajores, celo } from 'viem/chains';
+import { getCourseTokenId } from '@/lib/courseToken';
+import { 
+  getOptimizedContractConfig, 
+  OPTIMIZED_BADGE_ABI,
+  getNetworkConfig,
+  getOptimizedContractAddress
+} from '@/lib/contracts/optimized-badge-config';
 
 /**
- * Get the contract address with validation
+ * Get the contract address and configuration for the target chain
+ * Defaults to Celo mainnet for production, falls back to Alfajores for development
  */
-function getContractAddress(): Address {
-  const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
+function getContractConfig(chainId?: number) {
+  // Always default to mainnet
+  const targetChainId = chainId || 42220;
   
-  if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    throw new Error('SimpleBadge contract address not configured');
-  }
-  
-  const trimmedAddress = address.trim();
-  
-  if (!trimmedAddress.startsWith('0x') || trimmedAddress.length !== 42) {
-    throw new Error(`Invalid contract address format: ${trimmedAddress}`);
-  }
-  
-  return trimmedAddress as Address;
+  console.log('[ENROLLMENT VERIFICATION] Using chain:', targetChainId);
+  return getOptimizedContractConfig(targetChainId);
 }
 
 /**
- * Get token ID for a course
+ * Create a public client for the specified chain
  */
-function getCourseTokenId(courseSlug: string, courseId?: string): bigint {
-  // Check legacy mapping first
-  const legacyTokenId = LEGACY_COURSE_TOKEN_IDS[courseSlug as keyof typeof LEGACY_COURSE_TOKEN_IDS];
-  if (legacyTokenId) {
-    return legacyTokenId;
-  }
+function createPublicWeb3Client(chainId?: number) {
+  // Always default to mainnet
+  const targetChainId = chainId || 42220;
+  const chain = targetChainId === 42220 ? celo : celoAlfajores;
   
-  // Generate dynamic token ID from course database ID
-  if (courseId) {
-    return generateTokenIdFromCourseId(courseId);
-  }
-  
-  // Fallback: generate from slug hash
-  let hash = 0;
-  for (let i = 0; i < courseSlug.length; i++) {
-    const char = courseSlug.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  const tokenId = Math.abs(hash % 1000000) + 1000;
-  return BigInt(tokenId);
-}
-
-/**
- * Create a public client for reading blockchain data
- */
-function createPublicWeb3Client() {
   return createPublicClient({
-    chain: celoAlfajores,
+    chain,
     transport: http(),
   });
 }
 
 /**
- * Check if a user has claimed the enrollment badge for a course
+ * Check if a user is enrolled in the course using the optimized contract
  * This is a server-side check that doesn't require wallet connection
  */
 export async function hasUserClaimedBadge(
   userAddress: Address,
   courseSlug: string,
-  courseId?: string
+  courseId?: string,
+  chainId?: number
 ): Promise<boolean> {
   const startTime = Date.now();
-  console.log('[ENROLLMENT VERIFICATION] Checking claimed badge:', {
+  console.log('[ENROLLMENT VERIFICATION] Checking enrollment status:', {
     userAddress,
     courseSlug,
     courseId,
+    chainId,
   });
   
   try {
-    const contractAddress = getContractAddress();
+    const contractConfig = getContractConfig(chainId);
     const tokenId = getCourseTokenId(courseSlug, courseId);
     console.log('[ENROLLMENT VERIFICATION] Contract details:', {
-      contractAddress,
+      contractAddress: contractConfig.address,
       tokenId: tokenId.toString(),
+      chainId,
     });
     
-    const publicClient = createPublicWeb3Client();
+    const publicClient = createPublicWeb3Client(chainId);
 
-    // Check if user has claimed the badge
-    const hasClaimed = await publicClient.readContract({
-      address: contractAddress,
-      abi: SIMPLE_BADGE_ABI,
-      functionName: 'claimed',
+    // Use optimized contract's isEnrolled function
+    const isEnrolled = await publicClient.readContract({
+      address: contractConfig.address,
+      abi: OPTIMIZED_BADGE_ABI,
+      functionName: 'isEnrolled',
       args: [userAddress, tokenId],
     });
 
     const duration = Date.now() - startTime;
-    console.log('[ENROLLMENT VERIFICATION] Claimed check completed:', {
-      hasClaimed,
+    console.log('[ENROLLMENT VERIFICATION] Enrollment check completed:', {
+      isEnrolled,
       duration: `${duration}ms`,
     });
     
-    return hasClaimed;
+    return isEnrolled;
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('[ENROLLMENT VERIFICATION] Error checking badge claim status:', {
+    console.error('[ENROLLMENT VERIFICATION] Error checking enrollment status:', {
       error: error instanceof Error ? error.message : String(error),
       duration: `${duration}ms`,
       userAddress,
       courseSlug,
+      chainId,
     });
     // In case of error, we default to false (not enrolled)
     // This is safer than allowing access by default
@@ -142,62 +99,27 @@ export async function hasUserClaimedBadge(
 }
 
 /**
- * Check if a user has the enrollment badge (balance > 0)
+ * Check if a user has enrollment (same as hasUserClaimedBadge for optimized contract)
+ * Kept for backward compatibility
  */
 export async function hasUserEnrollmentBadge(
   userAddress: Address,
   courseSlug: string,
-  courseId?: string
+  courseId?: string,
+  chainId?: number
 ): Promise<boolean> {
-  const startTime = Date.now();
-  console.log('[ENROLLMENT VERIFICATION] Checking badge balance:', {
-    userAddress,
-    courseSlug,
-    courseId,
-  });
-  
-  try {
-    const contractAddress = getContractAddress();
-    const tokenId = getCourseTokenId(courseSlug, courseId);
-    const publicClient = createPublicWeb3Client();
-
-    // Check user's badge balance
-    const balance = await publicClient.readContract({
-      address: contractAddress,
-      abi: SIMPLE_BADGE_ABI,
-      functionName: 'balanceOf',
-      args: [userAddress, tokenId],
-    });
-
-    const hasBalance = balance > 0n;
-    const duration = Date.now() - startTime;
-    console.log('[ENROLLMENT VERIFICATION] Balance check completed:', {
-      balance: balance.toString(),
-      hasBalance,
-      duration: `${duration}ms`,
-    });
-
-    return hasBalance;
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    console.error('[ENROLLMENT VERIFICATION] Error checking badge balance:', {
-      error: error instanceof Error ? error.message : String(error),
-      duration: `${duration}ms`,
-      userAddress,
-      courseSlug,
-    });
-    return false;
-  }
+  // For optimized contract, enrollment status is the same as claimed badge
+  return hasUserClaimedBadge(userAddress, courseSlug, courseId, chainId);
 }
 
 /**
- * Comprehensive enrollment check
- * Checks both claim status and badge balance
+ * Comprehensive enrollment check using optimized contract
  */
 export async function isUserEnrolledInCourse(
   userAddress: Address,
   courseSlug: string,
-  courseId?: string
+  courseId?: string,
+  chainId?: number
 ): Promise<{
   isEnrolled: boolean;
   hasClaimed: boolean;
@@ -205,45 +127,41 @@ export async function isUserEnrolledInCourse(
   tokenId: string;
 }> {
   const startTime = Date.now();
-  console.log('[ENROLLMENT VERIFICATION] Starting comprehensive enrollment check:', {
+  console.log('[ENROLLMENT VERIFICATION] Starting enrollment check:', {
     userAddress,
     courseSlug,
     courseId,
+    chainId,
   });
   
   try {
     const tokenId = getCourseTokenId(courseSlug, courseId);
     console.log('[ENROLLMENT VERIFICATION] Using token ID:', tokenId.toString());
     
-    const [hasClaimed, hasBadge] = await Promise.all([
-      hasUserClaimedBadge(userAddress, courseSlug, courseId),
-      hasUserEnrollmentBadge(userAddress, courseSlug, courseId),
-    ]);
-
-    const isEnrolled = hasClaimed || hasBadge;
+    // For optimized contract, enrollment status is unified
+    const isEnrolled = await hasUserClaimedBadge(userAddress, courseSlug, courseId, chainId);
     const duration = Date.now() - startTime;
     
-    console.log('[ENROLLMENT VERIFICATION] Comprehensive check completed:', {
+    console.log('[ENROLLMENT VERIFICATION] Enrollment check completed:', {
       isEnrolled,
-      hasClaimed,
-      hasBadge,
       tokenId: tokenId.toString(),
       duration: `${duration}ms`,
     });
 
     return {
       isEnrolled,
-      hasClaimed,
-      hasBadge,
+      hasClaimed: isEnrolled, // For compatibility
+      hasBadge: isEnrolled,   // For compatibility
       tokenId: tokenId.toString(),
     };
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('[ENROLLMENT VERIFICATION] Error in comprehensive enrollment check:', {
+    console.error('[ENROLLMENT VERIFICATION] Error in enrollment check:', {
       error: error instanceof Error ? error.message : String(error),
       duration: `${duration}ms`,
       userAddress,
       courseSlug,
+      chainId,
     });
     return {
       isEnrolled: false,
@@ -260,7 +178,8 @@ export async function isUserEnrolledInCourse(
 export async function verifyEnrollmentAccess(
   userAddress: Address | undefined,
   courseSlug: string,
-  courseId?: string
+  courseId?: string,
+  chainId?: number
 ): Promise<{
   hasAccess: boolean;
   reason?: string;
@@ -273,8 +192,8 @@ export async function verifyEnrollmentAccess(
     };
   }
 
-  // Check enrollment status
-  const enrollmentStatus = await isUserEnrolledInCourse(userAddress, courseSlug, courseId);
+  // Check enrollment status using the correct chain
+  const enrollmentStatus = await isUserEnrolledInCourse(userAddress, courseSlug, courseId, chainId);
 
   if (!enrollmentStatus.isEnrolled) {
     return {

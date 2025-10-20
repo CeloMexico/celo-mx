@@ -83,9 +83,9 @@ export function getPaymasterConfig(chainId: number): PaymasterConfig | null {
 }
 
 /**
- * Default paymaster configuration (Alfajores for backward compatibility)
+ * Default paymaster configuration (always mainnet)
  */
-export const DEFAULT_PAYMASTER_CONFIG = PAYMASTER_CONFIGS[celoAlfajores.id];
+export const DEFAULT_PAYMASTER_CONFIG = PAYMASTER_CONFIGS[celo.id];
 
 /**
  * Check if a transaction can be sponsored

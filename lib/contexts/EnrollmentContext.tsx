@@ -10,6 +10,7 @@ import { encodeFunctionData } from 'viem';
 import { usePrivy } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useChainId } from 'wagmi';
+import { useDirectMainnetEnrollment } from '@/lib/hooks/useDirectMainnetReads';
 import type { Address } from 'viem';
 
 interface EnrollmentState {
@@ -47,19 +48,28 @@ export function EnrollmentProvider({
   const { isAuthenticated, wallet } = useAuth();
   const { authenticated: privyAuthenticated } = usePrivy();
   const queryClient = useQueryClient();
-  const chainId = useChainId();
-  const contractConfig = getOptimizedContractConfig(chainId);
+  // Force mainnet regardless of connected wallet chain
+  const contractConfig = getOptimizedContractConfig(42220);
   const userAddress = wallet?.address as Address | undefined;
   const isWalletConnected = isAuthenticated && !!userAddress;
   
-  console.log('[ENROLLMENT CONTEXT] Using contract for chain:', chainId, contractConfig.address);
+  console.log('[ENROLLMENT CONTEXT] Using MAINNET contract (FORCED):', contractConfig.address);
 
   // ZERODEV SMART ACCOUNT - Sponsored transactions
   const smartAccount = useSmartAccount();
   
-  // FIX: Use smart account address for reads to match enrollment writes
+  // DIRECT MAINNET CHECK: Bypass wagmi completely for guaranteed mainnet reads
+  const tokenId = getCourseTokenId(courseSlug, courseId);
   const addressForEnrollmentCheck = smartAccount.smartAccountAddress || userAddress;
-  const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, addressForEnrollmentCheck);
+  
+  console.log('[ENROLLMENT CONTEXT] Using direct mainnet check for addresses:', {
+    userAddress,
+    smartAccountAddress: smartAccount.smartAccountAddress,
+    finalCheckAddress: addressForEnrollmentCheck,
+    tokenId: tokenId.toString(),
+  });
+  
+  const directMainnetCheck = useDirectMainnetEnrollment(addressForEnrollmentCheck, tokenId);
   
   
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -67,10 +77,10 @@ export function EnrollmentProvider({
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [enrollmentError, setEnrollmentError] = useState<Error | null>(null);
 
-  console.log('[ENROLLMENT CONTEXT] Enrollment state:', {
-    hasBadge: optimizedEnrollment.hasBadge,
-    hasClaimed: optimizedEnrollment.hasClaimed,
-    isLoading: optimizedEnrollment.isLoading,
+  console.log('[ENROLLMENT CONTEXT] Enrollment state (DIRECT MAINNET):', {
+    directMainnetEnrolled: directMainnetCheck.isEnrolled,
+    directMainnetLoading: directMainnetCheck.isLoading,
+    directMainnetError: directMainnetCheck.error,
     isEnrolling,
     isConfirmingEnrollment,
     hasWallet: isWalletConnected,
@@ -79,16 +89,16 @@ export function EnrollmentProvider({
     serverHasAccess,
   });
 
-  // SPONSORED ENROLLMENT - ZeroDev smart account with paymaster
+  // FORCED SPONSORED ENROLLMENT - ZeroDev smart account with paymaster (MAINNET ONLY)
   const enrollInCourse = async () => {
-    console.log('[ENROLLMENT] Starting sponsored enrollment');
+    console.log('[ENROLLMENT] Starting FORCED sponsored enrollment on MAINNET');
     
     if (!isWalletConnected || !userAddress) {
       throw new Error('Wallet not connected');
     }
     
     if (!smartAccount.canSponsorTransaction) {
-      throw new Error('Smart account not ready for sponsored transactions');
+      throw new Error('Smart account not ready for sponsored transactions. Please wait for smart account initialization.');
     }
     
     const tokenId = getCourseTokenId(courseSlug, courseId);
@@ -104,14 +114,15 @@ export function EnrollmentProvider({
         args: [tokenId],
       });
       
-      console.log('[ENROLLMENT] Calling sponsored transaction:', {
+      console.log('[ENROLLMENT] ✅ EXECUTING FORCED MAINNET TRANSACTION:', {
         to: contractConfig.address,
-        chainId,
+        chainId: 42220, // Celo Mainnet
+        rpc: 'https://forno.celo.org',
         data: encodedData,
         tokenId: tokenId.toString(),
       });
       
-      // Use ZeroDev sponsored transaction
+      // Use ZeroDev sponsored transaction - THIS ALWAYS GOES TO MAINNET
       const txHash = await smartAccount.executeTransaction({
         to: contractConfig.address as `0x${string}`,
         data: encodedData,
@@ -154,12 +165,12 @@ export function EnrollmentProvider({
 
 
   const enrollmentState: EnrollmentState = {
-    hasBadge: optimizedEnrollment.hasBadge,
-    hasClaimed: optimizedEnrollment.hasClaimed,
-    isLoading: optimizedEnrollment.isLoading,
+    hasBadge: directMainnetCheck.isEnrolled,
+    hasClaimed: directMainnetCheck.isEnrolled, // Same as hasBadge for optimized contract
+    isLoading: directMainnetCheck.isLoading,
     enrollInCourse,
     enrollmentHash: hash,
-    enrollmentError: enrollmentError || optimizedEnrollment.enrollmentError,
+    enrollmentError: enrollmentError || directMainnetCheck.error,
     isEnrolling,
     isConfirmingEnrollment,
     enrollmentSuccess: !!hash && !isConfirmingEnrollment,

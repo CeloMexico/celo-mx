@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/courseToken';
+import { getOptimizedContractAddress } from '@/lib/contracts/optimized-badge-config';
 
 // Certificate contract ABI (would be a separate ERC721 contract for certificates)
 const CERTIFICATE_ABI = [
@@ -20,26 +21,17 @@ const CERTIFICATE_ABI = [
   },
 ] as const;
 
-// For now, we'll use the same contract address
+// For now, we'll use the optimized contract address (chain-aware)
 // In production, you'd have a separate certificate contract
-const getCertificateContractAddress = (): Address => {
-  const address = process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES;
-  if (!address || address === '[YOUR_ALFAJORES_CONTRACT_ADDRESS]') {
-    throw new Error('Certificate contract address not configured');
-  }
-  
-  const trimmedAddress = address.trim();
-  if (!trimmedAddress.startsWith('0x') || trimmedAddress.length !== 42) {
-    throw new Error(`Invalid certificate contract address format: ${trimmedAddress}`);
-  }
-  
-  return trimmedAddress as Address;
+const getCertificateContractAddress = (chainId?: number): Address => {
+  return getOptimizedContractAddress(chainId);
 };
 
 /**
  * Hook to generate course completion certificate
  */
 export function useCertificateGeneration() {
+  // Force mainnet regardless of connected wallet chain
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, error: confirmError } = useWaitForTransactionReceipt({
     hash,
@@ -92,7 +84,7 @@ export function useCertificateGeneration() {
     // In production, you'd use a separate certificate contract
     try {
       return writeContract({
-        address: getCertificateContractAddress(),
+        address: getCertificateContractAddress(42220),
         abi: [
           {
             type: 'function',

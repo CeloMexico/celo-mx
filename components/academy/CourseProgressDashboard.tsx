@@ -13,6 +13,8 @@ import { getCourseTokenId } from '@/lib/courseToken';
 import { CertificateGenerator } from '@/components/certificates/CertificateGenerator';
 import { SponsoredModuleCompletion } from './SponsoredModuleCompletion';
 import { ModuleCompletionProvider } from '@/lib/contexts/ModuleCompletionContext';
+import { getOptimizedContractAddress, getNetworkConfig } from '@/lib/contracts/optimized-badge-config';
+import { useChainId } from 'wagmi';
 import type { Address } from 'viem';
 
 interface Module {
@@ -39,6 +41,9 @@ export function CourseProgressDashboard({
 }: CourseProgressDashboardProps) {
   const enrollment = useEnrollment();
   const [mounted, setMounted] = useState(false);
+  // Force mainnet regardless of connected wallet chain
+  const contractAddress = getOptimizedContractAddress(42220);
+  const networkConfig = getNetworkConfig(42220);
   
   // SIMPLE FIX - Use enrollment context that already has the user address
   const enrollmentUserAddress = enrollment.userAddress;
@@ -124,7 +129,7 @@ export function CourseProgressDashboard({
                 asChild
               >
                 <a
-                  href={`https://alfajores.celoscan.io/token/${process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES}?a=${tokenId.toString()}`}
+                  href={`${networkConfig.EXPLORER_URL}/token/${contractAddress}?a=${tokenId.toString()}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs"

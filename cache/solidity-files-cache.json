@@ -962,6 +962,50 @@
       "artifacts": [
         "SimpleOptimizedBadge"
       ]
+    },
+    "/Users/cesarangulo/Documents/celo-academy/celo-mx/contracts/CourseCertificate.sol": {
+      "lastModificationDate": 1760994511575,
+      "contentHash": "a33118e3c6556b23714837521e374fa7",
+      "sourceName": "contracts/CourseCertificate.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "CourseCertificate"
+      ]
     }
   }
 }

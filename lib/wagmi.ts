@@ -1,5 +1,5 @@
 import { createConfig, http } from 'wagmi';
-import { celo, celoAlfajores } from 'viem/chains';
+import { celo } from 'viem/chains';
 import { injected, walletConnect } from 'wagmi/connectors';
 
 const wcProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim();
@@ -29,10 +29,11 @@ if (!isValidWcId && wcProjectId) {
 }
 
 export const wagmiConfig = createConfig({
-  chains: [celoAlfajores, celo],
+  chains: [celo], // MAINNET ONLY - production ready
   connectors,
   transports: {
-    [celoAlfajores.id]: http(),
-    [celo.id]: http(),
+    [celo.id]: http('https://forno.celo.org'), // Direct mainnet RPC
   },
+  // Mainnet as the only chain
+  initialChain: celo,
 });

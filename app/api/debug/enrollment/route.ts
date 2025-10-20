@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser, getUserWalletAddress } from '@/lib/auth-server';
 import { isUserEnrolledInCourse } from '@/lib/enrollment-verification';
+import { getOptimizedContractAddress, getNetworkConfig } from '@/lib/contracts/optimized-badge-config';
 import type { Address } from 'viem';
 
 export async function GET(request: NextRequest) {
@@ -54,10 +55,16 @@ export async function GET(request: NextRequest) {
     console.log('[DEBUG API] Starting enrollment verification...');
     const startTime = Date.now();
     
+    // Always use mainnet
+    const chainId = 42220;
+    const contractAddress = getOptimizedContractAddress(chainId);
+    const networkConfig = getNetworkConfig(chainId);
+    
     const enrollmentResult = await isUserEnrolledInCourse(
       userAddress as Address,
       courseSlug,
-      courseId || undefined
+      courseId || undefined,
+      chainId
     );
     
     const duration = Date.now() - startTime;
@@ -76,8 +83,11 @@ export async function GET(request: NextRequest) {
         timestamp: new Date().toISOString(),
       },
       debug: {
-        contractAddress: process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES,
-        network: 'Celo Alfajores',
+        chainId,
+        contractAddress,
+        network: networkConfig.CHAIN_NAME,
+        explorerUrl: networkConfig.EXPLORER_URL,
+        isMainnet: networkConfig.IS_MAINNET,
       }
     });
     

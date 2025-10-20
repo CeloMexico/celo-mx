@@ -1,14 +1,14 @@
 'use client';
 
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect, useChainId } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/courseToken';
 import { getOptimizedContractConfig } from '@/lib/contracts/optimized-badge-config';
 
-// Helper to get current chain contract configuration
+// Helper to get contract configuration - force mainnet
 function useContractConfig() {
-  const chainId = useChainId();
-  return getOptimizedContractConfig(chainId);
+  // Always use mainnet regardless of connected wallet chain
+  return getOptimizedContractConfig(42220);
 }
 
 // Hook to check if a user has completed a specific module
@@ -18,15 +18,14 @@ export function useHasCompletedModule(
   moduleIndex?: number
 ) {
   const { address: contractAddress, abi: contractAbi } = useContractConfig();
-  const chainId = useChainId();
   
-  console.log('[MODULE COMPLETION READ] isModuleCompleted:', {
+  console.log('[MODULE COMPLETION READ] isModuleCompleted (MAINNET FORCED):', {
     userAddress,
     courseTokenId: courseTokenId?.toString(),
     moduleIndex,
     contractModuleIndex: moduleIndex !== undefined ? moduleIndex + 1 : undefined,
     contractAddress,
-    chainId,
+    forcedChainId: 42220,
   });
   
   return useReadContract({
@@ -36,11 +35,14 @@ export function useHasCompletedModule(
     args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
       ? [userAddress, courseTokenId, moduleIndex + 1] // Convert to 1-based for contract
       : undefined,
+    chainId: 42220, // Force mainnet chain ID
     query: {
       enabled: !!userAddress && courseTokenId !== undefined && moduleIndex !== undefined,
       staleTime: 30 * 1000, // 30 seconds
       gcTime: 5 * 60 * 1000, // 5 minutes
       retry: 2,
+      refetchInterval: false,
+      networkMode: 'always',
     },
   });
 }
@@ -48,13 +50,12 @@ export function useHasCompletedModule(
 // Hook to get the total modules completed for a course
 export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigint) {
   const { address: contractAddress, abi: contractAbi } = useContractConfig();
-  const chainId = useChainId();
   
-  console.log('[MODULE COMPLETION READ] getModulesCompleted:', {
+  console.log('[MODULE COMPLETION READ] getModulesCompleted (MAINNET FORCED):', {
     userAddress,
     courseTokenId: courseTokenId?.toString(),
     contractAddress,
-    chainId,
+    forcedChainId: 42220,
   });
   
   return useReadContract({
@@ -62,22 +63,24 @@ export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigin
     abi: contractAbi,
     functionName: 'getModulesCompleted',
     args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
+    chainId: 42220, // Force mainnet chain ID
     query: {
       enabled: !!userAddress && courseTokenId !== undefined,
       staleTime: 30 * 1000, // 30 seconds
       gcTime: 5 * 60 * 1000, // 5 minutes
       retry: 2,
+      refetchInterval: false,
+      networkMode: 'always',
     },
   });
 }
 
-// Hook to complete a module (updates the NFT metadata state)
+// Hook to complete a module (updates the NFT metadata state) - MAINNET ONLY
 export function useCompleteModuleBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isConnected } = useAccount();
   const { connectAsync, connectors } = useConnect();
   const { address: contractAddress, abi: contractAbi } = useContractConfig();
-
   const completeModule = async (courseTokenId: bigint, moduleIndex: number) => {
     // Ensure connector is connected before write
     if (!isConnected) {
@@ -90,11 +93,13 @@ export function useCompleteModuleBadge() {
       await connectAsync({ connector });
     }
 
+    console.log('[MODULE COMPLETION] Sending transaction to mainnet contract:', contractAddress);
     return writeContract({
       address: contractAddress,
       abi: contractAbi,
       functionName: 'completeModule',
       args: [courseTokenId, moduleIndex + 1], // Convert to 1-based for contract
+      chainId: 42220, // Target mainnet
     });
   };
 

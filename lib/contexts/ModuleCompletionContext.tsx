@@ -39,10 +39,10 @@ export function ModuleCompletionProvider({
 }: ModuleCompletionProviderProps) {
   const queryClient = useQueryClient();
   const smartAccount = useSmartAccount();
-  const chainId = useChainId();
-  const contractConfig = getOptimizedContractConfig(chainId);
+  // Force mainnet regardless of connected wallet chain
+  const contractConfig = getOptimizedContractConfig(42220);
   
-  console.log('[MODULE COMPLETION CONTEXT] Using contract for chain:', chainId, contractConfig.address);
+  console.log('[MODULE COMPLETION CONTEXT] Using MAINNET contract (FORCED):', contractConfig.address);
   
   // Unified state
   const [isCompleting, setIsCompleting] = useState(false);
@@ -97,11 +97,11 @@ export function ModuleCompletionProvider({
       // Contract expects 1-based module indices
       const contractModuleIndex = moduleIndex + 1;
       
-      console.log('[MODULE COMPLETION] Wallet transaction:', {
+      console.log('[MODULE COMPLETION] Wallet transaction (MAINNET FORCED):', {
         moduleIndex,
         contractModuleIndex,
         tokenId: tokenId.toString(),
-        chainId,
+        forcedChainId: 42220,
         contractAddress: contractConfig.address,
       });
       
@@ -111,6 +111,7 @@ export function ModuleCompletionProvider({
         abi: contractConfig.abi,
         functionName: 'completeModule',
         args: [tokenId, contractModuleIndex],
+        chainId: 42220, // Force mainnet
       });
       
       // Transaction was initiated successfully
@@ -141,11 +142,11 @@ export function ModuleCompletionProvider({
         args: [tokenId, contractModuleIndex],
       });
       
-      console.log('[MODULE COMPLETION] Sponsored transaction:', {
+      console.log('[MODULE COMPLETION] Sponsored transaction (MAINNET FORCED):', {
         moduleIndex,
         contractModuleIndex,
         tokenId: tokenId.toString(),
-        chainId,
+        forcedChainId: 42220,
         smartAccountAddress: smartAccount.smartAccountAddress,
         contractAddress: contractConfig.address,
       });

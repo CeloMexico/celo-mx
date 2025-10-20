@@ -165,7 +165,8 @@ export default async function CoursePage(props: any) {
         const enrollmentResult = await verifyEnrollmentAccess(
           userWalletAddress as Address,
           course.slug,
-          course.id
+          course.id,
+          42220 // Force mainnet chain ID for server verification
         );
         
         serverHasAccess = enrollmentResult.hasAccess;

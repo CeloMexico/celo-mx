@@ -10,6 +10,20 @@
  */
 
 import { type Address } from 'viem';
+import { createPublicClient, http } from 'viem';
+import { celo, celoAlfajores } from 'viem/chains';
+
+// Direct mainnet client - bypasses wagmi wallet connection
+export const MAINNET_RPC_CLIENT = createPublicClient({
+  chain: celo,
+  transport: http('https://forno.celo.org'),
+});
+
+// Direct Alfajores client for testing
+export const ALFAJORES_RPC_CLIENT = createPublicClient({
+  chain: celoAlfajores,
+  transport: http('https://alfajores-forno.celo-testnet.org'),
+});
 
 // Network-based contract addresses
 const OPTIMIZED_CONTRACT_ADDRESSES = {
@@ -17,24 +31,23 @@ const OPTIMIZED_CONTRACT_ADDRESSES = {
   42220: '0xf8CA094fd88F259Df35e0B8a9f38Df8f4F28F336', // Celo Mainnet
 } as const;
 
-// Get contract address based on chain ID
+// Get contract address based on chain ID - MAINNET FIRST
 function getContractAddressForChain(chainId?: number): Address {
-  // Default to Alfajores for development/testing
-  const defaultChainId = 44787;
-  const targetChainId = chainId || defaultChainId;
+  // ALWAYS use mainnet by default
+  const targetChainId = chainId || 42220; // Default to mainnet
   
   const address = OPTIMIZED_CONTRACT_ADDRESSES[targetChainId as keyof typeof OPTIMIZED_CONTRACT_ADDRESSES];
   if (!address) {
-    console.warn(`[CONTRACT CONFIG] No contract address for chain ${targetChainId}, using Alfajores`);
-    return OPTIMIZED_CONTRACT_ADDRESSES[44787];
+    console.warn(`[CONTRACT CONFIG] No contract address for chain ${targetChainId}, using MAINNET fallback`);
+    return OPTIMIZED_CONTRACT_ADDRESSES[42220]; // Fallback to mainnet, not Alfajores
   }
   
   console.log(`[CONTRACT CONFIG] Using optimized contract for chain ${targetChainId}:`, address);
   return address as Address;
 }
 
-// Export for compatibility - uses current chain or defaults to Alfajores
-export const OPTIMIZED_CONTRACT_ADDRESS = getContractAddressForChain();
+// Export for compatibility - ALWAYS defaults to MAINNET
+export const OPTIMIZED_CONTRACT_ADDRESS = getContractAddressForChain(42220);
 
 // Optimized contract ABI (ONLY functions that exist in the deployed contract)
 export const OPTIMIZED_BADGE_ABI = [
@@ -121,8 +134,8 @@ export function getOptimizedContractConfig(chainId?: number) {
   } as const;
 }
 
-// Contract configuration object for easy importing (defaults to Alfajores)
-export const OPTIMIZED_CONTRACT_CONFIG = getOptimizedContractConfig();
+// Contract configuration object for easy importing (MAINNET BY DEFAULT)
+export const OPTIMIZED_CONTRACT_CONFIG = getOptimizedContractConfig(42220);
 
 // Helper function to get contract address with chain awareness
 export function getOptimizedContractAddress(chainId?: number): Address {
@@ -144,21 +157,26 @@ export const ENROLLMENT_CACHE_CONFIG = {
   staleTime: 5 * 1000, // 5 seconds
   // Keep in cache for 2 minutes
   gcTime: 2 * 60 * 1000,
-  // Retry failed requests
-  retry: 2,
+  // Retry failed requests but give up quickly
+  retry: 1,
+  retryDelay: 1000,
   // Refetch when window regains focus
-  refetchOnWindowFocus: true,
+  refetchOnWindowFocus: false, // Disable to prevent unnecessary requests
   // Refetch when component mounts
   refetchOnMount: true,
+  // Add timeout
+  networkMode: 'always',
 } as const;
 
 // Module completion cache config (can be cached longer)
 export const MODULE_CACHE_CONFIG = {
   staleTime: 30 * 1000, // 30 seconds
   gcTime: 5 * 60 * 1000, // 5 minutes
-  retry: 2,
+  retry: 1,
+  retryDelay: 1000,
   refetchOnWindowFocus: false, // Don't refetch on focus for module progress
   refetchOnMount: true,
+  networkMode: 'always',
 } as const;
 
 // Legacy contract addresses for reference (DO NOT USE)
@@ -193,11 +211,67 @@ export const NETWORK_CONFIGS = {
   },
 } as const;
 
-// Helper to get network config
+// Helper to get network config - MAINNET BY DEFAULT
 export function getNetworkConfig(chainId?: number) {
-  const targetChainId = chainId || 44787;
-  return NETWORK_CONFIGS[targetChainId as keyof typeof NETWORK_CONFIGS] || NETWORK_CONFIGS[44787];
+  const targetChainId = chainId || 42220; // Always default to mainnet
+  return NETWORK_CONFIGS[targetChainId as keyof typeof NETWORK_CONFIGS] || NETWORK_CONFIGS[42220];
 }
 
-// Default network config (Alfajores for backward compatibility)
-export const NETWORK_CONFIG = NETWORK_CONFIGS[44787];
+// Default network config (mainnet)
+export const NETWORK_CONFIG = NETWORK_CONFIGS[42220];
+
+// DIRECT MAINNET CONTRACT READS - Bypasses wagmi wallet connection
+export async function readMainnetContract(
+  functionName: string,
+  args?: readonly unknown[]
+): Promise<any> {
+  const contractAddress = getContractAddressForChain(42220);
+  
+  console.log('[DIRECT MAINNET READ]', {
+    functionName,
+    args,
+    contractAddress,
+    rpcUrl: 'https://forno.celo.org'
+  });
+  
+  try {
+    const result = await MAINNET_RPC_CLIENT.readContract({
+      address: contractAddress,
+      abi: OPTIMIZED_BADGE_ABI,
+      functionName: functionName as any,
+      args: args as any,
+    });
+    
+    console.log('[DIRECT MAINNET READ] Success:', { functionName, result });
+    return result;
+  } catch (error) {
+    console.error('[DIRECT MAINNET READ] Failed:', { functionName, error });
+    throw error;
+  }
+}
+
+// Check if user is enrolled directly on mainnet
+export async function isUserEnrolledOnMainnet(
+  userAddress: Address,
+  courseId: bigint
+): Promise<boolean> {
+  return await readMainnetContract('isEnrolled', [userAddress, courseId]) as boolean;
+}
+
+// Check if module is completed directly on mainnet
+export async function isModuleCompletedOnMainnet(
+  userAddress: Address,
+  courseId: bigint,
+  moduleIndex: number
+): Promise<boolean> {
+  return await readMainnetContract('isModuleCompleted', [userAddress, courseId, moduleIndex + 1]) as boolean;
+}
+
+// Get modules completed count directly on mainnet
+export async function getModulesCompletedOnMainnet(
+  userAddress: Address,
+  courseId: bigint
+): Promise<number> {
+  const result = await readMainnetContract('getModulesCompleted', [userAddress, courseId]) as bigint;
+  return Number(result);
+}

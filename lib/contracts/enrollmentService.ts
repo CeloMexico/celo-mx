@@ -1,8 +1,8 @@
 import { ethers } from 'ethers';
 import { encodeFunctionData, type Address } from 'viem';
 import {
-  OPTIMIZED_CONTRACT_CONFIG,
-  NETWORK_CONFIG,
+  getOptimizedContractConfig,
+  getNetworkConfig,
 } from './optimized-badge-config';
 import { getCourseTokenId } from '@/lib/courseToken';
 
@@ -27,18 +27,19 @@ interface ContractReadResult<T> {
 export class EnrollmentService {
   private provider: ethers.Provider | null = null;
   private smartAccountSigner: any = null; // Smart account signer from Privy/ZeroDev
-  private network = 'alfajores'; // Celo Alfajores
+  private network = 'mainnet'; // Celo Mainnet
 
   constructor() {
     // Initialize RPC provider for read operations
     this.initializeProvider();
   }
 
-  // Initialize RPC provider for read operations
+  // Initialize RPC provider for read operations (force mainnet)
   private async initializeProvider() {
     try {
-      this.provider = new ethers.JsonRpcProvider(NETWORK_CONFIG.RPC_URL);
-      console.log('✅ EnrollmentService: RPC provider initialized');
+      const networkConfig = getNetworkConfig(42220); // Force mainnet
+      this.provider = new ethers.JsonRpcProvider(networkConfig.RPC_URL);
+      console.log('✅ EnrollmentService: RPC provider initialized for MAINNET');
     } catch (error) {
       console.error('❌ EnrollmentService: Failed to initialize RPC provider:', error);
     }
@@ -133,7 +134,8 @@ export class EnrollmentService {
    * ENROLL WITH KERNEL - Core transaction execution following Motus pattern
    */
   private async enrollWithKernel(courseSlug: string, courseId: string): Promise<ContractTransactionResult> {
-    const contractAddress = OPTIMIZED_CONTRACT_CONFIG.address;
+    const contractConfig = getOptimizedContractConfig(42220); // Force mainnet
+    const contractAddress = contractConfig.address;
     const tokenId = getCourseTokenId(courseSlug, courseId);
     
     console.log('🚀 Enrolling with ZeroDev Kernel client:', this.smartAccountSigner.account.address);
@@ -204,7 +206,8 @@ export class EnrollmentService {
    * COMPLETE MODULE WITH KERNEL - Core transaction execution
    */
   private async completeModuleWithKernel(courseSlug: string, courseId: string, moduleIndex: number): Promise<ContractTransactionResult> {
-    const contractAddress = OPTIMIZED_CONTRACT_CONFIG.address;
+    const contractConfig = getOptimizedContractConfig(42220); // Force mainnet
+    const contractAddress = contractConfig.address;
     const tokenId = getCourseTokenId(courseSlug, courseId);
     
     console.log('🚀 Completing module with ZeroDev Kernel client:', this.smartAccountSigner.account.address);
@@ -244,16 +247,18 @@ export class EnrollmentService {
    * ENCODE FUNCTION CALL DATA - Following Motus pattern
    */
   private encodeEnrollData(tokenId: bigint): `0x${string}` {
+    const contractConfig = getOptimizedContractConfig(42220); // Force mainnet
     return encodeFunctionData({
-      abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+      abi: contractConfig.abi,
       functionName: 'enroll',
       args: [tokenId],
     });
   }
 
   private encodeCompleteModuleData(tokenId: bigint, moduleIndex: number): `0x${string}` {
+    const contractConfig = getOptimizedContractConfig(42220); // Force mainnet
     return encodeFunctionData({
-      abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+      abi: contractConfig.abi,
       functionName: 'completeModule',
       args: [tokenId, moduleIndex],
     });
@@ -269,9 +274,10 @@ export class EnrollmentService {
       }
 
       const tokenId = getCourseTokenId(courseSlug, courseId);
+      const contractConfig = getOptimizedContractConfig(42220); // Force mainnet
       const contract = new ethers.Contract(
-        OPTIMIZED_CONTRACT_CONFIG.address, 
-        OPTIMIZED_CONTRACT_CONFIG.abi, 
+        contractConfig.address, 
+        contractConfig.abi, 
         this.provider
       );
       
@@ -311,16 +317,17 @@ export class EnrollmentService {
         await this.initializeProvider();
       }
       
+      const contractConfig = getOptimizedContractConfig(42220); // Force mainnet
       console.log('🧪 Testing contract connectivity...', {
-        contractAddress: OPTIMIZED_CONTRACT_CONFIG.address,
+        contractAddress: contractConfig.address,
         networkName: this.network,
         hasProvider: !!this.provider
       });
       
       // Try a simple read call
       const contract = new ethers.Contract(
-        OPTIMIZED_CONTRACT_CONFIG.address, 
-        OPTIMIZED_CONTRACT_CONFIG.abi, 
+        contractConfig.address, 
+        contractConfig.abi, 
         this.provider
       );
       
@@ -330,7 +337,7 @@ export class EnrollmentService {
       return {
         success: true,
         data: { 
-          contractAddress: OPTIMIZED_CONTRACT_CONFIG.address,
+          contractAddress: contractConfig.address,
           smartAccountAddress,
           hasSmartAccount: !!this.smartAccountSigner
         }

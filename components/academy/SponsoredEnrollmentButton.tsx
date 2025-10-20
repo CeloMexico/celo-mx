@@ -171,7 +171,7 @@ export function SponsoredEnrollmentButton({
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(
-                  `https://alfajores.celoscan.io/tx/${enrollmentHash}`, 
+                  `https://celoscan.io/tx/${enrollmentHash}`, 
                   '_blank'
                 )}
               >

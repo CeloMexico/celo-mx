@@ -1,8 +1,8 @@
 'use client';
 
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect, useChainId } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
 import { type Address, encodeFunctionData } from 'viem';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { LEGACY_COURSE_TOKEN_IDS, generateTokenIdFromCourseId, getCourseTokenId } from '@/lib/courseToken';
@@ -14,10 +14,10 @@ import {
   getNetworkConfig,
 } from '@/lib/contracts/optimized-badge-config';
 
-// Helper to get current chain contract configuration
+// Helper to get contract configuration - force mainnet
 function useContractConfig() {
-  const chainId = useChainId();
-  return getOptimizedContractConfig(chainId);
+  // Always use mainnet regardless of connected wallet chain
+  return getOptimizedContractConfig(42220);
 }
 
 // Hook to check if a user has a badge (optimized contract uses isEnrolled)
@@ -29,9 +29,13 @@ export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
     abi: contractAbi,
     functionName: 'isEnrolled',
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
+    chainId: 42220, // Force mainnet chain ID
     query: {
       enabled: !!userAddress && tokenId !== undefined,
       ...ENROLLMENT_CACHE_CONFIG,
+      // Add timeout to prevent infinite loading
+      refetchInterval: false,
+      networkMode: 'always',
     },
   });
 }
@@ -45,9 +49,12 @@ export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
     abi: contractAbi,
     functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
+    chainId: 42220, // Force mainnet chain ID
     query: {
       enabled: !!userAddress && courseId !== undefined,
       ...ENROLLMENT_CACHE_CONFIG,
+      refetchInterval: false,
+      networkMode: 'always',
     },
   });
 }
@@ -62,14 +69,17 @@ export function useBadgeBalance(userAddress?: Address, courseId?: bigint) {
     abi: contractAbi,
     functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
+    chainId: 42220, // Force mainnet chain ID
     query: {
       enabled: !!userAddress && courseId !== undefined,
       ...MODULE_CACHE_CONFIG,
+      refetchInterval: false,
+      networkMode: 'always',
     },
   });
 }
 
-// Hook to claim a badge (user function)
+// Hook to claim a badge (user function) - MAINNET ONLY
 export function useClaimBadge() {
   const { writeContract, data: wagmiHash, error: wagmiError, isPending } = useWriteContract();
   const { isConnected } = useAccount();
@@ -80,11 +90,11 @@ export function useClaimBadge() {
   const [fallbackHash, setFallbackHash] = useState<`0x${string}` | undefined>(undefined);
   const [fallbackError, setFallbackError] = useState<Error | null>(null);
   const { address: contractAddress, abi: contractAbi } = useContractConfig();
-  const chainId = useChainId();
-  const networkConfig = getNetworkConfig(chainId);
+  // Always mainnet - no network switching
+  const networkConfig = getNetworkConfig(42220);
 
   const claimBadge = async (courseId: bigint) => {
-    // 1) Try wagmi connector path first
+    // 1) Try wagmi connector path first (now on mainnet thanks to Privy config fix)
     try {
       if (!isConnected) {
         const readyConnectors = connectors.filter((c) => (c as any)?.ready);
@@ -95,11 +105,13 @@ export function useClaimBadge() {
         }
       }
       if (isConnected) {
+        console.log('[ENROLLMENT] Sending transaction to MAINNET contract:', contractAddress);
         const hash = await writeContract({
           address: contractAddress,
           abi: contractAbi,
           functionName: 'enroll',
           args: [courseId],
+          chainId: 42220, // Target mainnet
         });
         
         // Invalidate enrollment cache immediately after transaction is sent
@@ -126,8 +138,8 @@ export function useClaimBadge() {
       }
       const provider = await primary.getEthereumProvider();
 
-      // Ensure we're on the correct network before sending tx
-      await ensureCorrectNetwork(provider, chainId, networkConfig);
+      // Ensure we're on the correct network before sending tx (force mainnet)
+      await ensureCorrectNetwork(provider, 42220, networkConfig);
 
       const data = encodeFunctionData({
         abi: contractAbi,
@@ -262,14 +274,29 @@ export function useCourseEnrollmentBadge(courseSlug: string, courseId?: string, 
     return claimBadge(tokenId);
   };
 
+  // Add timeout fallback - if loading for more than 10 seconds, assume false
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  useEffect(() => {
+    if (hasBadge.isLoading || hasClaimed.isLoading) {
+      const timeout = setTimeout(() => {
+        console.warn('[ENROLLMENT BADGE] Query timed out, assuming not enrolled');
+        setHasTimedOut(true);
+      }, 10000); // 10 second timeout
+      return () => clearTimeout(timeout);
+    }
+  }, [hasBadge.isLoading, hasClaimed.isLoading]);
+
+  const isLoading = (hasBadge.isLoading || hasClaimed.isLoading) && !hasTimedOut;
+  const hasError = hasBadge.error || hasClaimed.error || hasTimedOut;
+
   return {
     tokenId,
     hasBadge: hasBadge.data || false,
     hasClaimed: hasClaimed.data || false,
-    isLoading: hasBadge.isLoading || hasClaimed.isLoading,
+    isLoading,
     enrollInCourse,
     enrollmentHash: hash,
-    enrollmentError: error,
+    enrollmentError: error || (hasError ? new Error('Query timeout or network error') : null),
     isEnrolling: isPending,
     isConfirmingEnrollment: isConfirming,
     enrollmentSuccess: isSuccess,
