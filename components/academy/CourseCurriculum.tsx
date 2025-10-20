@@ -196,9 +196,9 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
               <ModuleCompletionProvider 
                 courseSlug={course.slug} 
                 courseId={course.id} 
-                moduleIndex={module.index}
+                moduleIndex={module.index - 1}
               >
-                <ModuleProgress courseSlug={course.slug} courseId={course.id} moduleIndex={module.index} />
+                <ModuleProgress courseSlug={course.slug} courseId={course.id} moduleIndex={module.index - 1} />
               </ModuleCompletionProvider>
             </div>
             <AccordionContent className="pb-4">
