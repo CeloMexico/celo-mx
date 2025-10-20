@@ -247,16 +247,19 @@ export function useSponsoredModuleCompletion({
         courseSlug,
         courseId,
         moduleIndex,
+        contractModuleIndex: moduleIndex + 1,
         tokenId: tokenId.toString(),
         smartAccountAddress,
         contractAddress,
       });
 
       // Encode the completeModule function call (optimized contract)
+      // FIX: Contract expects 1-based module indices (0 is reserved for enrollment)
+      const contractModuleIndex = moduleIndex + 1;
       const data = encodeFunctionData({
         abi: CONTRACT_ABI,
         functionName: 'completeModule',
-        args: [tokenId, moduleIndex],
+        args: [tokenId, contractModuleIndex],
       });
 
       // Execute sponsored transaction through smart account
