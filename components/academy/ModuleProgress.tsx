@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, ExternalLink, Wallet, Lock as LockIcon } from "lucide-react";
 import { useModuleCompletion } from "@/lib/hooks/useModuleCompletion";
 import { useAuth } from "@/hooks/useAuth";
-import { markModuleDone } from "@/lib/progress";
 import { useHasBadge } from "@/lib/hooks/useSimpleBadge";
 import { getCourseTokenId } from "@/lib/courseToken";
-import { useWriteContract } from "wagmi";
-import { OPTIMIZED_CONTRACT_CONFIG } from "@/lib/contracts/optimized-badge-config";
 import { useSmartAccount } from "@/lib/contexts/ZeroDevSmartWalletProvider";
+import { useUnifiedModuleCompletion } from "@/lib/contexts/ModuleCompletionContext";
 
 export default function ModuleProgress({
   courseSlug, courseId, moduleIndex
@@ -25,13 +23,14 @@ export default function ModuleProgress({
   const tokenId = getCourseTokenId(courseSlug, courseId);
   const enrolled = useHasBadge(addressForReads as `0x${string}` | undefined, tokenId);
   
-  // FIX: Use normal wagmi writeContract for user-paid transactions
-  const { 
-    writeContract, 
-    data: completionHash, 
-    isPending: isCompleting, 
-    error: completionError 
-  } = useWriteContract();
+  // USE UNIFIED CONTEXT FOR SHARED STATE
+  const {
+    isCompleting,
+    completionHash,
+    completionError,
+    completionSuccess,
+    completeWithWallet,
+  } = useUnifiedModuleCompletion();
   
   const {
     hasCompleted,
@@ -43,43 +42,20 @@ export default function ModuleProgress({
 
   // Mark module as done in local storage when blockchain confirmation succeeds
   useEffect(() => {
-    if (completionHash) {
-      markModuleDone(courseSlug, moduleIndex);
+    if (completionSuccess) {
       setShowSuccess(true);
       const timer = setTimeout(() => setShowSuccess(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [completionHash, courseSlug, moduleIndex]);
+  }, [completionSuccess]);
 
   const handleComplete = async () => {
     if (!walletAddress) {
       login();
       return;
     }
-
-    try {
-      // FIX: Contract expects 1-based module indices (0 is reserved for enrollment)
-      const contractModuleIndex = moduleIndex + 1;
-      
-      console.log('[MODULE COMPLETION] Calling normal wallet transaction:', {
-        address: OPTIMIZED_CONTRACT_CONFIG.address,
-        tokenId: tokenId.toString(),
-        moduleIndex: moduleIndex,
-        contractModuleIndex: contractModuleIndex,
-      });
-      
-      // Use normal wagmi writeContract (user pays gas)
-      await writeContract({
-        address: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
-        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
-        functionName: 'completeModule',
-        args: [tokenId, contractModuleIndex],
-      });
-      
-      console.log('[MODULE COMPLETION] ✅ Normal wallet transaction initiated');
-    } catch (error: any) {
-      console.error('[MODULE COMPLETION] ❌ Normal wallet transaction failed:', error);
-    }
+    
+    await completeWithWallet();
   };
 
   // Show loading state while checking enrollment/blockchain
@@ -93,7 +69,7 @@ export default function ModuleProgress({
   }
 
   // Already completed
-  if (hasCompleted || completionHash) {
+  if (hasCompleted || completionSuccess) {
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-emerald-600">

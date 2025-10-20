@@ -170,10 +170,10 @@ export function ModuleCompletionProvider({
   );
 }
 
-export function useModuleCompletion() {
+export function useUnifiedModuleCompletion() {
   const context = useContext(ModuleCompletionContext);
   if (!context) {
-    throw new Error('useModuleCompletion must be used within a ModuleCompletionProvider');
+    throw new Error('useUnifiedModuleCompletion must be used within a ModuleCompletionProvider');
   }
   return context;
 }
