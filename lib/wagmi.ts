@@ -34,6 +34,4 @@ export const wagmiConfig = createConfig({
   transports: {
     [celo.id]: http('https://forno.celo.org'), // Direct mainnet RPC
   },
-  // Mainnet as the only chain
-  initialChain: celo,
 });

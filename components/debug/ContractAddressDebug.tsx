@@ -49,7 +49,7 @@ export function ContractAddressDebug() {
       <div className="mt-3 space-y-1 text-xs text-gray-300">
         <div>Expected Mainnet: {expectedMainnetContract}</div>
         <div>Expected Alfajores: {expectedAlfajoresContract}</div>
-        <div className="text-red-300">Legacy (DON'T USE): {legacyContract}</div>
+<div className="text-red-300">Legacy (DON&apos;T USE): {legacyContract}</div>
       </div>
       
       <div className="mt-3 text-xs">
