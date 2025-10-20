@@ -12,7 +12,8 @@ import { getCourseTokenId } from '@/lib/courseToken';
 import { useAuth } from '@/hooks/useAuth';
 import { courseProgressPercent } from '@/lib/progress';
 import { CertificateGenerator } from '@/components/certificates/CertificateGenerator';
-import { SponsoredModuleCompletion } from '@/components/academy/SponsoredModuleCompletion';
+import { SponsoredModuleCompletion } from './SponsoredModuleCompletion';
+import { ModuleCompletionProvider } from '@/lib/contexts/ModuleCompletionContext';
 import type { Address } from 'viem';
 
 interface Module {
@@ -299,15 +300,21 @@ function ModuleProgressItem({
       {/* Sponsored Module Completion - Only show if enrolled and not completed */}
       {isEnrolled && !isCompleted && !isLoading && (
         <div className="pl-8">
-          <SponsoredModuleCompletion
-            courseSlug={courseSlug}
-            courseId={courseId}
+          <ModuleCompletionProvider 
+            courseSlug={courseSlug} 
+            courseId={courseId} 
             moduleIndex={moduleIndex}
-            moduleTitle={module.title}
-            isCompleted={isCompleted}
-            isEnrolled={isEnrolled}
-            className="max-w-md"
-          />
+          >
+            <SponsoredModuleCompletion
+              courseSlug={courseSlug}
+              courseId={courseId}
+              moduleIndex={moduleIndex}
+              moduleTitle={module.title}
+              isCompleted={isCompleted}
+              isEnrolled={isEnrolled}
+              className="max-w-md"
+            />
+          </ModuleCompletionProvider>
         </div>
       )}
     </div>

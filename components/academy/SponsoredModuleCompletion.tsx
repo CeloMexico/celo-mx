@@ -14,9 +14,9 @@ import {
   ExternalLink,
   Star,
 } from 'lucide-react';
-import { useSponsoredModuleCompletion } from '@/lib/hooks/useSponsoredEnrollment';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { usePrivy } from '@privy-io/react-auth';
+import { useUnifiedModuleCompletion } from '@/lib/contexts/ModuleCompletionContext';
 
 interface SponsoredModuleCompletionProps {
   courseSlug: string;
@@ -45,14 +45,15 @@ export function SponsoredModuleCompletion({
     error: smartAccountError,
   } = useSmartAccount();
   
+  // USE UNIFIED CONTEXT FOR SHARED STATE
   const {
     isCompleting,
     completionHash,
     completionError,
     completionSuccess,
-    completeModuleWithSponsorship,
+    completeWithSponsorship,
     resetCompletion,
-  } = useSponsoredModuleCompletion({ courseSlug, courseId });
+  } = useUnifiedModuleCompletion();
 
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
 
@@ -183,7 +184,7 @@ export function SponsoredModuleCompletion({
 
           {/* Complete Button */}
           <Button
-            onClick={() => completeModuleWithSponsorship(moduleIndex)}
+            onClick={() => completeWithSponsorship()}
             disabled={isCompleting || !canSponsorTransaction}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
             size="default"
