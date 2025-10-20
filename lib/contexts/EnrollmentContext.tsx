@@ -136,6 +136,13 @@ export function EnrollmentProvider({
       setIsEnrolling(false);
     }
   };
+
+  const enrollmentState: EnrollmentState = {
+    hasBadge: optimizedEnrollment.hasBadge,
+    hasClaimed: optimizedEnrollment.hasClaimed,
+    isLoading: optimizedEnrollment.isLoading,
+    enrollInCourse,
+    enrollmentHash: hash,
     enrollmentError: enrollmentError || optimizedEnrollment.enrollmentError,
     isEnrolling,
     isConfirmingEnrollment,
