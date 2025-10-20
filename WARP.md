@@ -2,6 +2,23 @@
 
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
+## CRITICAL: PRE-WORK REQUIREMENTS
+
+**BEFORE MAKING ANY CODE CHANGES:**
+1. **READ ALL .md FILES** - Review existing documentation to understand current state
+2. **CHECK TRACKING DOCUMENTS** - Look for ENROLLMENT_FIX_TRACKING.md, bug analysis files, implementation plans
+3. **CREATE DOCUMENTATION FIRST** - Always document analysis and implementation plans before coding
+4. **FOLLOW COMMUNICATION RULES** - See WARP_COMMUNICATION_RULES.md for mandatory guidelines
+
+**Key Documentation Files to Always Check:**
+- ENROLLMENT_FIX_TRACKING.md - Current enrollment system status
+- ENROLLMENT_BUG_ANALYSIS.md - Specific bug details and root causes
+- ENROLLMENT_FIX_IMPLEMENTATION_PLAN.md - Step-by-step fix procedures
+- WARP_COMMUNICATION_RULES.md - Communication and workflow requirements
+- Any other analysis or tracking .md files in root directory
+
+**Workflow Requirement**: Document → Plan → Implement → Commit → Push
+
 Project overview
 - Next.js 15 (App Router) with TypeScript
 - Web3: wagmi + viem; Authentication: Privy
