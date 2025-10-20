@@ -7,36 +7,31 @@ import { useAuth } from "@/hooks/useAuth";
 import { markModuleDone } from "@/lib/progress";
 import { useHasBadge } from "@/lib/hooks/useSimpleBadge";
 import { getCourseTokenId } from "@/lib/courseToken";
-import { useSmartAccount } from "@/lib/contexts/ZeroDevSmartWalletProvider";
-import { encodeFunctionData } from "viem";
+import { useWriteContract } from "wagmi";
 import { OPTIMIZED_CONTRACT_CONFIG } from "@/lib/contracts/optimized-badge-config";
-import { useState as useModuleState } from "react";
 
 export default function ModuleProgress({
   courseSlug, courseId, moduleIndex
 }:{ courseSlug:string; courseId:string; moduleIndex:number }) {
   const { wallet, login } = useAuth();
-  const smartAccount = useSmartAccount();
-  
-  // FIX: Use smart account address for consistency with enrollment
   const walletAddress = wallet?.address;
-  const smartAccountAddress = smartAccount.smartAccountAddress;
-  const addressForReads = smartAccountAddress || walletAddress;
 
   const tokenId = getCourseTokenId(courseSlug, courseId);
-  const enrolled = useHasBadge(addressForReads as `0x${string}` | undefined, tokenId);
+  const enrolled = useHasBadge(walletAddress as `0x${string}` | undefined, tokenId);
   
-  // FIX: Use smart account for module completion (sponsored transactions)
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [completionHash, setCompletionHash] = useState<`0x${string}` | undefined>();
-  const [completionError, setCompletionError] = useState<Error | null>(null);
-  const [completionSuccess, setCompletionSuccess] = useState(false);
+  // FIX: Use normal wagmi writeContract for user-paid transactions
+  const { 
+    writeContract, 
+    data: completionHash, 
+    isPending: isCompleting, 
+    error: completionError 
+  } = useWriteContract();
   
   const {
     hasCompleted,
     modulesCompleted,
     isLoading,
-  } = useModuleCompletion(courseSlug, courseId, moduleIndex, addressForReads as `0x${string}` | undefined);
+  } = useModuleCompletion(courseSlug, courseId, moduleIndex, walletAddress as `0x${string}` | undefined);
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -56,47 +51,28 @@ export default function ModuleProgress({
       return;
     }
 
-    if (!smartAccount.canSponsorTransaction) {
-      throw new Error('Smart account not ready for sponsored transactions');
-    }
-
-    setIsCompleting(true);
-    setCompletionError(null);
-
     try {
-      // Encode the function call for sponsored transaction
       // FIX: Contract expects 1-based module indices (0 is reserved for enrollment)
       const contractModuleIndex = moduleIndex + 1;
-      const encodedData = encodeFunctionData({
-        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
-        functionName: 'completeModule',
-        args: [tokenId, contractModuleIndex],
-      });
       
-      console.log('[MODULE COMPLETION] Calling sponsored transaction:', {
-        to: OPTIMIZED_CONTRACT_CONFIG.address,
+      console.log('[MODULE COMPLETION] Calling normal wallet transaction:', {
+        address: OPTIMIZED_CONTRACT_CONFIG.address,
         tokenId: tokenId.toString(),
         moduleIndex: moduleIndex,
         contractModuleIndex: contractModuleIndex,
       });
       
-      // Use ZeroDev sponsored transaction
-      const txHash = await smartAccount.executeTransaction({
-        to: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
-        data: encodedData,
-        value: 0n,
+      // Use normal wagmi writeContract (user pays gas)
+      await writeContract({
+        address: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
+        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+        functionName: 'completeModule',
+        args: [tokenId, contractModuleIndex],
       });
       
-      if (txHash) {
-        setCompletionHash(txHash);
-        setCompletionSuccess(true);
-        console.log('[MODULE COMPLETION] ✅ Sponsored transaction sent:', txHash);
-      }
+      console.log('[MODULE COMPLETION] ✅ Normal wallet transaction initiated');
     } catch (error: any) {
-      console.error('[MODULE COMPLETION] ❌ Sponsored transaction failed:', error);
-      setCompletionError(new Error(error.message || 'Module completion failed'));
-    } finally {
-      setIsCompleting(false);
+      console.error('[MODULE COMPLETION] ❌ Normal wallet transaction failed:', error);
     }
   };
 
@@ -111,7 +87,7 @@ export default function ModuleProgress({
   }
 
   // Already completed
-  if (hasCompleted || completionSuccess) {
+  if (hasCompleted || completionHash) {
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-emerald-600">
@@ -120,7 +96,7 @@ export default function ModuleProgress({
         </div>
         
         {/* Success Message with Transaction Link */}
-        {showSuccess && completionHash && (
+        {completionHash && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center gap-2 text-green-800 font-medium mb-1">
               <CheckCircle2 className="w-4 h-4" />
@@ -193,7 +169,7 @@ export default function ModuleProgress({
     return (
       <Button disabled className="w-full md:w-auto">
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Completando módulo...
+        Firmando transacción...
       </Button>
     );
   }
