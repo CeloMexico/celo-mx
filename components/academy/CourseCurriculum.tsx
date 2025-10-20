@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ModuleProgress from "./ModuleProgress";
 import { Course, CurriculumItemType, Module, Submodule, CurriculumItem } from "./types";
+import { ModuleCompletionProvider } from "@/lib/contexts/ModuleCompletionContext";
 import { getYouTubeVideoId, getYouTubeThumbnail } from "@/lib/youtube";
 
 interface CourseCurriculumProps {
@@ -192,7 +193,13 @@ export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculu
               </div>
             </AccordionTrigger>
             <div className="px-4 pb-2">
-              <ModuleProgress courseSlug={course.slug} courseId={course.id} moduleIndex={module.index} />
+              <ModuleCompletionProvider 
+                courseSlug={course.slug} 
+                courseId={course.id} 
+                moduleIndex={module.index}
+              >
+                <ModuleProgress courseSlug={course.slug} courseId={course.id} moduleIndex={module.index} />
+              </ModuleCompletionProvider>
             </div>
             <AccordionContent className="pb-4">
               {/* Submodules Accordion */}
