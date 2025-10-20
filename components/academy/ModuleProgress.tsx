@@ -65,16 +65,19 @@ export default function ModuleProgress({
 
     try {
       // Encode the function call for sponsored transaction
+      // FIX: Contract expects 1-based module indices (0 is reserved for enrollment)
+      const contractModuleIndex = moduleIndex + 1;
       const encodedData = encodeFunctionData({
         abi: OPTIMIZED_CONTRACT_CONFIG.abi,
         functionName: 'completeModule',
-        args: [tokenId, moduleIndex],
+        args: [tokenId, contractModuleIndex],
       });
       
       console.log('[MODULE COMPLETION] Calling sponsored transaction:', {
         to: OPTIMIZED_CONTRACT_CONFIG.address,
         tokenId: tokenId.toString(),
-        moduleIndex,
+        moduleIndex: moduleIndex,
+        contractModuleIndex: contractModuleIndex,
       });
       
       // Use ZeroDev sponsored transaction

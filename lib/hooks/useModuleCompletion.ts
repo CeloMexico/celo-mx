@@ -68,7 +68,7 @@ export function useHasCompletedModule(
     abi: OPTIMIZED_BADGE_ABI,
     functionName: 'isModuleCompleted',
     args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
-      ? [userAddress, courseTokenId, moduleIndex] 
+      ? [userAddress, courseTokenId, moduleIndex + 1] // Convert to 1-based for contract
       : undefined,
     query: {
       enabled: !!userAddress && courseTokenId !== undefined && moduleIndex !== undefined,
@@ -117,7 +117,7 @@ export function useCompleteModuleBadge() {
       address: getContractAddress(),
       abi: OPTIMIZED_BADGE_ABI,
       functionName: 'completeModule',
-      args: [courseTokenId, moduleIndex],
+      args: [courseTokenId, moduleIndex + 1], // Convert to 1-based for contract
     });
   };
 
