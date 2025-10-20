@@ -1,11 +1,11 @@
 import { type Address } from 'viem';
-import { celoAlfajores } from 'viem/chains';
+import { celoAlfajores, celo } from 'viem/chains';
 
 /**
  * Paymaster configuration for Celo Academy sponsored transactions
  */
 export interface PaymasterConfig {
-  // Paymaster contract address on Celo Alfajores
+  // Paymaster contract address
   paymasterAddress: Address;
   
   // API endpoint for paymaster service
@@ -19,33 +19,73 @@ export interface PaymasterConfig {
   
   // Supported function selectors that can be sponsored
   sponsoredFunctions: string[];
+  
+  // Chain ID this config is for
+  chainId: number;
 }
 
 /**
- * Default paymaster configuration for Celo Academy
+ * Network-specific paymaster configurations
  */
-export const DEFAULT_PAYMASTER_CONFIG: PaymasterConfig = {
-  // This would be your actual paymaster contract address
-  paymasterAddress: process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
+export const PAYMASTER_CONFIGS: Record<number, PaymasterConfig> = {
+  // Celo Alfajores Testnet
+  [celoAlfajores.id]: {
+    chainId: celoAlfajores.id,
+    paymasterAddress: process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS_ALFAJORES as Address || '0x0000000000000000000000000000000000000000',
+    paymasterUrl: process.env.NEXT_PUBLIC_PAYMASTER_URL_ALFAJORES || 'https://api.celo-academy.com/paymaster/alfajores',
+    maxGasLimit: 200000n,
+    sponsoredContracts: [
+      process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES as Address,
+      '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29' as Address, // Optimized contract Alfajores
+    ].filter(Boolean) as Address[],
+    sponsoredFunctions: [
+      '0x7b8b9c8d', // claimBadge(uint256,address)
+      '0x4e4bfa29', // completeModule(uint256,uint256) 
+      '0xa0b8e5f3', // adminMint(address,uint256,uint256) - for certificates
+      '0x6339fbaa', // enroll(uint256) - optimized contract function
+    ],
+  },
   
-  // Paymaster service URL (could be your backend API)
-  paymasterUrl: process.env.NEXT_PUBLIC_PAYMASTER_URL || 'https://api.celo-academy.com/paymaster',
-  
-  // Maximum gas limit for sponsored transactions (200k gas)
-  maxGasLimit: 200000n,
-  
-  // Only sponsor transactions to the SimpleBadge contract
-  sponsoredContracts: [
-    process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_ALFAJORES as Address,
-  ].filter(Boolean) as Address[],
-  
-  // Only sponsor specific functions
-  sponsoredFunctions: [
-    '0x7b8b9c8d', // claimBadge(uint256,address)
-    '0x4e4bfa29', // completeModule(uint256,uint256) 
-    '0xa0b8e5f3', // adminMint(address,uint256,uint256) - for certificates
-  ],
+  // Celo Mainnet
+  [celo.id]: {
+    chainId: celo.id,
+    paymasterAddress: process.env.NEXT_PUBLIC_PAYMASTER_ADDRESS_MAINNET as Address || '0x0000000000000000000000000000000000000000',
+    paymasterUrl: process.env.NEXT_PUBLIC_PAYMASTER_URL_MAINNET || 'https://api.celo-academy.com/paymaster/mainnet',
+    maxGasLimit: 300000n, // Higher limit for mainnet safety
+    sponsoredContracts: [
+      process.env.NEXT_PUBLIC_MILESTONE_CONTRACT_ADDRESS_MAINNET as Address,
+      '0xf8CA094fd88F259Df35e0B8a9f38Df8f4F28F336' as Address, // Optimized contract Mainnet
+    ].filter(Boolean) as Address[],
+    sponsoredFunctions: [
+      '0x7b8b9c8d', // claimBadge(uint256,address)
+      '0x4e4bfa29', // completeModule(uint256,uint256) 
+      '0xa0b8e5f3', // adminMint(address,uint256,uint256) - for certificates
+      '0x6339fbaa', // enroll(uint256) - optimized contract function
+    ],
+  },
 };
+
+/**
+ * Get paymaster configuration for a specific chain
+ */
+export function getPaymasterConfig(chainId: number): PaymasterConfig | null {
+  const config = PAYMASTER_CONFIGS[chainId];
+  if (!config) {
+    console.warn(`[PAYMASTER] No paymaster configuration found for chain ID: ${chainId}`);
+    return null;
+  }
+  console.log(`[PAYMASTER] Using paymaster config for chain ${chainId}:`, {
+    paymasterAddress: config.paymasterAddress,
+    sponsoredContractsCount: config.sponsoredContracts.length,
+    maxGasLimit: config.maxGasLimit.toString(),
+  });
+  return config;
+}
+
+/**
+ * Default paymaster configuration (Alfajores for backward compatibility)
+ */
+export const DEFAULT_PAYMASTER_CONFIG = PAYMASTER_CONFIGS[celoAlfajores.id];
 
 /**
  * Check if a transaction can be sponsored
@@ -53,21 +93,29 @@ export const DEFAULT_PAYMASTER_CONFIG: PaymasterConfig = {
 export function canSponsorTransaction(
   to: Address,
   data: `0x${string}`,
-  config: PaymasterConfig = DEFAULT_PAYMASTER_CONFIG
+  chainId?: number,
+  config?: PaymasterConfig
 ): boolean {
+  // Get config for the specific chain if not provided
+  const paymasterConfig = config || (chainId ? getPaymasterConfig(chainId) : DEFAULT_PAYMASTER_CONFIG);
+  if (!paymasterConfig) {
+    console.log('[PAYMASTER] No paymaster config available for chain:', chainId);
+    return false;
+  }
   // Check if the contract address is whitelisted
-  if (!config.sponsoredContracts.includes(to)) {
-    console.log('[PAYMASTER] Contract not sponsored:', to);
+  if (!paymasterConfig.sponsoredContracts.includes(to)) {
+    console.log('[PAYMASTER] Contract not sponsored:', to, 'on chain', paymasterConfig.chainId);
     return false;
   }
   
   // Check if the function selector is whitelisted
   const functionSelector = data.slice(0, 10);
-  if (!config.sponsoredFunctions.includes(functionSelector)) {
-    console.log('[PAYMASTER] Function not sponsored:', functionSelector);
+  if (!paymasterConfig.sponsoredFunctions.includes(functionSelector)) {
+    console.log('[PAYMASTER] Function not sponsored:', functionSelector, 'on chain', paymasterConfig.chainId);
     return false;
   }
   
+  console.log('[PAYMASTER] ✅ Transaction can be sponsored on chain', paymasterConfig.chainId);
   return true;
 }
 
@@ -79,7 +127,8 @@ export async function getPaymasterData(
   to: Address,
   data: `0x${string}`,
   userAddress: Address,
-  config: PaymasterConfig = DEFAULT_PAYMASTER_CONFIG
+  chainId?: number,
+  config?: PaymasterConfig
 ): Promise<{
   paymasterAndData: `0x${string}`;
   callGasLimit: bigint;
@@ -87,7 +136,9 @@ export async function getPaymasterData(
   preVerificationGas: bigint;
 } | null> {
   
-  if (!canSponsorTransaction(to, data, config)) {
+  // Get config for the specific chain
+  const paymasterConfig = config || (chainId ? getPaymasterConfig(chainId) : DEFAULT_PAYMASTER_CONFIG);
+  if (!paymasterConfig || !canSponsorTransaction(to, data, chainId, paymasterConfig)) {
     return null;
   }
   
@@ -110,7 +161,7 @@ export async function getPaymasterData(
         to,
         data,
         userAddress,
-        chainId: celoAlfajores.id,
+        chainId: paymasterConfig.chainId,
       }),
     });
     
@@ -121,7 +172,7 @@ export async function getPaymasterData(
     // For demo purposes, return mock paymaster data
     // In production, this would come from your paymaster service
     return {
-      paymasterAndData: `${config.paymasterAddress}${'0'.repeat(128)}` as `0x${string}`,
+      paymasterAndData: `${paymasterConfig.paymasterAddress}${'0'.repeat(128)}` as `0x${string}`,
       callGasLimit: 100000n,
       verificationGasLimit: 50000n,
       preVerificationGas: 21000n,

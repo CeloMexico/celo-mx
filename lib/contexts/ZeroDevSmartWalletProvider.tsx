@@ -10,7 +10,19 @@ import {
 } from "@zerodev/sdk";
 import { getEntryPoint, KERNEL_V3_1 } from '@zerodev/sdk/constants';
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { celoAlfajores } from "viem/chains";
+import { celoAlfajores, celo } from "viem/chains";
+import { useChainId } from 'wagmi';
+
+// Helper to get the correct chain configuration
+function getChainConfig(chainId?: number) {
+  switch (chainId) {
+    case celo.id:
+      return celo;
+    case celoAlfajores.id:
+    default:
+      return celoAlfajores; // Default to Alfajores
+  }
+}
 
 type SmartWalletContextType = {
   kernelClient: any; // KernelAccountClient from ZeroDev SDK
@@ -50,12 +62,16 @@ export const ZeroDevSmartWalletProvider = ({
   console.log('[ZERODEV] Provider initialized with project ID:', zeroDevProjectId);
   const { wallets } = useWallets();
   const { authenticated } = usePrivy();
+  const chainId = useChainId();
+  const currentChain = getChainConfig(chainId);
   const [kernelClient, setKernelClient] = useState<any>(null);
   const [smartAccountAddress, setSmartAccountAddress] = useState<
     `0x${string}` | null
   >(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  console.log('[ZERODEV] Current chain:', currentChain.name, 'ID:', chainId);
 
   const executeTransaction = async (params: {
     to: `0x${string}`;
@@ -134,13 +150,13 @@ export const ZeroDevSmartWalletProvider = ({
         
         // Create public client for blockchain interactions
         const publicClient = createPublicClient({
-          chain: celoAlfajores,
+          chain: currentChain,
           transport: http(),
         });
         
         // Create wallet client from the EIP-1193 provider
         const walletClient = createWalletClient({
-          chain: celoAlfajores,
+          chain: currentChain,
           transport: custom(provider),
         });
         
@@ -166,14 +182,14 @@ export const ZeroDevSmartWalletProvider = ({
 
         console.log('[ZERODEV] Created smart account:', account.address);
 
-        const bundlerUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${celoAlfajores.id}`;
-        const paymasterUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${celoAlfajores.id}`;
+        const bundlerUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${currentChain.id}`;
+        const paymasterUrl = `https://rpc.zerodev.app/api/v3/${zeroDevProjectId}/chain/${currentChain.id}`;
 
         console.log('[ZERODEV] Creating paymaster client...');
         
         // Create paymaster client following ZeroDev docs pattern
         const paymasterClient = createZeroDevPaymasterClient({
-          chain: celoAlfajores,
+          chain: currentChain,
           transport: http(paymasterUrl),
         });
         
@@ -182,7 +198,7 @@ export const ZeroDevSmartWalletProvider = ({
         // Create Kernel client using ZeroDev SDK with paymaster
         const client = createKernelAccountClient({
           account,
-          chain: celoAlfajores,
+          chain: currentChain,
           bundlerTransport: http(bundlerUrl),
           paymaster: paymasterClient,
           client: publicClient,
@@ -202,7 +218,7 @@ export const ZeroDevSmartWalletProvider = ({
     };
 
     initializeSmartWallet();
-  }, [authenticated, wallets, zeroDevProjectId]);
+  }, [authenticated, wallets, zeroDevProjectId, chainId, currentChain]);
 
   // Reset state when user logs out
   useEffect(() => {
