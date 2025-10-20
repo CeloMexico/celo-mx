@@ -37,13 +37,13 @@ export default function ModuleProgress({
 
   // Mark module as done in local storage when blockchain confirmation succeeds
   useEffect(() => {
-    if (completionSuccess) {
+    if (completionHash) {
       markModuleDone(courseSlug, moduleIndex);
       setShowSuccess(true);
       const timer = setTimeout(() => setShowSuccess(false), 5000);
       return () => clearTimeout(timer);
     }
-  }, [completionSuccess, courseSlug, moduleIndex]);
+  }, [completionHash, courseSlug, moduleIndex]);
 
   const handleComplete = async () => {
     if (!walletAddress) {
@@ -96,7 +96,7 @@ export default function ModuleProgress({
         </div>
         
         {/* Success Message with Transaction Link */}
-        {completionHash && (
+        {showSuccess && completionHash && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center gap-2 text-green-800 font-medium mb-1">
               <CheckCircle2 className="w-4 h-4" />
