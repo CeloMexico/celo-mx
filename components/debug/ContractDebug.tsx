@@ -15,7 +15,6 @@ export function ContractDebug() {
       <div>🔍 CONTRACT DEBUG:</div>
       <div>Optimized: {optimizedAddress || 'NOT SET'}</div>
       <div>Legacy: {legacyAddress || 'NOT SET'}</div>
-      <div>Time: {new Date().toLocaleTimeString()}</div>
     </div>
   );
 }

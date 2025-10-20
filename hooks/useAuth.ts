@@ -169,8 +169,8 @@ export function useAuth(): UseAuthReturn {
 
   return {
     // Authentication state
-    isAuthenticated: authenticated && ready,
-    isLoading: !ready,
+    isAuthenticated: authenticated,
+    isLoading: false, // Force ready to bypass stuck state
     user,
     
     // Token management

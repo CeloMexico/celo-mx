@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, ExternalLink, Wallet, Lock as LockIcon } from "lucide-react";
-import { useModuleCompletion } from "@/lib/hooks/useModuleCompletion";
+import { useModuleCompletion, useHasCompletedModule } from "@/lib/hooks/useModuleCompletion";
 import { useAuth } from "@/hooks/useAuth";
 import { useHasBadge } from "@/lib/hooks/useSimpleBadge";
 import { getCourseTokenId } from "@/lib/courseToken";
@@ -16,12 +16,18 @@ export default function ModuleProgress({
   const walletAddress = wallet?.address;
   const smartAccount = useSmartAccount();
   
-  // CRITICAL: Use smart account address for enrollment checks (user enrolled with smart account)
-  // but use wallet address for transaction signing (normal wallet transaction)
-  const addressForReads = smartAccount.smartAccountAddress || walletAddress;
-
   const tokenId = getCourseTokenId(courseSlug, courseId);
-  const enrolled = useHasBadge(addressForReads as `0x${string}` | undefined, tokenId);
+  
+  // CHECK BOTH ADDRESSES FOR ENROLLMENT AND COMPLETION
+  const walletEnrolled = useHasBadge(walletAddress as `0x${string}` | undefined, tokenId);
+  const smartAccountEnrolled = useHasBadge(smartAccount.smartAccountAddress || undefined, tokenId);
+  const enrolled = walletEnrolled.data || smartAccountEnrolled.data;
+  
+  // CHECK BOTH ADDRESSES FOR MODULE COMPLETION
+  const walletCompletion = useHasCompletedModule(walletAddress as `0x${string}` | undefined, tokenId, moduleIndex);
+  const smartAccountCompletion = useHasCompletedModule(smartAccount.smartAccountAddress || undefined, tokenId, moduleIndex);
+  const hasCompleted = walletCompletion.data || smartAccountCompletion.data;
+  const isLoading = walletCompletion.isLoading || smartAccountCompletion.isLoading || walletEnrolled.isLoading || smartAccountEnrolled.isLoading;
   
   // USE UNIFIED CONTEXT FOR SHARED STATE
   const {
@@ -32,11 +38,16 @@ export default function ModuleProgress({
     completeWithWallet,
   } = useUnifiedModuleCompletion();
   
-  const {
-    hasCompleted,
-    modulesCompleted,
-    isLoading,
-  } = useModuleCompletion(courseSlug, courseId, moduleIndex, addressForReads as `0x${string}` | undefined);
+  console.log(`[MODULE PROGRESS ${moduleIndex}] Dual check:`, {
+    walletAddress,
+    smartAccountAddress: smartAccount.smartAccountAddress,
+    walletEnrolled: walletEnrolled.data,
+    smartAccountEnrolled: smartAccountEnrolled.data,
+    finalEnrolled: enrolled,
+    walletCompleted: walletCompletion.data,
+    smartAccountCompleted: smartAccountCompletion.data,
+    finalHasCompleted: hasCompleted,
+  });
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -59,7 +70,7 @@ export default function ModuleProgress({
   };
 
   // Show loading state while checking enrollment/blockchain
-  if (isLoading || enrolled.isLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -124,7 +135,7 @@ export default function ModuleProgress({
   }
 
   // Not enrolled gate
-  if (!enrolled.data) {
+  if (!enrolled) {
     return (
       <div className="space-y-2">
         <Button disabled className="w-full md:w-auto" variant="outline">

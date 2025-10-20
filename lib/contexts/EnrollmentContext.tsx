@@ -49,13 +49,6 @@ export function EnrollmentProvider({
   const userAddress = wallet?.address as Address | undefined;
   const isWalletConnected = isAuthenticated && !!userAddress;
 
-  console.log('[ENROLLMENT CONTEXT] Wallet state:', {
-    isAuthenticated,
-    privyAuthenticated,
-    hasWalletAddress: !!userAddress,
-    isWalletConnected,
-  });
-
   // ZERODEV SMART ACCOUNT - Sponsored transactions
   const smartAccount = useSmartAccount();
   
@@ -63,12 +56,6 @@ export function EnrollmentProvider({
   const addressForEnrollmentCheck = smartAccount.smartAccountAddress || userAddress;
   const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, addressForEnrollmentCheck);
   
-  console.log('[ENROLLMENT CONTEXT] Address mapping:', {
-    walletAddress: userAddress,
-    smartAccountAddress: smartAccount.smartAccountAddress,
-    addressUsedForReads: addressForEnrollmentCheck,
-    addressUsedForWrites: smartAccount.smartAccountAddress,
-  });
   
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isConfirmingEnrollment, setIsConfirmingEnrollment] = useState(false);
@@ -129,13 +116,26 @@ export function EnrollmentProvider({
         setHash(txHash);
         console.log('[ENROLLMENT] ✅ Sponsored transaction sent:', txHash);
         
-        // Cache invalidation after successful transaction
-        setTimeout(() => {
-          queryClient.invalidateQueries({ 
-            queryKey: ['readContract'] 
-          });
-          console.log('[ENROLLMENT] Cache invalidated after enrollment');
-        }, 2000);
+        setIsConfirmingEnrollment(true);
+        
+        // Wait for transaction confirmation before invalidating cache
+        try {
+          // Wait for the transaction to be mined (3 seconds should be enough for Celo)
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          // Invalidate all relevant caches
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['readContract'] }),
+            queryClient.invalidateQueries({ queryKey: ['hasBadge'] }),
+            queryClient.invalidateQueries({ queryKey: ['hasClaimed'] }),
+          ]);
+          
+          console.log('[ENROLLMENT] ✅ Cache invalidated after transaction confirmation');
+        } catch (cacheError) {
+          console.warn('[ENROLLMENT] ⚠️ Cache invalidation failed:', cacheError);
+        } finally {
+          setIsConfirmingEnrollment(false);
+        }
       }
     } catch (error: any) {
       console.error('[ENROLLMENT] ❌ Sponsored transaction failed:', error);
@@ -145,6 +145,7 @@ export function EnrollmentProvider({
       setIsEnrolling(false);
     }
   };
+
 
   const enrollmentState: EnrollmentState = {
     hasBadge: optimizedEnrollment.hasBadge,

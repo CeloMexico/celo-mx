@@ -12,6 +12,7 @@ import {
   Globe
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function PrivyLogin() {
   const router = useRouter();
@@ -19,14 +20,52 @@ export default function PrivyLogin() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const { 
-    isAuthenticated, 
-    isLoading, 
-    user, 
-    wallet, 
-    login, 
-    logout 
-  } = useAuth();
+  // Emergency reset function for stuck sessions
+  const forceReset = () => {
+    localStorage.removeItem('privy:token');
+    localStorage.removeItem('privy:refresh_token');
+    localStorage.removeItem('privy:identity_token');
+    localStorage.removeItem('privy-token');
+    document.cookie = 'privy-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'wallet-address=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    window.location.reload();
+  };
+  
+  const auth = useAuth();
+  
+  // DIRECT PRIVY ACCESS FOR DEBUGGING
+  const {
+    authenticated: privyAuthenticated,
+    ready: privyReady,
+    user: privyUser,
+    login: privyLogin,
+    logout: privyLogout
+  } = usePrivy();
+  
+  console.log('[PRIVY LOGIN DEBUG]', {
+    useAuthResult: {
+      isAuthenticated: auth.isAuthenticated,
+      isLoading: auth.isLoading,
+      hasUser: !!auth.user,
+      hasWallet: !!auth.wallet?.address
+    },
+    directPrivy: {
+      authenticated: privyAuthenticated,
+      ready: privyReady,
+      hasUser: !!privyUser,
+      loginFunction: typeof privyLogin
+    }
+  });
+  
+  // Use direct Privy values
+  const isAuthenticated = privyAuthenticated;
+  const isLoading = !privyReady;
+  const user = privyUser;
+  const wallet = auth.wallet;
+  const login = privyLogin;
+  const logout = privyLogout;
+
+
 
   function truncate(address: string) {
     return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
@@ -65,6 +104,7 @@ export default function PrivyLogin() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
 
   // Show loading state
   if (isLoading) {
@@ -124,11 +164,11 @@ export default function PrivyLogin() {
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white/25 dark:bg-black/25 border border-white/30 dark:border-white/25 backdrop-blur-md">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-celo-yellow to-yellow-500 flex items-center justify-center text-black font-bold text-sm">
-                  {user?.email?.slice(0, 1).toUpperCase() || wallet.address?.slice(2, 4).toUpperCase() || 'U'}
+                  {user?.email?.address?.slice(0, 1).toUpperCase() || wallet.address?.slice(2, 4).toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-celo-black dark:text-celo-yellow">
-                    {user?.email || 'Wallet User'}
+                    {user?.email?.address || 'Wallet User'}
                   </div>
                   <div className="text-xs text-celo-black/70 dark:text-celo-yellow/70">
                     {user?.linkedAccounts?.length || 1} account{(user?.linkedAccounts?.length || 1) !== 1 ? 's' : ''}

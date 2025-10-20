@@ -3,59 +3,10 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/courseToken';
+import { OPTIMIZED_CONTRACT_CONFIG } from '@/lib/contracts/optimized-badge-config';
 
-// Optimized contract ABI (now properly deployed)
-const OPTIMIZED_BADGE_ABI = [
-  {
-    type: 'function',
-    name: 'completeModule',
-    inputs: [
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'isModuleCompleted',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
-      { name: 'moduleIndex', type: 'uint8' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'getModulesCompleted',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'uint8' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'isEnrolled',
-    inputs: [
-      { name: 'user', type: 'address' },
-      { name: 'courseId', type: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'view',
-  },
-] as const;
-
-// DEFINITIVE FIX: Use hardcoded optimized contract address
-const getContractAddress = (): Address => {
-  // HARDCODED: Use the ACTUAL deployed optimized contract
-  const OPTIMIZED_CONTRACT_ADDRESS = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
-  console.log('[MODULE COMPLETION] Using HARDCODED OPTIMIZED contract:', OPTIMIZED_CONTRACT_ADDRESS);
-  return OPTIMIZED_CONTRACT_ADDRESS as Address;
-};
+// Use unified contract configuration (SINGLE SOURCE OF TRUTH)
+const { address: CONTRACT_ADDRESS, abi: CONTRACT_ABI } = OPTIMIZED_CONTRACT_CONFIG;
 
 // Hook to check if a user has completed a specific module
 export function useHasCompletedModule(
@@ -63,9 +14,17 @@ export function useHasCompletedModule(
   courseTokenId?: bigint,
   moduleIndex?: number
 ) {
+  console.log('[MODULE COMPLETION READ] isModuleCompleted:', {
+    userAddress,
+    courseTokenId: courseTokenId?.toString(),
+    moduleIndex,
+    contractModuleIndex: moduleIndex !== undefined ? moduleIndex + 1 : undefined,
+    contractAddress: CONTRACT_ADDRESS,
+  });
+  
   return useReadContract({
-    address: getContractAddress(),
-    abi: OPTIMIZED_BADGE_ABI,
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
     functionName: 'isModuleCompleted',
     args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
       ? [userAddress, courseTokenId, moduleIndex + 1] // Convert to 1-based for contract
@@ -81,9 +40,15 @@ export function useHasCompletedModule(
 
 // Hook to get the total modules completed for a course
 export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigint) {
+  console.log('[MODULE COMPLETION READ] getModulesCompleted:', {
+    userAddress,
+    courseTokenId: courseTokenId?.toString(),
+    contractAddress: CONTRACT_ADDRESS,
+  });
+  
   return useReadContract({
-    address: getContractAddress(),
-    abi: OPTIMIZED_BADGE_ABI,
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
     functionName: 'getModulesCompleted',
     args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
     query: {
@@ -114,8 +79,8 @@ export function useCompleteModuleBadge() {
     }
 
     return writeContract({
-      address: getContractAddress(),
-      abi: OPTIMIZED_BADGE_ABI,
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
       functionName: 'completeModule',
       args: [courseTokenId, moduleIndex + 1], // Convert to 1-based for contract
     });

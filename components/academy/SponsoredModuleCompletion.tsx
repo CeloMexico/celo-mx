@@ -207,7 +207,7 @@ export function SponsoredModuleCompletion({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                Error completando módulo: {completionError}
+                Error completando módulo: {completionError?.message || 'Error desconocido'}
               </AlertDescription>
             </Alert>
           )}

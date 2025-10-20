@@ -82,7 +82,7 @@ export function useUnifiedEnrollment({ courseSlug, courseId }: UseUnifiedEnrollm
       });
       console.log('[UNIFIED ENROLLMENT] Cache invalidated for enrollment status');
     }, 1000);
-  }, [queryClient]);
+  }, [queryClient, CONTRACT_ADDRESS]);
 
   /**
    * SPONSORED ENROLLMENT

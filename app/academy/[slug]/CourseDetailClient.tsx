@@ -15,8 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl, getYouTubeEmbedFromUrl, isYouTubeUrl } from "@/lib/youtube";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
-import { EnrollmentProvider, useEnrollment } from "@/lib/contexts/EnrollmentContext";
-import { CourseProgressDashboard } from "@/components/academy/CourseProgressDashboard";
+import { EnrollmentProvider, useEnrollment } from '@/lib/contexts/EnrollmentContext';
+import { CourseProgressDashboard } from '@/components/academy/CourseProgressDashboard';
+import { CourseProgressProvider } from '@/lib/contexts/CourseProgressProvider';
 
 // Dynamically import the Web3 enrollment panel to avoid SSR issues
 const Web3EnrollPanel = dynamic(

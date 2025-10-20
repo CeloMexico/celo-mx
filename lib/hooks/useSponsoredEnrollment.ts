@@ -148,6 +148,7 @@ export function useSponsoredEnrollment({ courseSlug, courseId }: UseSponsoredEnr
     courseSlug,
     courseId,
     executeTransaction,
+    queryClient,
   ]);
 
   const resetEnrollment = useCallback(() => {
@@ -312,6 +313,7 @@ export function useSponsoredModuleCompletion({
     courseSlug,
     courseId,
     executeTransaction,
+    queryClient,
   ]);
 
   const resetCompletion = useCallback(() => {

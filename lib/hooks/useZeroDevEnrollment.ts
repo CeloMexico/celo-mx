@@ -148,6 +148,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
     courseSlug,
     courseId,
     executeTransaction,
+    queryClient,
   ]);
 
   const completeModuleWithZeroDev = useCallback(async (moduleIndex: number) => {
@@ -241,6 +242,7 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
     courseSlug,
     courseId,
     executeTransaction,
+    queryClient,
   ]);
 
   const generateCertificateWithZeroDev = useCallback(async () => {
@@ -300,7 +302,6 @@ export function useZeroDevEnrollment({ courseSlug, courseId }: UseZeroDevEnrollm
     smartAccountAddress,
     courseSlug,
     courseId,
-    executeTransaction,
   ]);
 
   const resetStates = useCallback(() => {

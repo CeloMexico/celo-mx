@@ -7,10 +7,9 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEnrollment } from '@/lib/contexts/EnrollmentContext';
-import { useModulesCompleted, useHasCompletedModule } from '@/lib/hooks/useModuleCompletion';
+import { useHasCompletedModule } from '@/lib/hooks/useModuleCompletion';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { getCourseTokenId } from '@/lib/courseToken';
-import { useAuth } from '@/hooks/useAuth';
-import { courseProgressPercent } from '@/lib/progress';
 import { CertificateGenerator } from '@/components/certificates/CertificateGenerator';
 import { SponsoredModuleCompletion } from './SponsoredModuleCompletion';
 import { ModuleCompletionProvider } from '@/lib/contexts/ModuleCompletionContext';
@@ -38,67 +37,49 @@ export function CourseProgressDashboard({
   modules,
   className = '',
 }: CourseProgressDashboardProps) {
-  const { wallet } = useAuth();
   const enrollment = useEnrollment();
   const [mounted, setMounted] = useState(false);
+  
+  // SIMPLE FIX - Use enrollment context that already has the user address
+  const enrollmentUserAddress = enrollment.userAddress;
+  const tokenId = getCourseTokenId(courseSlug, courseId);
+  
+  // Get module completion data using the working address from enrollment
+  const module0Completed = useHasCompletedModule(enrollmentUserAddress, tokenId, 0);
+  const module1Completed = useHasCompletedModule(enrollmentUserAddress, tokenId, 1);
+  const module2Completed = useHasCompletedModule(enrollmentUserAddress, tokenId, 2);
+  
+  const moduleCompletionStatus = [
+    module0Completed.data || false,
+    module1Completed.data || false,
+    module2Completed.data || false,
+  ].slice(0, modules.length);
+  
+  const completedModules = moduleCompletionStatus.filter(Boolean).length;
+  const progressPercentage = modules.length > 0 ? Math.round((completedModules / modules.length) * 100) : 0;
+  const isComplete = progressPercentage === 100;
+  const progressLoading = module0Completed.isLoading || module1Completed.isLoading || module2Completed.isLoading;
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const userAddress = wallet?.address as Address | undefined;
-  const tokenId = getCourseTokenId(courseSlug, courseId);
+  
   const isEnrolled = enrollment.hasBadge || enrollment.hasClaimed || enrollment.enrollmentSuccess;
 
-  // Get blockchain progress data
-  const modulesCompleted = useModulesCompleted(userAddress, tokenId);
-  
-  // Get local storage progress for comparison
-  const localProgress = mounted ? courseProgressPercent(courseSlug, modules.length) : 0;
-
-  console.log('[COURSE PROGRESS DASHBOARD] State:', {
+  console.log('[COURSE PROGRESS DASHBOARD] Using direct module hooks:', {
     courseSlug,
     isEnrolled,
-    userAddress: userAddress || 'none',
-    blockchainCompleted: modulesCompleted.data?.toString() || '0',
-    localProgress,
+    address: enrollmentUserAddress || 'none',
+    completedModules,
     totalModules: modules.length,
+    progressPercentage,
+    isComplete,
+    moduleCompletionStatus,
   });
 
-  if (!mounted) {
+  if (!mounted || progressLoading) {
     return <CourseProgressSkeleton />;
   }
-
-  if (!isEnrolled) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            {courseTitle} - Progress
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <Trophy className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-              <p className="text-sm font-medium text-blue-900 mb-1">
-                Enroll to Start Your Journey
-              </p>
-              <p className="text-xs text-blue-700">
-                Get your enrollment NFT badge and start tracking your progress on the blockchain
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const totalModules = modules.length;
-  const blockchainCompleted = Number(modulesCompleted.data || 0);
-  const progressPercentage = totalModules > 0 ? Math.round((blockchainCompleted / totalModules) * 100) : 0;
-  const isComplete = progressPercentage === 100;
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -120,7 +101,7 @@ export function CourseProgressDashboard({
           <div>
             <div className="flex justify-between text-sm text-gray-600 mb-2">
               <span>Modules Completed</span>
-              <span>{blockchainCompleted}/{totalModules}</span>
+              <span>{completedModules}/{modules.length}</span>
             </div>
             <Progress value={progressPercentage} className="h-3" />
           </div>
@@ -136,7 +117,7 @@ export function CourseProgressDashboard({
                 Your progress is stored on-chain and updates as you complete modules
               </p>
             </div>
-            {tokenId && (
+            {Boolean(enrollmentUserAddress) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -189,7 +170,7 @@ export function CourseProgressDashboard({
                 moduleIndex={index}
                 courseSlug={courseSlug}
                 courseId={courseId}
-                userAddress={userAddress}
+                userAddress={enrollmentUserAddress}
                 isEnrolled={isEnrolled}
               />
             ))}
@@ -220,8 +201,8 @@ export function CourseProgressDashboard({
           createdAt: new Date(),
           updatedAt: new Date(),
         }}
-        completedModules={blockchainCompleted}
-        totalModules={totalModules}
+        completedModules={completedModules}
+        totalModules={modules.length}
         completionPercentage={progressPercentage}
       />
     </div>
@@ -245,11 +226,28 @@ function ModuleProgressItem({
   userAddress,
   isEnrolled,
 }: ModuleProgressItemProps) {
+  // CHECK BOTH SMART ACCOUNT AND WALLET ADDRESS FOR COMPLETION
+  const { smartAccountAddress } = useSmartAccount();
   const tokenId = getCourseTokenId(courseSlug, courseId);
-  const hasCompleted = useHasCompletedModule(userAddress, tokenId, moduleIndex);
-
-  const isCompleted = hasCompleted.data || false;
-  const isLoading = hasCompleted.isLoading;
+  
+  // Query both addresses
+  const walletCompletion = useHasCompletedModule(userAddress, tokenId, moduleIndex);
+  const smartAccountCompletion = useHasCompletedModule(smartAccountAddress || undefined, tokenId, moduleIndex);
+  
+  // Module is completed if EITHER address has completed it
+  const isCompleted = walletCompletion.data || smartAccountCompletion.data || false;
+  const isLoading = walletCompletion.isLoading || smartAccountCompletion.isLoading;
+  
+  console.log(`[MODULE ${moduleIndex}] Dual completion check:`, {
+    walletAddress: userAddress,
+    smartAccountAddress,
+    walletCompleted: walletCompletion.data,
+    smartAccountCompleted: smartAccountCompletion.data,
+    finalIsCompleted: isCompleted,
+    tokenId: tokenId.toString(),
+    moduleIndex,
+    contractModuleIndex: moduleIndex + 1,
+  });
 
   return (
     <div className="space-y-3">

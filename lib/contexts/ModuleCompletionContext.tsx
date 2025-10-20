@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useWriteContract } from 'wagmi';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useQueryClient } from '@tanstack/react-query';
@@ -47,9 +47,25 @@ export function ModuleCompletionProvider({
   const [completionSuccess, setCompletionSuccess] = useState(false);
   
   // Normal wallet transaction hook
-  const { writeContract } = useWriteContract();
+  const { writeContract, data: writeContractHash } = useWriteContract();
   
   const tokenId = getCourseTokenId(courseSlug, courseId);
+  
+  // Watch for writeContract hash and update completion state
+  useEffect(() => {
+    if (writeContractHash) {
+      setCompletionHash(writeContractHash);
+      markModuleDone(courseSlug, moduleIndex);
+      
+      // Invalidate cache
+      setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ['readContract'] 
+        });
+        console.log('[MODULE COMPLETION] Cache invalidated after completion');
+      }, 2000);
+    }
+  }, [writeContractHash, courseSlug, moduleIndex, queryClient]);
   
   // Shared completion logic
   const handleCompletionSuccess = (hash: `0x${string}`) => {
@@ -83,17 +99,17 @@ export function ModuleCompletionProvider({
         tokenId: tokenId.toString(),
       });
       
-      const hash = await writeContract({
+      // writeContract doesn't return a hash directly, it's void
+      await writeContract({
         address: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
         abi: OPTIMIZED_CONTRACT_CONFIG.abi,
         functionName: 'completeModule',
         args: [tokenId, contractModuleIndex],
       });
       
-      if (hash) {
-        handleCompletionSuccess(hash);
-        console.log('[MODULE COMPLETION] ✅ Wallet transaction sent:', hash);
-      }
+      // Transaction was initiated successfully
+      console.log('[MODULE COMPLETION] ✅ Wallet transaction initiated');
+      setCompletionSuccess(true);
     } catch (error: any) {
       console.error('[MODULE COMPLETION] ❌ Wallet transaction failed:', error);
       setCompletionError(new Error(error.message || 'Module completion failed'));
@@ -123,6 +139,8 @@ export function ModuleCompletionProvider({
         moduleIndex,
         contractModuleIndex,
         tokenId: tokenId.toString(),
+        smartAccountAddress: smartAccount.smartAccountAddress,
+        contractAddress: OPTIMIZED_CONTRACT_CONFIG.address,
       });
       
       const hash = await smartAccount.executeTransaction({
