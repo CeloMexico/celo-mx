@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCourseEnrollmentBadge } from '@/lib/hooks/useSimpleBadge';
-import { useUnifiedEnrollment } from '@/lib/hooks/useUnifiedEnrollment';
+import { useEnrollmentService } from '@/lib/hooks/useEnrollmentService';
 import { usePrivy } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
@@ -56,71 +56,59 @@ export function EnrollmentProvider({
   // Use optimized enrollment for read operations (badge/claim status)
   const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
   
-  // Use UNIFIED enrollment for write operations (handles both sponsored and wallet)
-  const unifiedEnrollment = useUnifiedEnrollment({ courseSlug, courseId });
+  // Use ENROLLMENT SERVICE for write operations (follows Motus pattern)
+  const enrollmentService = useEnrollmentService();
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state:', {
     hasBadge: optimizedEnrollment.hasBadge,
     hasClaimed: optimizedEnrollment.hasClaimed,
     isLoading: optimizedEnrollment.isLoading,
-    unifiedEnrollmentSuccess: unifiedEnrollment.enrollmentSuccess,
-    prefersSponsoredMethod: unifiedEnrollment.prefersSponsoredMethod,
-    transactionMethod: unifiedEnrollment.transactionMethod,
+    serviceInitialized: enrollmentService.isInitialized,
+    serviceReady: enrollmentService.isServiceReady,
+    hasSmartAccount: enrollmentService.hasSmartAccount,
+    canSponsorTransaction: enrollmentService.canSponsorTransaction,
     serverHasAccess,
-    contractAddress: unifiedEnrollment.contractAddress,
   });
 
-  // CRITICAL: Invalidate cache after successful enrollment (unified approach)
-  useEffect(() => {
-    const shouldInvalidate = unifiedEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess;
-    
-    if (shouldInvalidate) {
-      console.log('[ENROLLMENT CONTEXT] 🔄 Invalidating cache after successful enrollment:', {
-        unifiedSuccess: unifiedEnrollment.enrollmentSuccess,
-        transactionMethod: unifiedEnrollment.transactionMethod,
-        legacySuccess: optimizedEnrollment.enrollmentSuccess,
-      });
-      
-      // Aggressive cache invalidation for enrollment-related queries
-      queryClient.invalidateQueries({ queryKey: ['readContract'] });
-      queryClient.refetchQueries({ queryKey: ['readContract'] });
-      
-      // Multiple invalidation attempts to ensure cache refresh
-      const intervals = [500, 1000, 2000, 3000];
-      intervals.forEach(delay => {
-        setTimeout(() => {
-          console.log('[ENROLLMENT CONTEXT] 🔄 Cache invalidation attempt at', delay, 'ms');
-          queryClient.invalidateQueries({ queryKey: ['readContract'] });
-          queryClient.refetchQueries({ queryKey: ['readContract'] });
-        }, delay);
-      });
-    }
-  }, [unifiedEnrollment.enrollmentSuccess, optimizedEnrollment.enrollmentSuccess, queryClient]);
+  // Cache invalidation is now handled by the enrollment service
+  // The service automatically invalidates cache after successful transactions
+  // This follows the Motus pattern of letting the service manage its own state
 
-  // Use unified enrollment function (handles both sponsored and wallet automatically)
+  // Use enrollment service (follows Motus pattern with direct kernelClient usage)
   const enrollInCourse = async () => {
-    console.log('[ENROLLMENT CONTEXT] Using unified enrollment:', {
+    console.log('[ENROLLMENT CONTEXT] Using enrollment service:', {
       privyAuthenticated,
-      prefersSponsoredMethod: unifiedEnrollment.prefersSponsoredMethod,
-      canEnroll: unifiedEnrollment.canEnroll,
+      serviceReady: enrollmentService.isServiceReady,
+      hasSmartAccount: enrollmentService.hasSmartAccount,
+      canSponsorTransaction: enrollmentService.canSponsorTransaction,
     });
     
-    // The unified hook automatically chooses the best method
-    await unifiedEnrollment.enroll();
+    if (!enrollmentService.isServiceReady) {
+      throw new Error('Enrollment service not ready. Please wait for smart account initialization.');
+    }
+    
+    // CRITICAL: Use enrollment service with direct kernelClient.sendTransaction
+    const result = await enrollmentService.enrollInCourse(courseSlug, courseId);
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Enrollment failed');
+    }
+    
+    console.log('[ENROLLMENT CONTEXT] ✅ Enrollment completed:', result.transactionHash);
   };
 
   const enrollmentState: EnrollmentState = {
     hasBadge: optimizedEnrollment.hasBadge,
     hasClaimed: optimizedEnrollment.hasClaimed,
-    isLoading: optimizedEnrollment.isLoading || unifiedEnrollment.isLoading,
+    isLoading: optimizedEnrollment.isLoading || enrollmentService.isLoading,
     enrollInCourse,
-    enrollmentHash: unifiedEnrollment.enrollmentHash || optimizedEnrollment.enrollmentHash,
-    enrollmentError: unifiedEnrollment.enrollmentError ? new Error(unifiedEnrollment.enrollmentError) : optimizedEnrollment.enrollmentError,
-    isEnrolling: unifiedEnrollment.isEnrolling || optimizedEnrollment.isEnrolling,
-    isConfirmingEnrollment: false, // Unified hook manages this internally
-    enrollmentSuccess: unifiedEnrollment.enrollmentSuccess || optimizedEnrollment.enrollmentSuccess,
+    enrollmentHash: undefined, // Service handles transaction hashes internally
+    enrollmentError: enrollmentService.error ? new Error(enrollmentService.error) : optimizedEnrollment.enrollmentError,
+    isEnrolling: enrollmentService.isLoading,
+    isConfirmingEnrollment: false, // Service manages confirmation internally
+    enrollmentSuccess: false, // Service handles success state internally
     serverHasAccess,
-    isWalletConnected,
+    isWalletConnected: enrollmentService.hasSmartAccount,
     userAddress,
   };
 
