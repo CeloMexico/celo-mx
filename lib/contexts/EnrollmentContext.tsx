@@ -56,11 +56,20 @@ export function EnrollmentProvider({
     isWalletConnected,
   });
 
-  // Use optimized enrollment for read operations (badge/claim status)
-  const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
-  
   // ZERODEV SMART ACCOUNT - Sponsored transactions
   const smartAccount = useSmartAccount();
+  
+  // FIX: Use smart account address for reads to match enrollment writes
+  const addressForEnrollmentCheck = smartAccount.smartAccountAddress || userAddress;
+  const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, addressForEnrollmentCheck);
+  
+  console.log('[ENROLLMENT CONTEXT] Address mapping:', {
+    walletAddress: userAddress,
+    smartAccountAddress: smartAccount.smartAccountAddress,
+    addressUsedForReads: addressForEnrollmentCheck,
+    addressUsedForWrites: smartAccount.smartAccountAddress,
+  });
+  
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isConfirmingEnrollment, setIsConfirmingEnrollment] = useState(false);
   const [hash, setHash] = useState<`0x${string}` | undefined>();
