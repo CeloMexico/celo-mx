@@ -1,11 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useWriteContract } from 'wagmi';
+import { useWriteContract, useChainId } from 'wagmi';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { useQueryClient } from '@tanstack/react-query';
 import { encodeFunctionData } from 'viem';
-import { OPTIMIZED_CONTRACT_CONFIG } from '@/lib/contracts/optimized-badge-config';
+import { getOptimizedContractConfig } from '@/lib/contracts/optimized-badge-config';
 import { getCourseTokenId } from '@/lib/courseToken';
 import { markModuleDone } from '@/lib/progress';
 
@@ -39,6 +39,10 @@ export function ModuleCompletionProvider({
 }: ModuleCompletionProviderProps) {
   const queryClient = useQueryClient();
   const smartAccount = useSmartAccount();
+  const chainId = useChainId();
+  const contractConfig = getOptimizedContractConfig(chainId);
+  
+  console.log('[MODULE COMPLETION CONTEXT] Using contract for chain:', chainId, contractConfig.address);
   
   // Unified state
   const [isCompleting, setIsCompleting] = useState(false);
@@ -97,12 +101,14 @@ export function ModuleCompletionProvider({
         moduleIndex,
         contractModuleIndex,
         tokenId: tokenId.toString(),
+        chainId,
+        contractAddress: contractConfig.address,
       });
       
       // writeContract doesn't return a hash directly, it's void
       await writeContract({
-        address: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
-        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+        address: contractConfig.address as `0x${string}`,
+        abi: contractConfig.abi,
         functionName: 'completeModule',
         args: [tokenId, contractModuleIndex],
       });
@@ -130,7 +136,7 @@ export function ModuleCompletionProvider({
       const contractModuleIndex = moduleIndex + 1;
       
       const encodedData = encodeFunctionData({
-        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+        abi: contractConfig.abi,
         functionName: 'completeModule',
         args: [tokenId, contractModuleIndex],
       });
@@ -139,12 +145,13 @@ export function ModuleCompletionProvider({
         moduleIndex,
         contractModuleIndex,
         tokenId: tokenId.toString(),
+        chainId,
         smartAccountAddress: smartAccount.smartAccountAddress,
-        contractAddress: OPTIMIZED_CONTRACT_CONFIG.address,
+        contractAddress: contractConfig.address,
       });
       
       const hash = await smartAccount.executeTransaction({
-        to: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
+        to: contractConfig.address as `0x${string}`,
         data: encodedData,
         value: 0n,
       });

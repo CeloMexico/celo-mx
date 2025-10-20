@@ -3,12 +3,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCourseEnrollmentBadge } from '@/lib/hooks/useSimpleBadge';
-import { OPTIMIZED_CONTRACT_CONFIG } from '@/lib/contracts/optimized-badge-config';
+import { getOptimizedContractConfig } from '@/lib/contracts/optimized-badge-config';
 import { getCourseTokenId } from '@/lib/courseToken';
 import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
 import { encodeFunctionData } from 'viem';
 import { usePrivy } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
+import { useChainId } from 'wagmi';
 import type { Address } from 'viem';
 
 interface EnrollmentState {
@@ -46,8 +47,12 @@ export function EnrollmentProvider({
   const { isAuthenticated, wallet } = useAuth();
   const { authenticated: privyAuthenticated } = usePrivy();
   const queryClient = useQueryClient();
+  const chainId = useChainId();
+  const contractConfig = getOptimizedContractConfig(chainId);
   const userAddress = wallet?.address as Address | undefined;
   const isWalletConnected = isAuthenticated && !!userAddress;
+  
+  console.log('[ENROLLMENT CONTEXT] Using contract for chain:', chainId, contractConfig.address);
 
   // ZERODEV SMART ACCOUNT - Sponsored transactions
   const smartAccount = useSmartAccount();
@@ -94,20 +99,21 @@ export function EnrollmentProvider({
     try {
       // Encode the function call data
       const encodedData = encodeFunctionData({
-        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+        abi: contractConfig.abi,
         functionName: 'enroll',
         args: [tokenId],
       });
       
       console.log('[ENROLLMENT] Calling sponsored transaction:', {
-        to: OPTIMIZED_CONTRACT_CONFIG.address,
+        to: contractConfig.address,
+        chainId,
         data: encodedData,
         tokenId: tokenId.toString(),
       });
       
       // Use ZeroDev sponsored transaction
       const txHash = await smartAccount.executeTransaction({
-        to: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
+        to: contractConfig.address as `0x${string}`,
         data: encodedData,
         value: 0n,
       });
