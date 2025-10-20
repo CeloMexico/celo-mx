@@ -78,16 +78,25 @@ export class EnrollmentService {
    * This mirrors Motus's createAssignmentWithKernel method
    */
   async enrollInCourse(courseSlug: string, courseId: string): Promise<ContractTransactionResult> {
+    console.log('🚀 EnrollmentService.enrollInCourse called:', { courseSlug, courseId });
+    console.log('🔍 Smart account signer state:', {
+      hasSmartAccountSigner: !!this.smartAccountSigner,
+      smartAccountType: this.smartAccountSigner?.constructor?.name,
+      hasAccount: !!this.smartAccountSigner?.account,
+      accountAddress: this.smartAccountSigner?.account?.address,
+      hasSendTransaction: !!this.smartAccountSigner?.sendTransaction
+    });
+    
     try {
-      console.log('📝 EnrollmentService: Enrolling in course:', { courseSlug, courseId });
-      
       if (!this.smartAccountSigner) {
         console.error('❌ EnrollmentService: No smart wallet signer available');
         throw new Error('Smart wallet signer required for transactions');
       }
       
-      console.log('🔧 EnrollmentService: Using ZeroDev Kernel client for sponsored enrollment');
-      return await this.enrollWithKernel(courseSlug, courseId);
+      console.log('🔧 EnrollmentService: Calling enrollWithKernel...');
+      const result = await this.enrollWithKernel(courseSlug, courseId);
+      console.log('✅ EnrollmentService: enrollWithKernel completed:', result);
+      return result;
     } catch (error: any) {
       console.error('❌ EnrollmentService: Enrollment error:', error);
       return {
@@ -151,6 +160,13 @@ export class EnrollmentService {
       // CRITICAL: Direct kernelClient.sendTransaction call like Motus
       // The kernel client is a drop-in replacement for viem's wallet client
       // Use sendTransaction directly - ZeroDev will handle the user operation creation
+      console.log('🚀 About to call kernelClient.sendTransaction with params:', {
+        to: contractAddress,
+        data: encodedData,
+        value: '0x0',
+        smartAccountAddress: this.smartAccountSigner.account?.address
+      });
+      
       const hash = await this.smartAccountSigner.sendTransaction({
         to: contractAddress as `0x${string}`,
         data: encodedData,

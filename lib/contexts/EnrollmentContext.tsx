@@ -3,7 +3,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCourseEnrollmentBadge } from '@/lib/hooks/useSimpleBadge';
-import { useEnrollmentService } from '@/lib/hooks/useEnrollmentService';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { OPTIMIZED_CONTRACT_CONFIG } from '@/lib/contracts/optimized-badge-config';
+import { getCourseTokenId } from '@/lib/courseToken';
 import { usePrivy } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
@@ -56,59 +58,75 @@ export function EnrollmentProvider({
   // Use optimized enrollment for read operations (badge/claim status)
   const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
   
-  // Use ENROLLMENT SERVICE for write operations (follows Motus pattern)
-  const enrollmentService = useEnrollmentService();
+  // DIRECT WAGMI WRITE CONTRACT - This will actually trigger wallet signing
+  const { 
+    writeContract, 
+    data: hash,
+    isPending: isEnrolling,
+    error: enrollmentError 
+  } = useWriteContract();
+  
+  const { isLoading: isConfirmingEnrollment } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state:', {
     hasBadge: optimizedEnrollment.hasBadge,
     hasClaimed: optimizedEnrollment.hasClaimed,
     isLoading: optimizedEnrollment.isLoading,
-    serviceInitialized: enrollmentService.isInitialized,
-    serviceReady: enrollmentService.isServiceReady,
-    hasSmartAccount: enrollmentService.hasSmartAccount,
-    canSponsorTransaction: enrollmentService.canSponsorTransaction,
+    isEnrolling,
+    isConfirmingEnrollment,
+    hasWallet: isWalletConnected,
     serverHasAccess,
   });
 
-  // Cache invalidation is now handled by the enrollment service
-  // The service automatically invalidates cache after successful transactions
-  // This follows the Motus pattern of letting the service manage its own state
-
-  // Use enrollment service (follows Motus pattern with direct kernelClient usage)
+  // DIRECT WAGMI ENROLLMENT - This will actually trigger wallet signing
   const enrollInCourse = async () => {
-    console.log('[ENROLLMENT CONTEXT] Using enrollment service:', {
-      privyAuthenticated,
-      serviceReady: enrollmentService.isServiceReady,
-      hasSmartAccount: enrollmentService.hasSmartAccount,
-      canSponsorTransaction: enrollmentService.canSponsorTransaction,
+    console.log('[ENROLLMENT CONTEXT] Starting enrollment with wagmi writeContract');
+    
+    if (!isWalletConnected || !userAddress) {
+      throw new Error('Wallet not connected');
+    }
+    
+    const tokenId = getCourseTokenId(courseSlug, courseId);
+    
+    console.log('[ENROLLMENT CONTEXT] Calling writeContract:', {
+      address: OPTIMIZED_CONTRACT_CONFIG.address,
+      tokenId: tokenId.toString(),
+      userAddress
     });
     
-    if (!enrollmentService.isServiceReady) {
-      throw new Error('Enrollment service not ready. Please wait for smart account initialization.');
+    // THIS WILL ACTUALLY PROMPT FOR WALLET SIGNING
+    writeContract({
+      address: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
+      abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+      functionName: 'enroll',
+      args: [tokenId],
+    });
+    
+    // Cache invalidation after successful transaction
+    if (hash) {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ['readContract'] 
+        });
+        console.log('[ENROLLMENT CONTEXT] Cache invalidated after enrollment');
+      }, 2000);
     }
-    
-    // CRITICAL: Use enrollment service with direct kernelClient.sendTransaction
-    const result = await enrollmentService.enrollInCourse(courseSlug, courseId);
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Enrollment failed');
-    }
-    
-    console.log('[ENROLLMENT CONTEXT] ✅ Enrollment completed:', result.transactionHash);
   };
 
   const enrollmentState: EnrollmentState = {
     hasBadge: optimizedEnrollment.hasBadge,
     hasClaimed: optimizedEnrollment.hasClaimed,
-    isLoading: optimizedEnrollment.isLoading || enrollmentService.isLoading,
+    isLoading: optimizedEnrollment.isLoading,
     enrollInCourse,
-    enrollmentHash: undefined, // Service handles transaction hashes internally
-    enrollmentError: enrollmentService.error ? new Error(enrollmentService.error) : optimizedEnrollment.enrollmentError,
-    isEnrolling: enrollmentService.isLoading,
-    isConfirmingEnrollment: false, // Service manages confirmation internally
-    enrollmentSuccess: false, // Service handles success state internally
+    enrollmentHash: hash,
+    enrollmentError: enrollmentError ? new Error(enrollmentError.message) : optimizedEnrollment.enrollmentError,
+    isEnrolling,
+    isConfirmingEnrollment,
+    enrollmentSuccess: !!hash && !isConfirmingEnrollment,
     serverHasAccess,
-    isWalletConnected: enrollmentService.hasSmartAccount,
+    isWalletConnected,
     userAddress,
   };
 
