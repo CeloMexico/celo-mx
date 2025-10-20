@@ -1,12 +1,15 @@
 'use client';
 
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect, useChainId } from 'wagmi';
 import { type Address } from 'viem';
 import { getCourseTokenId } from '@/lib/courseToken';
-import { OPTIMIZED_CONTRACT_CONFIG } from '@/lib/contracts/optimized-badge-config';
+import { getOptimizedContractConfig } from '@/lib/contracts/optimized-badge-config';
 
-// Use unified contract configuration (SINGLE SOURCE OF TRUTH)
-const { address: CONTRACT_ADDRESS, abi: CONTRACT_ABI } = OPTIMIZED_CONTRACT_CONFIG;
+// Helper to get current chain contract configuration
+function useContractConfig() {
+  const chainId = useChainId();
+  return getOptimizedContractConfig(chainId);
+}
 
 // Hook to check if a user has completed a specific module
 export function useHasCompletedModule(
@@ -14,17 +17,21 @@ export function useHasCompletedModule(
   courseTokenId?: bigint,
   moduleIndex?: number
 ) {
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
+  const chainId = useChainId();
+  
   console.log('[MODULE COMPLETION READ] isModuleCompleted:', {
     userAddress,
     courseTokenId: courseTokenId?.toString(),
     moduleIndex,
     contractModuleIndex: moduleIndex !== undefined ? moduleIndex + 1 : undefined,
-    contractAddress: CONTRACT_ADDRESS,
+    contractAddress,
+    chainId,
   });
   
   return useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
+    address: contractAddress,
+    abi: contractAbi,
     functionName: 'isModuleCompleted',
     args: userAddress && courseTokenId !== undefined && moduleIndex !== undefined 
       ? [userAddress, courseTokenId, moduleIndex + 1] // Convert to 1-based for contract
@@ -40,15 +47,19 @@ export function useHasCompletedModule(
 
 // Hook to get the total modules completed for a course
 export function useModulesCompleted(userAddress?: Address, courseTokenId?: bigint) {
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
+  const chainId = useChainId();
+  
   console.log('[MODULE COMPLETION READ] getModulesCompleted:', {
     userAddress,
     courseTokenId: courseTokenId?.toString(),
-    contractAddress: CONTRACT_ADDRESS,
+    contractAddress,
+    chainId,
   });
   
   return useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
+    address: contractAddress,
+    abi: contractAbi,
     functionName: 'getModulesCompleted',
     args: userAddress && courseTokenId !== undefined ? [userAddress, courseTokenId] : undefined,
     query: {
@@ -65,6 +76,7 @@ export function useCompleteModuleBadge() {
   const { writeContract, data: hash, error, isPending } = useWriteContract();
   const { isConnected } = useAccount();
   const { connectAsync, connectors } = useConnect();
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
 
   const completeModule = async (courseTokenId: bigint, moduleIndex: number) => {
     // Ensure connector is connected before write
@@ -79,8 +91,8 @@ export function useCompleteModuleBadge() {
     }
 
     return writeContract({
-      address: CONTRACT_ADDRESS,
-      abi: CONTRACT_ABI,
+      address: contractAddress,
+      abi: contractAbi,
       functionName: 'completeModule',
       args: [courseTokenId, moduleIndex + 1], // Convert to 1-based for contract
     });

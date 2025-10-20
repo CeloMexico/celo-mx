@@ -4,14 +4,37 @@
  * This is the SINGLE SOURCE OF TRUTH for all optimized contract interactions.
  * ALL hooks and components must import from this file to ensure consistency.
  * 
- * Last Updated: 2025-01-19
- * Contract Address: 0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29 (Celo Alfajores)
+ * Last Updated: 2025-01-20
+ * Alfajores: 0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29
+ * Mainnet: 0xf8CA094fd88F259Df35e0B8a9f38Df8f4F28F336
  */
 
 import { type Address } from 'viem';
 
-// HARDCODED OPTIMIZED CONTRACT ADDRESS (verified deployed and working)
-export const OPTIMIZED_CONTRACT_ADDRESS: Address = '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29';
+// Network-based contract addresses
+const OPTIMIZED_CONTRACT_ADDRESSES = {
+  44787: '0x4193D2f9Bf93495d4665C485A3B8AadAF78CDf29', // Celo Alfajores
+  42220: '0xf8CA094fd88F259Df35e0B8a9f38Df8f4F28F336', // Celo Mainnet
+} as const;
+
+// Get contract address based on chain ID
+function getContractAddressForChain(chainId?: number): Address {
+  // Default to Alfajores for development/testing
+  const defaultChainId = 44787;
+  const targetChainId = chainId || defaultChainId;
+  
+  const address = OPTIMIZED_CONTRACT_ADDRESSES[targetChainId as keyof typeof OPTIMIZED_CONTRACT_ADDRESSES];
+  if (!address) {
+    console.warn(`[CONTRACT CONFIG] No contract address for chain ${targetChainId}, using Alfajores`);
+    return OPTIMIZED_CONTRACT_ADDRESSES[44787];
+  }
+  
+  console.log(`[CONTRACT CONFIG] Using optimized contract for chain ${targetChainId}:`, address);
+  return address as Address;
+}
+
+// Export for compatibility - uses current chain or defaults to Alfajores
+export const OPTIMIZED_CONTRACT_ADDRESS = getContractAddressForChain();
 
 // Optimized contract ABI (ONLY functions that exist in the deployed contract)
 export const OPTIMIZED_BADGE_ABI = [
@@ -89,17 +112,25 @@ export const OPTIMIZED_BADGE_ABI = [
   },
 ] as const;
 
-// Contract configuration object for easy importing
-export const OPTIMIZED_CONTRACT_CONFIG = {
-  address: OPTIMIZED_CONTRACT_ADDRESS,
-  abi: OPTIMIZED_BADGE_ABI,
-} as const;
-
-// Helper function to get contract address (maintains compatibility with existing code)
-export function getOptimizedContractAddress(): Address {
-  console.log('[CONTRACT CONFIG] Using optimized contract:', OPTIMIZED_CONTRACT_ADDRESS);
-  return OPTIMIZED_CONTRACT_ADDRESS;
+// Dynamic contract configuration that adapts to current chain
+export function getOptimizedContractConfig(chainId?: number) {
+  const address = getContractAddressForChain(chainId);
+  return {
+    address,
+    abi: OPTIMIZED_BADGE_ABI,
+  } as const;
 }
+
+// Contract configuration object for easy importing (defaults to Alfajores)
+export const OPTIMIZED_CONTRACT_CONFIG = getOptimizedContractConfig();
+
+// Helper function to get contract address with chain awareness
+export function getOptimizedContractAddress(chainId?: number): Address {
+  return getContractAddressForChain(chainId);
+}
+
+// Export addresses for direct access
+export const CONTRACT_ADDRESSES = OPTIMIZED_CONTRACT_ADDRESSES;
 
 // Validation function to ensure contract exists
 export function validateContractAddress(): boolean {
@@ -142,11 +173,31 @@ export const GAS_ESTIMATES = {
   MODULE_COMPLETION: 40_000n, // Conservative estimate for completeModule()
 } as const;
 
-// Network configuration
-export const NETWORK_CONFIG = {
-  CHAIN_ID: 44787, // Celo Alfajores
-  CHAIN_ID_HEX: '0xaef3',
-  CHAIN_NAME: 'Celo Alfajores',
-  RPC_URL: 'https://alfajores-forno.celo-testnet.org',
-  EXPLORER_URL: 'https://alfajores.celoscan.io',
+// Network configurations for both networks
+export const NETWORK_CONFIGS = {
+  44787: {
+    CHAIN_ID: 44787,
+    CHAIN_ID_HEX: '0xaef3',
+    CHAIN_NAME: 'Celo Alfajores',
+    RPC_URL: 'https://alfajores-forno.celo-testnet.org',
+    EXPLORER_URL: 'https://alfajores.celoscan.io',
+    IS_MAINNET: false,
+  },
+  42220: {
+    CHAIN_ID: 42220,
+    CHAIN_ID_HEX: '0xa4ec',
+    CHAIN_NAME: 'Celo',
+    RPC_URL: 'https://forno.celo.org',
+    EXPLORER_URL: 'https://celoscan.io',
+    IS_MAINNET: true,
+  },
 } as const;
+
+// Helper to get network config
+export function getNetworkConfig(chainId?: number) {
+  const targetChainId = chainId || 44787;
+  return NETWORK_CONFIGS[targetChainId as keyof typeof NETWORK_CONFIGS] || NETWORK_CONFIGS[44787];
+}
+
+// Default network config (Alfajores for backward compatibility)
+export const NETWORK_CONFIG = NETWORK_CONFIGS[44787];

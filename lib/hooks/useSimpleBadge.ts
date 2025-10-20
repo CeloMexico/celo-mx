@@ -1,26 +1,32 @@
 'use client';
 
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useConnect, useChainId } from 'wagmi';
 import { type Address, encodeFunctionData } from 'viem';
 import { useState } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { LEGACY_COURSE_TOKEN_IDS, generateTokenIdFromCourseId, getCourseTokenId } from '@/lib/courseToken';
 import {
-  OPTIMIZED_CONTRACT_CONFIG,
+  getOptimizedContractConfig,
   getOptimizedContractAddress,
   ENROLLMENT_CACHE_CONFIG,
   MODULE_CACHE_CONFIG,
+  getNetworkConfig,
 } from '@/lib/contracts/optimized-badge-config';
 
-// Use unified contract configuration (SINGLE SOURCE OF TRUTH)
-const { address: CONTRACT_ADDRESS, abi: CONTRACT_ABI } = OPTIMIZED_CONTRACT_CONFIG;
+// Helper to get current chain contract configuration
+function useContractConfig() {
+  const chainId = useChainId();
+  return getOptimizedContractConfig(chainId);
+}
 
 // Hook to check if a user has a badge (optimized contract uses isEnrolled)
 export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
+  
   return useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
+    address: contractAddress,
+    abi: contractAbi,
     functionName: 'isEnrolled',
     args: userAddress && tokenId !== undefined ? [userAddress, tokenId] : undefined,
     query: {
@@ -32,9 +38,11 @@ export function useHasBadge(userAddress?: Address, tokenId?: bigint) {
 
 // Hook to check if a user is enrolled (using optimized contract isEnrolled)
 export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
+  
   return useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
+    address: contractAddress,
+    abi: contractAbi,
     functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
@@ -46,10 +54,12 @@ export function useHasClaimed(userAddress?: Address, courseId?: bigint) {
 
 // Hook to check enrollment status (replaces legacy balanceOf)
 export function useBadgeBalance(userAddress?: Address, courseId?: bigint) {
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
+  
   // For optimized contract, we use isEnrolled instead of balanceOf
   return useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
+    address: contractAddress,
+    abi: contractAbi,
     functionName: 'isEnrolled',
     args: userAddress && courseId !== undefined ? [userAddress, courseId] : undefined,
     query: {
@@ -69,6 +79,9 @@ export function useClaimBadge() {
   const queryClient = useQueryClient();
   const [fallbackHash, setFallbackHash] = useState<`0x${string}` | undefined>(undefined);
   const [fallbackError, setFallbackError] = useState<Error | null>(null);
+  const { address: contractAddress, abi: contractAbi } = useContractConfig();
+  const chainId = useChainId();
+  const networkConfig = getNetworkConfig(chainId);
 
   const claimBadge = async (courseId: bigint) => {
     // 1) Try wagmi connector path first
@@ -83,8 +96,8 @@ export function useClaimBadge() {
       }
       if (isConnected) {
         const hash = await writeContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
+          address: contractAddress,
+          abi: contractAbi,
           functionName: 'enroll',
           args: [courseId],
         });
@@ -92,7 +105,7 @@ export function useClaimBadge() {
         // Invalidate enrollment cache immediately after transaction is sent
         setTimeout(() => {
           queryClient.invalidateQueries({ 
-            queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+            queryKey: ['readContract', { address: contractAddress, functionName: 'isEnrolled' }] 
           });
         }, 1000);
         
@@ -113,25 +126,25 @@ export function useClaimBadge() {
       }
       const provider = await primary.getEthereumProvider();
 
-      // Ensure we're on Celo Alfajores before sending tx (chainId 44787 = 0xaef3)
-      await ensureCeloAlfajores(provider);
+      // Ensure we're on the correct network before sending tx
+      await ensureCorrectNetwork(provider, chainId, networkConfig);
 
       const data = encodeFunctionData({
-        abi: CONTRACT_ABI,
+        abi: contractAbi,
         functionName: 'enroll',
         args: [courseId],
       });
       const from = primary.address || (await provider.request({ method: 'eth_accounts' }))[0];
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
-        params: [{ from, to: CONTRACT_ADDRESS, data, value: '0x0' }],
+        params: [{ from, to: contractAddress, data, value: '0x0' }],
       });
       setFallbackHash(txHash as `0x${string}`);
       
       // Invalidate enrollment cache immediately after transaction is sent
       setTimeout(() => {
         queryClient.invalidateQueries({ 
-          queryKey: ['readContract', { address: CONTRACT_ADDRESS, functionName: 'isEnrolled' }] 
+          queryKey: ['readContract', { address: contractAddress, functionName: 'isEnrolled' }] 
         });
       }, 1000);
       
@@ -142,12 +155,13 @@ export function useClaimBadge() {
     }
   };
 
-  // Ensure Privy provider is connected to Celo Alfajores (44787)
-  async function ensureCeloAlfajores(provider: any) {
+  // Ensure Privy provider is connected to the correct network
+  async function ensureCorrectNetwork(provider: any, targetChainId: number, networkConfig: any) {
     try {
-      const desiredHex = '0xaef3'; // 44787
+      const desiredHex = networkConfig.CHAIN_ID_HEX;
       const current = await provider.request({ method: 'eth_chainId' });
-      if (typeof current === 'string' && current.toLowerCase() === desiredHex) return;
+      if (typeof current === 'string' && current.toLowerCase() === desiredHex.toLowerCase()) return;
+      
       try {
         await provider.request({
           method: 'wallet_switchEthereumChain',
@@ -162,10 +176,10 @@ export function useClaimBadge() {
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: desiredHex,
-                chainName: 'Celo Alfajores',
+                chainName: networkConfig.CHAIN_NAME,
                 nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
-                rpcUrls: ['https://alfajores-forno.celo-testnet.org'],
-                blockExplorerUrls: ['https://alfajores.celoscan.io'],
+                rpcUrls: [networkConfig.RPC_URL],
+                blockExplorerUrls: [networkConfig.EXPLORER_URL],
               }],
             });
             // Try switching again after adding
