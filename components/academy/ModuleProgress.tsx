@@ -9,15 +9,21 @@ import { useHasBadge } from "@/lib/hooks/useSimpleBadge";
 import { getCourseTokenId } from "@/lib/courseToken";
 import { useWriteContract } from "wagmi";
 import { OPTIMIZED_CONTRACT_CONFIG } from "@/lib/contracts/optimized-badge-config";
+import { useSmartAccount } from "@/lib/contexts/ZeroDevSmartWalletProvider";
 
 export default function ModuleProgress({
   courseSlug, courseId, moduleIndex
 }:{ courseSlug:string; courseId:string; moduleIndex:number }) {
   const { wallet, login } = useAuth();
   const walletAddress = wallet?.address;
+  const smartAccount = useSmartAccount();
+  
+  // CRITICAL: Use smart account address for enrollment checks (user enrolled with smart account)
+  // but use wallet address for transaction signing (normal wallet transaction)
+  const addressForReads = smartAccount.smartAccountAddress || walletAddress;
 
   const tokenId = getCourseTokenId(courseSlug, courseId);
-  const enrolled = useHasBadge(walletAddress as `0x${string}` | undefined, tokenId);
+  const enrolled = useHasBadge(addressForReads as `0x${string}` | undefined, tokenId);
   
   // FIX: Use normal wagmi writeContract for user-paid transactions
   const { 
@@ -31,7 +37,7 @@ export default function ModuleProgress({
     hasCompleted,
     modulesCompleted,
     isLoading,
-  } = useModuleCompletion(courseSlug, courseId, moduleIndex, walletAddress as `0x${string}` | undefined);
+  } = useModuleCompletion(courseSlug, courseId, moduleIndex, addressForReads as `0x${string}` | undefined);
 
   const [showSuccess, setShowSuccess] = useState(false);
 
