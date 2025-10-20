@@ -3,9 +3,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCourseEnrollmentBadge } from '@/lib/hooks/useSimpleBadge';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { OPTIMIZED_CONTRACT_CONFIG } from '@/lib/contracts/optimized-badge-config';
 import { getCourseTokenId } from '@/lib/courseToken';
+import { useSmartAccount } from '@/lib/contexts/ZeroDevSmartWalletProvider';
+import { encodeFunctionData } from 'viem';
 import { usePrivy } from '@privy-io/react-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
@@ -58,17 +59,12 @@ export function EnrollmentProvider({
   // Use optimized enrollment for read operations (badge/claim status)
   const optimizedEnrollment = useCourseEnrollmentBadge(courseSlug, courseId, userAddress);
   
-  // DIRECT WAGMI WRITE CONTRACT - This will actually trigger wallet signing
-  const { 
-    writeContract, 
-    data: hash,
-    isPending: isEnrolling,
-    error: enrollmentError 
-  } = useWriteContract();
-  
-  const { isLoading: isConfirmingEnrollment } = useWaitForTransactionReceipt({
-    hash,
-  });
+  // ZERODEV SMART ACCOUNT - Sponsored transactions
+  const smartAccount = useSmartAccount();
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isConfirmingEnrollment, setIsConfirmingEnrollment] = useState(false);
+  const [hash, setHash] = useState<`0x${string}` | undefined>();
+  const [enrollmentError, setEnrollmentError] = useState<Error | null>(null);
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state:', {
     hasBadge: optimizedEnrollment.hasBadge,
@@ -77,51 +73,70 @@ export function EnrollmentProvider({
     isEnrolling,
     isConfirmingEnrollment,
     hasWallet: isWalletConnected,
+    canSponsorTransaction: smartAccount.canSponsorTransaction,
+    smartAccountReady: smartAccount.isSmartAccountReady,
     serverHasAccess,
   });
 
-  // DIRECT WAGMI ENROLLMENT - This will actually trigger wallet signing
+  // SPONSORED ENROLLMENT - ZeroDev smart account with paymaster
   const enrollInCourse = async () => {
-    console.log('[ENROLLMENT CONTEXT] Starting enrollment with wagmi writeContract');
+    console.log('[ENROLLMENT] Starting sponsored enrollment');
     
     if (!isWalletConnected || !userAddress) {
       throw new Error('Wallet not connected');
     }
     
+    if (!smartAccount.canSponsorTransaction) {
+      throw new Error('Smart account not ready for sponsored transactions');
+    }
+    
     const tokenId = getCourseTokenId(courseSlug, courseId);
     
-    console.log('[ENROLLMENT CONTEXT] Calling writeContract:', {
-      address: OPTIMIZED_CONTRACT_CONFIG.address,
-      tokenId: tokenId.toString(),
-      userAddress
-    });
+    setIsEnrolling(true);
+    setEnrollmentError(null);
     
-    // THIS WILL ACTUALLY PROMPT FOR WALLET SIGNING
-    writeContract({
-      address: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
-      abi: OPTIMIZED_CONTRACT_CONFIG.abi,
-      functionName: 'enroll',
-      args: [tokenId],
-    });
-    
-    // Cache invalidation after successful transaction
-    if (hash) {
-      setTimeout(() => {
-        queryClient.invalidateQueries({ 
-          queryKey: ['readContract'] 
-        });
-        console.log('[ENROLLMENT CONTEXT] Cache invalidated after enrollment');
-      }, 2000);
+    try {
+      // Encode the function call data
+      const encodedData = encodeFunctionData({
+        abi: OPTIMIZED_CONTRACT_CONFIG.abi,
+        functionName: 'enroll',
+        args: [tokenId],
+      });
+      
+      console.log('[ENROLLMENT] Calling sponsored transaction:', {
+        to: OPTIMIZED_CONTRACT_CONFIG.address,
+        data: encodedData,
+        tokenId: tokenId.toString(),
+      });
+      
+      // Use ZeroDev sponsored transaction
+      const txHash = await smartAccount.executeTransaction({
+        to: OPTIMIZED_CONTRACT_CONFIG.address as `0x${string}`,
+        data: encodedData,
+        value: 0n,
+      });
+      
+      if (txHash) {
+        setHash(txHash);
+        console.log('[ENROLLMENT] ✅ Sponsored transaction sent:', txHash);
+        
+        // Cache invalidation after successful transaction
+        setTimeout(() => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['readContract'] 
+          });
+          console.log('[ENROLLMENT] Cache invalidated after enrollment');
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('[ENROLLMENT] ❌ Sponsored transaction failed:', error);
+      setEnrollmentError(new Error(error.message || 'Enrollment failed'));
+      throw error;
+    } finally {
+      setIsEnrolling(false);
     }
   };
-
-  const enrollmentState: EnrollmentState = {
-    hasBadge: optimizedEnrollment.hasBadge,
-    hasClaimed: optimizedEnrollment.hasClaimed,
-    isLoading: optimizedEnrollment.isLoading,
-    enrollInCourse,
-    enrollmentHash: hash,
-    enrollmentError: enrollmentError ? new Error(enrollmentError.message) : optimizedEnrollment.enrollmentError,
+    enrollmentError: enrollmentError || optimizedEnrollment.enrollmentError,
     isEnrolling,
     isConfirmingEnrollment,
     enrollmentSuccess: !!hash && !isConfirmingEnrollment,
