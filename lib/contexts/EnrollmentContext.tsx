@@ -26,6 +26,7 @@ interface EnrollmentState {
   serverHasAccess: boolean;
   isWalletConnected: boolean;
   userAddress?: Address;
+  enrollmentCount?: number;
 }
 
 const EnrollmentContext = createContext<EnrollmentState | null>(null);
@@ -76,6 +77,8 @@ export function EnrollmentProvider({
   const [isConfirmingEnrollment, setIsConfirmingEnrollment] = useState(false);
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [enrollmentError, setEnrollmentError] = useState<Error | null>(null);
+  const [enrollmentCount, setEnrollmentCount] = useState<number | undefined>(undefined);
+  const [didSync, setDidSync] = useState(false);
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state (DIRECT MAINNET):', {
     directMainnetEnrolled: directMainnetCheck.isEnrolled,
@@ -88,6 +91,42 @@ export function EnrollmentProvider({
     smartAccountReady: smartAccount.isSmartAccountReady,
     serverHasAccess,
   });
+
+  // Fetch enrollment count from API
+  useEffect(() => {
+    let aborted = false;
+    async function fetchCount() {
+      try {
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted) setEnrollmentCount(typeof data.count === 'number' ? data.count : undefined);
+      } catch {
+        // ignore
+      }
+    }
+    fetchCount();
+    return () => { aborted = true };
+  }, [courseSlug]);
+
+  // Reconcile DB when on-chain enrolled but server says no
+  useEffect(() => {
+    async function reconcile() {
+      if (directMainnetCheck.isEnrolled && !serverHasAccess && isWalletConnected && !didSync) {
+        try {
+          const res = await fetch(`/api/courses/${courseSlug}/sync-enrollment`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          if (res.ok) {
+            const data = await res.json();
+            setDidSync(true);
+            if (typeof data.count === 'number') setEnrollmentCount(data.count);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    reconcile();
+  }, [directMainnetCheck.isEnrolled, serverHasAccess, isWalletConnected, didSync, courseSlug]);
 
   // FORCED SPONSORED ENROLLMENT - ZeroDev smart account with paymaster (MAINNET ONLY)
   const enrollInCourse = async () => {
@@ -177,6 +216,7 @@ export function EnrollmentProvider({
     serverHasAccess,
     isWalletConnected,
     userAddress,
+    enrollmentCount,
   };
 
   return (

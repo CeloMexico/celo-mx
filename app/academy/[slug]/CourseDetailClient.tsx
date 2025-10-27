@@ -50,6 +50,8 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
   // Get enrollment status from context
   const enrollment = useEnrollment();
   const isEnrolled = enrollment.hasBadge || enrollment.hasClaimed || enrollment.enrollmentSuccess || enrollment.serverHasAccess;
+  const learnersDisplay = typeof enrollment.enrollmentCount === 'number' ? enrollment.enrollmentCount : course.learners;
+  const courseWithCount: Course = { ...course, learners: learnersDisplay };
   
   console.log('[COURSE DETAIL] Enrollment status:', {
     hasBadge: enrollment.hasBadge,
@@ -86,7 +88,7 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
       {/* Hero Section */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
-          <CourseHeader course={course} />
+          <CourseHeader course={courseWithCount} />
         </div>
       </div>
 
@@ -327,9 +329,9 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
                 modules={course.modules}
               />
               {isMounted ? (
-                <Web3EnrollPanel course={course} />
+                <Web3EnrollPanel course={courseWithCount} />
               ) : (
-                <EnrollPanel course={course} onEnroll={handleFallbackEnroll} />
+                <EnrollPanel course={courseWithCount} onEnroll={handleFallbackEnroll} />
               )}
             </div>
           </div>
