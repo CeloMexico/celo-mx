@@ -45,6 +45,7 @@ model Course {
   promoVideoUrl    String?
   durationHours    Int?
   lessonsCount     Int?
+  tokenId          String?
   rating           Float?
   ratingCount      Int?
   learners         Int?
