@@ -42,14 +42,31 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [learnersCount, setLearnersCount] = useState<number | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Fetch live enrollment count
+  useEffect(() => {
+    let aborted = false;
+    async function loadCount() {
+      try {
+        const res = await fetch(`/api/courses/${course.slug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setLearnersCount(data.count);
+      } catch {}
+    }
+    loadCount();
+    return () => { aborted = true };
+  }, [course.slug]);
+
   // Get enrollment status from context
   const enrollment = useEnrollment();
   const isEnrolled = enrollment.hasBadge || enrollment.hasClaimed || enrollment.enrollmentSuccess || enrollment.serverHasAccess;
+  const courseWithCount: Course = { ...course, learners: learnersCount ?? course.learners };
   
   console.log('[COURSE DETAIL] Enrollment status:', {
     hasBadge: enrollment.hasBadge,
@@ -86,7 +103,7 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
       {/* Hero Section */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
-          <CourseHeader course={course} />
+          <CourseHeader course={courseWithCount} />
         </div>
       </div>
 
@@ -327,9 +344,9 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
                 modules={course.modules}
               />
               {isMounted ? (
-                <Web3EnrollPanel course={course} />
+                <Web3EnrollPanel course={courseWithCount} />
               ) : (
-                <EnrollPanel course={course} onEnroll={handleFallbackEnroll} />
+                <EnrollPanel course={courseWithCount} onEnroll={handleFallbackEnroll} />
               )}
             </div>
           </div>
