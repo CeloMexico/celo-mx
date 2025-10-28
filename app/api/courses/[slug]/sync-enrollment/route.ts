@@ -27,17 +27,17 @@ export async function POST(
       return NextResponse.json({ error: 'Course not found' }, { status: 404 })
     }
 
-    // Minimal: trust caller that on-chain enrollment exists
-    const user = await prisma.user.upsert({
-      where: { walletAddress: wallet },
-      update: {},
-      create: { walletAddress: wallet }
-    })
+    // Require existing user; do not create users here
+    const user = await prisma.user.findUnique({ where: { walletAddress: wallet } })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found for wallet' }, { status: 404 })
+    }
 
+    // Upsert enrollment (id required by schema)
     await prisma.courseEnrollment.upsert({
       where: { userId_courseId: { userId: user.id, courseId: course.id } },
       update: {},
-      create: { userId: user.id, courseId: course.id }
+      create: { id: crypto.randomUUID(), userId: user.id, courseId: course.id }
     })
 
     const count = await prisma.courseEnrollment.count({ where: { courseId: course.id } })
