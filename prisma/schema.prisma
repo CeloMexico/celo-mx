@@ -195,6 +195,21 @@ model UserLessonProgress {
   @@unique([userId, lessonId])
 }
 
+// Course reviews: one per user per course
+model CourseReview {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id])
+  Course    Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
 enum LessonProgressStatus {
   NOT_STARTED
   IN_PROGRESS
