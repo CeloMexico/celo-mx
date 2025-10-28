@@ -26,6 +26,7 @@ interface EnrollmentState {
   serverHasAccess: boolean;
   isWalletConnected: boolean;
   userAddress?: Address;
+  enrollmentCount?: number;
 }
 
 const EnrollmentContext = createContext<EnrollmentState | null>(null);
@@ -76,6 +77,8 @@ export function EnrollmentProvider({
   const [isConfirmingEnrollment, setIsConfirmingEnrollment] = useState(false);
   const [hash, setHash] = useState<`0x${string}` | undefined>();
   const [enrollmentError, setEnrollmentError] = useState<Error | null>(null);
+  const [enrollmentCount, setEnrollmentCount] = useState<number | undefined>(undefined);
+  const [didSync, setDidSync] = useState(false);
 
   console.log('[ENROLLMENT CONTEXT] Enrollment state (DIRECT MAINNET):', {
     directMainnetEnrolled: directMainnetCheck.isEnrolled,
@@ -88,6 +91,62 @@ export function EnrollmentProvider({
     smartAccountReady: smartAccount.isSmartAccountReady,
     serverHasAccess,
   });
+
+  // Fetch enrollment count
+  useEffect(() => {
+    let aborted = false;
+    async function fetchCount() {
+      try {
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setEnrollmentCount(data.count);
+      } catch {}
+    }
+    fetchCount();
+    return () => { aborted = true };
+  }, [courseSlug]);
+
+  // Reconcile DB if on-chain enrolled but DB likely missing
+  useEffect(() => {
+    async function syncIfNeeded() {
+      if (!isWalletConnected || !addressForEnrollmentCheck) return;
+      const isOnChain = !!directMainnetCheck.isEnrolled;
+      if (isOnChain && !didSync) {
+        try {
+          const res = await fetch(`/api/courses/${courseSlug}/sync-enrollment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address: addressForEnrollmentCheck }),
+          });
+          setDidSync(true);
+          // refresh count regardless of serverHasAccess
+          try {
+            const r = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+            const d = await r.json();
+            if (typeof d.count === 'number') setEnrollmentCount(d.count);
+          } catch {}
+        } catch (e) {
+          console.warn('[ENROLLMENT CONTEXT] Sync enrollment failed:', e);
+        }
+      }
+    }
+    syncIfNeeded();
+  }, [directMainnetCheck.isEnrolled, isWalletConnected, addressForEnrollmentCheck, courseSlug, didSync]);
+
+  // Also refetch count after a successful enroll
+  useEffect(() => {
+    async function refetch() {
+      try {
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        const data = await res.json();
+        if (typeof data.count === 'number') setEnrollmentCount(data.count);
+      } catch {}
+    }
+    if (hash && !isConfirmingEnrollment) {
+      refetch();
+    }
+  }, [hash, isConfirmingEnrollment, courseSlug]);
 
   // FORCED SPONSORED ENROLLMENT - ZeroDev smart account with paymaster (MAINNET ONLY)
   const enrollInCourse = async () => {
@@ -177,6 +236,7 @@ export function EnrollmentProvider({
     serverHasAccess,
     isWalletConnected,
     userAddress,
+    enrollmentCount,
   };
 
   return (
