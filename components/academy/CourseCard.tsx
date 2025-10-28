@@ -28,6 +28,25 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, href }: CourseCardProps) {
+  const [count, setCount] = React.useState<number | null>(null as any);
+  React.useEffect(() => {
+    let aborted = false;
+    // try to derive slug from href like /academy/[slug]
+    const m = href.match(/\/academy\/(.+)$/);
+    const slug = m?.[1];
+    async function load() {
+      try {
+        if (!slug) return;
+        const res = await fetch(`/api/courses/${slug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setCount(data.count);
+      } catch {}
+    }
+    load();
+    return () => { aborted = true };
+  }, [href]);
+
   const formatDuration = (hours: number) => {
     if (hours < 1) return `${Math.round(hours * 60)}m`;
     if (hours < 24) return `${hours}h`;
@@ -123,7 +142,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{formatLearners(course.learners)} alumnos</span>
+                <span>{formatLearners((count ?? course.learners))} alumnos</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
