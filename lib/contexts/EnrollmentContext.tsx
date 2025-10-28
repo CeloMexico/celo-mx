@@ -148,6 +148,36 @@ export function EnrollmentProvider({
     }
   }, [hash, isConfirmingEnrollment, courseSlug]);
 
+  // Retry listener: if on-chain says enrolled but DB count not updated yet, keep syncing a few times
+  useEffect(() => {
+    if (!isWalletConnected || !addressForEnrollmentCheck || !directMainnetCheck.isEnrolled) return;
+    let cancelled = false;
+    let attempts = 0;
+    const delays = [500, 1000, 2000, 3000, 5000];
+
+    async function attemptSync() {
+      if (cancelled || attempts >= delays.length) return;
+      attempts++;
+      try {
+        await fetch(`/api/courses/${courseSlug}/sync-enrollment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addressForEnrollmentCheck }),
+        });
+        const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+        const data = await res.json();
+        if (typeof data.count === 'number') {
+          setEnrollmentCount(data.count);
+          if (data.count > 0) return; // success
+        }
+      } catch {}
+      setTimeout(() => { if (!cancelled) attemptSync(); }, delays[Math.min(attempts, delays.length - 1)]);
+    }
+
+    if (!enrollmentCount || enrollmentCount === 0) attemptSync();
+    return () => { cancelled = true };
+  }, [isWalletConnected, addressForEnrollmentCheck, directMainnetCheck.isEnrolled, courseSlug, enrollmentCount]);
+
   // FORCED SPONSORED ENROLLMENT - ZeroDev smart account with paymaster (MAINNET ONLY)
   const enrollInCourse = async () => {
     console.log('[ENROLLMENT] Starting FORCED sponsored enrollment on MAINNET');
@@ -173,13 +203,7 @@ export function EnrollmentProvider({
         args: [tokenId],
       });
       
-      console.log('[ENROLLMENT] ✅ EXECUTING FORCED MAINNET TRANSACTION:', {
-        to: contractConfig.address,
-        chainId: 42220, // Celo Mainnet
-        rpc: 'https://forno.celo.org',
-        data: encodedData,
-        tokenId: tokenId.toString(),
-      });
+ 
       
       // Use ZeroDev sponsored transaction - THIS ALWAYS GOES TO MAINNET
       const txHash = await smartAccount.executeTransaction({
@@ -211,6 +235,23 @@ export function EnrollmentProvider({
           console.warn('[ENROLLMENT] ⚠️ Cache invalidation failed:', cacheError);
         } finally {
           setIsConfirmingEnrollment(false);
+        }
+
+        // Immediately sync enrollment to DB and refresh count
+        try {
+          const addr = addressForEnrollmentCheck || userAddress;
+          if (addr) {
+            await fetch(`/api/courses/${courseSlug}/sync-enrollment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ address: addr }),
+            });
+            const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
+            const data = await res.json();
+            if (typeof data.count === 'number') setEnrollmentCount(data.count);
+          }
+        } catch (e) {
+          console.warn('[ENROLLMENT] DB sync/count refresh failed:', e);
         }
       }
     } catch (error: any) {

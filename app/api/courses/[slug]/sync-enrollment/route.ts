@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { revalidatePath } from 'next/cache'
+import { randomUUID } from 'crypto'
 
 export async function POST(
   request: NextRequest,
@@ -27,20 +29,26 @@ export async function POST(
       return NextResponse.json({ error: 'Course not found' }, { status: 404 })
     }
 
-    // Require existing user; do not create users here
-    const user = await prisma.user.findUnique({ where: { walletAddress: wallet } })
-    if (!user) {
-      return NextResponse.json({ error: 'User not found for wallet' }, { status: 404 })
-    }
+    // Ensure user exists and enrollment is recorded (idempotent)
+    const user = await prisma.user.upsert({
+      where: { walletAddress: wallet },
+      update: { updatedAt: new Date() },
+      create: { id: randomUUID(), walletAddress: wallet, updatedAt: new Date() }
+    })
 
-    // Upsert enrollment (id required by schema)
     await prisma.courseEnrollment.upsert({
       where: { userId_courseId: { userId: user.id, courseId: course.id } },
       update: {},
-      create: { id: crypto.randomUUID(), userId: user.id, courseId: course.id }
+      create: { id: randomUUID(), userId: user.id, courseId: course.id }
     })
 
     const count = await prisma.courseEnrollment.count({ where: { courseId: course.id } })
+
+    // Revalidate pages that display this count
+    try {
+      revalidatePath('/academy')
+      revalidatePath(`/academy/${slug}`)
+    } catch {}
 
     return NextResponse.json({ success: true, count }, { status: 200 })
   } catch (error) {
