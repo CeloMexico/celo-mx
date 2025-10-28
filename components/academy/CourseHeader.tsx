@@ -12,9 +12,7 @@ interface CourseHeaderProps {
 }
 
 export function CourseHeader({ course }: CourseHeaderProps) {
-  const enrollment = (() => {
-    try { return useEnrollment(); } catch { return null as any }
-  })();
+  const enrollment = useEnrollment();
   const liveCount = typeof enrollment?.enrollmentCount === 'number' ? enrollment.enrollmentCount : course.learners;
   const formatLearners = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
