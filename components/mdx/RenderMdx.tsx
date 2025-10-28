@@ -1,16 +1,31 @@
-import React from "react";
+"use client";
 
-export default function RenderMdx({ source }: { source: string }) {
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import { MdxComponents } from './MdxComponents';
+
+// Import highlight.js theme for syntax highlighting
+import 'highlight.js/styles/github-dark.css';
+
+interface RenderMdxProps {
+  source: string;
+}
+
+export default function RenderMdx({ source }: RenderMdxProps) {
   if (!source) return null;
-  
-  // Temporary fallback to avoid React version conflicts
+
   return (
-    <article className="prose prose-invert max-w-none prose-strong:text-celo-yellow prose-a:text-celo-yellow">
-      <div 
-        className="font-inter text-base md:text-lg leading-7 text-white/90"
-        dangerouslySetInnerHTML={{ __html: source.replace(/\n/g, '<br/>') }}
-      />
-    </article>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw, rehypeHighlight]}
+      components={MdxComponents}
+      // Allow dangerous HTML (needed for iframes, videos, etc.)
+      // Note: Only use with trusted content!
+    >
+      {source}
+    </ReactMarkdown>
   );
 }
 

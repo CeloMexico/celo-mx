@@ -4,6 +4,7 @@ import './globals.css';
 import Providers from '@/components/Providers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { ContractDebug } from '@/components/debug/ContractDebug';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="dark" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         
       </head>
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1 overflow-x-hidden">{children}</main>
               <Footer />
             </div>
+            <ContractDebug />
           </Providers>
         </ThemeProvider>
       </body>

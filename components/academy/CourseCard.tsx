@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,6 +29,25 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, href }: CourseCardProps) {
+  const [count, setCount] = useState<number | null>(null as any);
+  useEffect(() => {
+    let aborted = false;
+    // try to derive slug from href like /academy/[slug]
+    const m = href.match(/\/academy\/(.+)$/);
+    const slug = m?.[1];
+    async function load() {
+      try {
+        if (!slug) return;
+        const res = await fetch(`/api/courses/${slug}/enrollment-count`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!aborted && typeof data.count === 'number') setCount(data.count);
+      } catch {}
+    }
+    load();
+    return () => { aborted = true };
+  }, [href]);
+
   const formatDuration = (hours: number) => {
     if (hours < 1) return `${Math.round(hours * 60)}m`;
     if (hours < 24) return `${hours}h`;
@@ -40,7 +60,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
     return count.toString();
   };
 
-  const badgeBase = "bg-transparent text-black dark:text-celo-yellow border border-celo-border rounded-full px-2.5 py-0.5 text-xs inline-flex items-center gap-1";
+  const badgeBase = "bg-transparent text-celo-fg border border-celo-border rounded-full px-2.5 py-0.5 text-xs inline-flex items-center gap-1";
 
   return (
     <motion.article
@@ -61,6 +81,11 @@ export function CourseCard({ course, href }: CourseCardProps) {
                 alt={course.title}
                 fill
                 className="object-cover transition-transform duration-200 hover:scale-[1.03] [mask-image:linear-gradient(to_bottom,black_85%,transparent)]"
+                onError={(e) => {
+                  // Hide the image if it fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
               />
             ) : (
               <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,rgba(247,255,88,0.15),transparent_60%)] bg-gray-100 flex items-center justify-center">
@@ -81,11 +106,11 @@ export function CourseCard({ course, href }: CourseCardProps) {
             {/* Badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className={badgeBase}>
-                <GraduationCap className="w-3.5 h-3.5 text-black dark:text-celo-yellow" />
+                <GraduationCap className="w-3.5 h-3.5 text-celo-yellow" />
                 {course.level}
               </span>
               <span className={badgeBase}>
-                <Award className="w-3.5 h-3.5 text-black dark:text-celo-yellow" />
+                <Award className="w-3.5 h-3.5 text-celo-yellow" />
                 {course.category}
               </span>
             </div>
@@ -94,12 +119,12 @@ export function CourseCard({ course, href }: CourseCardProps) {
             <div>
               <h3 
                 id={`course-${course.id}`}
-                className="font-display text-xl leading-tight mb-2 text-black dark:text-celo-yellow theme-yellow-dark:text-black"
+                className="font-display text-xl leading-tight mb-2 text-celo-fg"
               >
                 {course.title}
               </h3>
               {course.subtitle && (
-                <p className="text-celo-muted dark:text-celo-fg theme-yellow-dark:text-black/80 text-sm leading-relaxed overflow-hidden" style={{
+                <p className="text-celo-muted text-sm leading-relaxed overflow-hidden" style={{
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical'
@@ -110,7 +135,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
             </div>
 
             {/* Stats */}
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-4 text-sm text-celo-muted">
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-celo-yellow text-celo-yellow" />
                 <span className="font-medium text-celo-fg">{course.rating}</span>
@@ -118,7 +143,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{formatLearners(course.learners)} alumnos</span>
+                <span>{formatLearners((count ?? course.learners))} alumnos</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -130,9 +155,9 @@ export function CourseCard({ course, href }: CourseCardProps) {
             <div className="flex items-center justify-between pt-2">
               <div className="text-lg font-bold">
                 {course.isFree ? (
-                  <span className="text-black dark:text-celo-yellow">Gratis</span>
+                  <span className="text-celo-yellow">Gratis</span>
                 ) : (
-                  <span className="text-black dark:text-celo-fg">${course.priceUSD}</span>
+                  <span className="text-celo-fg">${course.priceUSD}</span>
                 )}
               </div>
               <div className="text-sm text-celo-muted">

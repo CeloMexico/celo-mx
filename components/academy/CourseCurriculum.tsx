@@ -20,21 +20,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ModuleProgress from "./ModuleProgress";
 import { Course, CurriculumItemType, Module, Submodule, CurriculumItem } from "./types";
+import { ModuleCompletionProvider } from "@/lib/contexts/ModuleCompletionContext";
 import { getYouTubeVideoId, getYouTubeThumbnail } from "@/lib/youtube";
 
 interface CourseCurriculumProps {
   course: Course;
+  isEnrolled?: boolean;
 }
 
 
-export function CourseCurriculum({ course }: CourseCurriculumProps) {
+export function CourseCurriculum({ course, isEnrolled = false }: CourseCurriculumProps) {
   const [expandedContent, setExpandedContent] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<CurriculumItem | null>(null);
   
   // Simple function to convert markdown links to clickable HTML
   const makeLinksClickable = (text: string) => {
-    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">$1</a>');
+    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-celo-yellow hover:text-celo-yellow/80 underline font-medium">$1</a>');
   };
 
   // Function to handle video click
@@ -191,7 +193,13 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
               </div>
             </AccordionTrigger>
             <div className="px-4 pb-2">
-              <ModuleProgress courseSlug={course.slug} moduleIndex={module.index} />
+              <ModuleCompletionProvider 
+                courseSlug={course.slug} 
+                courseId={course.id} 
+                moduleIndex={module.index - 1}
+              >
+                <ModuleProgress courseSlug={course.slug} courseId={course.id} moduleIndex={module.index - 1} />
+              </ModuleCompletionProvider>
             </div>
             <AccordionContent className="pb-4">
               {/* Submodules Accordion */}
@@ -214,16 +222,34 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pb-3">
+                      {/* Locked message for non-enrolled users */}
+                      {!isEnrolled ? (
+                        <div className="p-8 text-center bg-gradient-to-br from-muted/30 to-muted/10 rounded-lg border-2 border-dashed border-muted">
+                          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          </div>
+                          <h4 className="font-semibold text-lg mb-2">Contenido Bloqueado</h4>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Inscríbete en el curso para acceder a este contenido
+                          </p>
+                          <Badge variant="secondary" className="text-xs">
+                            {submodule.items.length} elementos disponibles después de inscribirse
+                          </Badge>
+                        </div>
+                      ) : (
+                        <>
                       {/* Direct content display for submodules */}
                       {submodule.content && (
                         <div className="mb-6 p-6 bg-muted/20 rounded-lg border border-muted">
-                          <div className="prose prose-sm max-w-none text-gray-700">
+                                          <div className="prose prose-sm max-w-none dark:prose-invert text-slate-900 dark:text-slate-100">
                             <div className="space-y-4 text-sm leading-relaxed">
                               {submodule.content.split('\n').map((line, index) => {
                                 // Handle headers
                                 if (line.startsWith('## ')) {
                                   return (
-                                    <h2 key={index} className="text-2xl font-bold text-gray-900 mt-8 mb-4 border-b-2 border-gray-300 pb-3">
+                                    <h2 key={index} className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-8 mb-4 border-b-2 border-celo-yellow pb-3">
                                       {line.replace('## ', '')}
                                     </h2>
                                   );
@@ -231,18 +257,18 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                                 // Handle bold text lines (complete lines in bold)
                                 if (line.startsWith('**') && line.endsWith('**')) {
                                   return (
-                                    <div key={index} className="font-bold text-gray-900 text-base mb-2" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace(/\*\*/g, '')) }} />
+                                            <div key={index} className="font-bold text-slate-900 dark:text-slate-50 text-base mb-2" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace(/\*\*/g, '')) }} />
                                   );
                                 }
                                 // Handle paragraphs with bold text inline
                                 if (line.includes('**') && !line.startsWith('-')) {
                                   const parts = line.split(/(\*\*.*?\*\*)/g);
                                   return (
-                                    <p key={index} className="text-gray-700 leading-relaxed mb-3">
+                                    <p key={index} className="text-slate-800 dark:text-slate-200 leading-relaxed mb-3">
                                       {parts.map((part, partIndex) => {
                                         if (part.startsWith('**') && part.endsWith('**')) {
                                           return (
-                                            <span key={partIndex} className="font-bold text-gray-900" dangerouslySetInnerHTML={{ __html: makeLinksClickable(part.replace(/\*\*/g, '')) }} />
+                                            <span key={partIndex} className="font-bold text-slate-900 dark:text-slate-50" dangerouslySetInnerHTML={{ __html: makeLinksClickable(part.replace(/\*\*/g, '')) }} />
                                           );
                                         }
                                         return <span key={partIndex} dangerouslySetInnerHTML={{ __html: makeLinksClickable(part) }} />;
@@ -257,28 +283,28 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                                   const title = parts[0];
                                   const description = parts.slice(1).join(':').trim();
                                   return (
-                                    <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                      <span className="text-gray-500 mt-1 text-lg">•</span>
-                                      <div>
-                                        <span className="font-bold text-gray-900 text-base" dangerouslySetInnerHTML={{ __html: makeLinksClickable(title + ':') }}></span>
-                                        <span className="text-gray-700 ml-1" dangerouslySetInnerHTML={{ __html: makeLinksClickable(description) }}></span>
-                                      </div>
-                                    </div>
+                                            <div key={index} className="flex items-start gap-3 ml-6 mb-2">
+                                              <span className="text-celo-yellow mt-1 text-lg">•</span>
+                                              <div>
+                                                <span className="font-bold text-slate-900 dark:text-slate-50 text-base" dangerouslySetInnerHTML={{ __html: makeLinksClickable(title + ':') }}></span>
+                                                <span className="text-slate-800 dark:text-slate-200 ml-1" dangerouslySetInnerHTML={{ __html: makeLinksClickable(description) }}></span>
+                                              </div>
+                                            </div>
                                   );
                                 }
                                 // Handle regular list items (without bold)
                                 if (line.startsWith('- ')) {
                                   return (
-                                    <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                      <span className="text-gray-500 mt-1">•</span>
-                                      <span className="text-gray-700" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace('- ', '')) }}></span>
-                                    </div>
+                                            <div key={index} className="flex items-start gap-3 ml-6 mb-2">
+                                              <span className="text-celo-yellow mt-1">•</span>
+                                              <span className="text-slate-800 dark:text-slate-200" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line.replace('- ', '')) }}></span>
+                                            </div>
                                   );
                                 }
                                 // Handle regular paragraphs
                                 if (line.trim() && !line.startsWith('##') && !line.startsWith('-')) {
                                   return (
-                                    <p key={index} className="text-gray-700 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line) }}></p>
+                                            <p key={index} className="text-slate-800 dark:text-slate-200 leading-relaxed mb-3" dangerouslySetInnerHTML={{ __html: makeLinksClickable(line) }}></p>
                                   );
                                 }
                                 // Handle empty lines
@@ -417,13 +443,13 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                               {/* Content display */}
                               {item.content && isExpanded && (
                                 <div className="ml-0 p-6 bg-muted/20 rounded-lg border border-muted">
-                                  <div className="prose prose-sm max-w-none text-gray-700">
+                                  <div className="prose prose-sm max-w-none dark:prose-invert text-slate-900 dark:text-slate-100">
                                     <div className="space-y-4 text-sm leading-relaxed">
                                       {item.content.split('\n').map((line, index) => {
                                         // Handle headers
                                         if (line.startsWith('## ')) {
                                           return (
-                                            <h2 key={index} className="text-2xl font-bold text-gray-900 mt-8 mb-4 border-b-2 border-gray-300 pb-3">
+                                            <h2 key={index} className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-8 mb-4 border-b-2 border-celo-yellow pb-3">
                                               {line.replace('## ', '')}
                                             </h2>
                                           );
@@ -431,7 +457,7 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                                         // Handle bold text lines (complete lines in bold)
                                         if (line.startsWith('**') && line.endsWith('**')) {
                                           return (
-                                            <div key={index} className="font-bold text-gray-900 text-base mb-2">
+                                            <div key={index} className="font-bold text-slate-900 dark:text-slate-50 text-base mb-2">
                                               {line.replace(/\*\*/g, '')}
                                             </div>
                                           );
@@ -440,11 +466,11 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                                         if (line.includes('**') && !line.startsWith('-')) {
                                           const parts = line.split(/(\*\*.*?\*\*)/g);
                                           return (
-                                            <p key={index} className="text-gray-700 leading-relaxed mb-3">
+                                            <p key={index} className="text-slate-800 dark:text-slate-200 leading-relaxed mb-3">
                                               {parts.map((part, partIndex) => {
                                                 if (part.startsWith('**') && part.endsWith('**')) {
                                                   return (
-                                                    <span key={partIndex} className="font-bold text-gray-900">
+                                                    <span key={partIndex} className="font-bold text-slate-900 dark:text-slate-50">
                                                       {part.replace(/\*\*/g, '')}
                                                     </span>
                                                   );
@@ -462,10 +488,10 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                                           const description = parts.slice(1).join(':').trim();
                                           return (
                                             <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                              <span className="text-gray-500 mt-1 text-lg">•</span>
+                                              <span className="text-celo-yellow mt-1 text-lg">•</span>
                                               <div>
-                                                <span className="font-bold text-gray-900 text-base">{title}:</span>
-                                                <span className="text-gray-700 ml-1">{description}</span>
+                                                <span className="font-bold text-slate-900 dark:text-slate-50 text-base">{title}:</span>
+                                                <span className="text-slate-800 dark:text-slate-200 ml-1">{description}</span>
                                               </div>
                                             </div>
                                           );
@@ -474,15 +500,15 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                                         if (line.startsWith('- ')) {
                                           return (
                                             <div key={index} className="flex items-start gap-3 ml-6 mb-2">
-                                              <span className="text-gray-500 mt-1">•</span>
-                                              <span className="text-gray-700">{line.replace('- ', '')}</span>
+                                              <span className="text-celo-yellow mt-1">•</span>
+                                              <span className="text-slate-800 dark:text-slate-200">{line.replace('- ', '')}</span>
                                             </div>
                                           );
                                         }
                                         // Handle regular paragraphs
                                         if (line.trim() && !line.startsWith('##') && !line.startsWith('-')) {
                                           return (
-                                            <p key={index} className="text-gray-700 leading-relaxed mb-3">
+                                            <p key={index} className="text-slate-800 dark:text-slate-200 leading-relaxed mb-3">
                                               {line}
                                             </p>
                                           );
@@ -501,6 +527,8 @@ export function CourseCurriculum({ course }: CourseCurriculumProps) {
                           );
                         })}
                       </div>
+                      </>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 ))}
