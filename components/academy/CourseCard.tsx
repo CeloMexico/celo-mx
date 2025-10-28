@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -29,8 +29,8 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, href }: CourseCardProps) {
-  const [count, setCount] = React.useState<number | null>(null as any);
-  React.useEffect(() => {
+  const [count, setCount] = useState<number | null>(null as any);
+  useEffect(() => {
     let aborted = false;
     // try to derive slug from href like /academy/[slug]
     const m = href.match(/\/academy\/(.+)$/);
