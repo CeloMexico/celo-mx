@@ -61,7 +61,7 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
     }
     loadCount();
     return () => { aborted = true };
-  }, [course.slug]);
+  }, [course.slug, enrollment.enrollmentSuccess]);
 
   // Get enrollment status from context
   const enrollment = useEnrollment();
