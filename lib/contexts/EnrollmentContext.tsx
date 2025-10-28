@@ -249,6 +249,7 @@ export function EnrollmentProvider({
             const res = await fetch(`/api/courses/${courseSlug}/enrollment-count`, { cache: 'no-store' });
             const data = await res.json();
             if (typeof data.count === 'number') setEnrollmentCount(data.count);
+            setDidSync(true);
           }
         } catch (e) {
           console.warn('[ENROLLMENT] DB sync/count refresh failed:', e);

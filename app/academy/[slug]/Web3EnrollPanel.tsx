@@ -29,18 +29,6 @@ export default function Web3EnrollPanel({ course }: Web3EnrollPanelProps) {
       await enrollment.enrollInCourse();
       console.log('[WEB3 ENROLL PANEL] Enrollment initiated');
 
-      // Sync enrollment to DB to update student count
-      try {
-        if (enrollment.userAddress) {
-          await fetch(`/api/courses/${course.slug}/sync-enrollment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address: enrollment.userAddress }),
-          });
-        }
-      } catch (e) {
-        console.warn('[WEB3 ENROLL PANEL] Sync enrollment failed:', e);
-      }
     } catch (error) {
       console.error('[WEB3 ENROLL PANEL] Enrollment error:', error);
       alert(`Error al inscribirse: ${error instanceof Error ? error.message : 'Error desconocido'}`);
