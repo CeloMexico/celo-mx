@@ -43,6 +43,7 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [learnersCount, setLearnersCount] = useState<number | null>(null);
+  const enrollment = useEnrollment();
 
   useEffect(() => {
     setIsMounted(true);
@@ -61,10 +62,8 @@ function CourseDetailInner({ course }: CourseDetailClientProps) {
     }
     loadCount();
     return () => { aborted = true };
-  }, [course.slug, enrollment.enrollmentSuccess]);
 
-  // Get enrollment status from context
-  const enrollment = useEnrollment();
+  }, [course.slug, enrollment.enrollmentSuccess]);
   const isEnrolled = enrollment.hasBadge || enrollment.hasClaimed || enrollment.enrollmentSuccess || enrollment.serverHasAccess;
   const courseWithCount: Course = { ...course, learners: learnersCount ?? course.learners };
   
