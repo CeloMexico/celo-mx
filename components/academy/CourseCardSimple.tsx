@@ -102,7 +102,7 @@ export function CourseCardSimple({ course, href }: CourseCardProps) {
                 {course.lessonsCount} lessons
               </div>
             </div>
-            <Button className="w-full bg-transparent text-celoLegacy-yellow border border-celoLegacy-yellow dark:bg-celo-yellow dark:text-black dark:border-transparent">
+            <Button variant="outline" className="w-full bg-transparent text-celoLegacy-yellow border border-celoLegacy-yellow hover:bg-celoLegacy-yellow/10">
               View Course
             </Button>
           </div>
