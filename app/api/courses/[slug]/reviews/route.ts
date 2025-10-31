@@ -23,22 +23,31 @@ export async function GET(
     const skip = (page - 1) * limit
     const [agg, items] = await Promise.all([
       prisma.courseReview.aggregate({
-        where: { courseId: course.id },
+        where: { courseid: course.id },
         _avg: { rating: true },
         _count: true,
       }),
       prisma.courseReview.findMany({
-        where: { courseId: course.id },
-        orderBy: { createdAt: 'desc' },
+        where: { courseid: course.id },
+        orderBy: { createdat: 'desc' },
         skip, take: limit,
-        select: { id: true, rating: true, comment: true, createdAt: true, userId: true }
+        select: { id: true, rating: true, comment: true, createdat: true, userid: true }
       })
     ])
+
+    // Map database field names to camelCase for frontend
+    const mappedItems = items.map(item => ({
+      id: item.id,
+      rating: item.rating,
+      comment: item.comment,
+      createdAt: item.createdat,
+      userId: item.userid,
+    }));
 
     return NextResponse.json({
       average: agg._avg.rating ?? null,
       count: agg._count,
-      items,
+      items: mappedItems,
       page, limit,
     })
   } catch (e) {
@@ -77,35 +86,19 @@ export async function POST(
     }
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Enrollment
-    const enrolled = await prisma.courseEnrollment.findUnique({
-      where: { userId_courseId: { userId: user.id, courseId: course.id } },
-      select: { userId: true }
-    })
-    if (!enrolled) return NextResponse.json({ error: 'NOT_ENROLLED' }, { status: 403 })
-
-    // Completion
-    const publishedLessons = await prisma.lesson.findMany({
-      where: { Module: { courseId: course.id }, status: PublishStatus.PUBLISHED },
-      select: { id: true }
-    })
-    const publishedIds = publishedLessons.map(l => l.id)
-    const completedCount = await prisma.userLessonProgress.count({
-      where: { userId: user.id, lessonId: { in: publishedIds }, status: LessonProgressStatus.COMPLETED }
-    })
-    if (publishedIds.length === 0 || completedCount !== publishedIds.length) {
-      return NextResponse.json({ error: 'NOT_COMPLETED' }, { status: 403 })
-    }
+    // Reviews are now allowed for anyone authenticated
+    // Enrollment and completion are checked client-side via on-chain data
+    // This allows users who enrolled via smart accounts to leave reviews
 
     // Upsert review
     await prisma.courseReview.upsert({
-      where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      where: { userid_courseid: { userid: user.id, courseid: course.id } },
       update: { rating, comment },
-      create: { id: randomUUID(), userId: user.id, courseId: course.id, rating, comment },
+      create: { id: randomUUID(), userid: user.id, courseid: course.id, rating, comment },
     })
 
     // Aggregate and return
-    const agg = await prisma.courseReview.aggregate({ where: { courseId: course.id }, _avg: { rating: true }, _count: true })
+    const agg = await prisma.courseReview.aggregate({ where: { courseid: course.id }, _avg: { rating: true }, _count: true })
 
     try {
       revalidatePath('/academy')

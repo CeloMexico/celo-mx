@@ -24,7 +24,7 @@ export async function GET(
     const user = wallet ? await prisma.user.findUnique({ where: { walletAddress: wallet } }) : null
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const review = await prisma.courseReview.findUnique({ where: { userId_courseId: { userId: user.id, courseId: course.id } } })
+    const review = await prisma.courseReview.findUnique({ where: { userid_courseid: { userid: user.id, courseid: course.id } } })
     if (!review) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ review })
   } catch {
@@ -56,9 +56,9 @@ export async function PATCH(
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     await prisma.courseReview.upsert({
-      where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      where: { userid_courseid: { userid: user.id, courseid: course.id } },
       update: { rating, comment },
-      create: { id: randomUUID(), userId: user.id, courseId: course.id, rating: rating ?? 5, comment },
+      create: { id: randomUUID(), userid: user.id, courseid: course.id, rating: rating ?? 5, comment },
     })
 
     try { revalidatePath('/academy'); revalidatePath(`/academy/${slug}`) } catch {}
@@ -84,7 +84,7 @@ export async function DELETE(
     const user = wallet ? await prisma.user.findUnique({ where: { walletAddress: wallet } }) : null
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    await prisma.courseReview.delete({ where: { userId_courseId: { userId: user.id, courseId: course.id } } })
+    await prisma.courseReview.delete({ where: { userid_courseid: { userid: user.id, courseid: course.id } } })
     try { revalidatePath('/academy'); revalidatePath(`/academy/${slug}`) } catch {}
     return NextResponse.json({ ok: true })
   } catch {
