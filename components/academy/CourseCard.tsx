@@ -167,7 +167,7 @@ export function CourseCard({ course, href }: CourseCardProps) {
 
             {/* CTA Button */}
             <Button 
-              className="w-full bg-celo-yellow text-black font-medium py-2.5 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-celo-yellow/70 focus:ring-offset-2 focus:ring-offset-white relative overflow-hidden before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,rgba(245,240,230,0.9),rgba(245,240,230,0)_60%)] before:opacity-0 before:scale-0 before:transition-transform before:duration-500 before:ease-out hover:before:opacity-100 hover:before:scale-125 before:-z-10"
+              className="w-full bg-celo-yellow text-black font-medium py-2.5 rounded-full transition-colors duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-celo-yellow/70 focus:ring-offset-2 focus:ring-offset-white relative overflow-hidden before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,rgba(245,240,230,0.9),rgba(245,240,230,0)_60%)] before:opacity-0 before:scale-0 before:transition-transform before:duration-500 before:ease-out hover:before:opacity-100 hover:before:scale-125 before:-z-10 theme-yellow-dark:bg-black theme-yellow-dark:text-celoLegacy-yellow theme-yellow-dark:border theme-yellow-dark:border-black"
             >
               Ver curso
               <ArrowRight className="w-4 h-4" />
